@@ -48,33 +48,30 @@
 **Reason**: Story 1 findings document already provides all necessary authentication patterns. No additional traffic capture needed.
 
 ### Story 2: OAuth Credentials Manager
-**Status**: unassigned
+**Status**: completed
+**Claimed**: 2025-11-05 10:00
+**Completed**: 2025-11-05 10:15
 **Description**: Implement module to read, validate, and refresh OAuth credentials from ~/.claude/.credentials.json
 **Acceptance Criteria**:
-- [ ] Read credentials from cross-platform path (~/.claude/.credentials.json)
-- [ ] Validate token format (sk-ant-oat01-, sk-ant-ort01-)
-- [ ] Check token expiration (expiresAt < current_time)
-- [ ] Handle missing/corrupted credentials gracefully
-- [ ] Fallback to API key if no OAuth credentials exist
+- [x] Read credentials from cross-platform path (~/.claude/.credentials.json)
+- [x] Validate token format (sk-ant-oat01-, sk-ant-ort01-)
+- [x] Check token expiration (expiresAt < current_time)
+- [x] Handle missing/corrupted credentials gracefully
+- [x] Fallback to API key if no OAuth credentials exist (via get_valid_credentials())
+**Implementation**: `src/claude_agent_sdk/_internal/oauth_credentials.py`
+**Tests**: `tests/test_oauth_credentials.py` (25 tests, all passing)
 
 ### Story 2.1: Credentials File Reader
-**Status**: unassigned
+**Status**: superseded
 **Parent**: Story 2
 **Description**: Implement function to locate and parse credentials JSON file
-**Acceptance Criteria**:
-- [ ] Cross-platform path resolution (Windows/Linux/macOS)
-- [ ] JSON parsing with error handling
-- [ ] Extract claudeAiOauth object
-- [ ] Validate required fields (accessToken, refreshToken, expiresAt, scopes)
+**Reason**: Completed as part of Story 2 implementation (read_credentials() function)
 
 ### Story 2.2: Token Expiration Checker
-**Status**: unassigned
+**Status**: superseded
 **Parent**: Story 2
 **Description**: Implement validation logic to check if OAuth access token has expired based on timestamp comparison
-**Acceptance Criteria**:
-- [ ] Compare expiresAt timestamp with current time
-- [ ] Add buffer (e.g., 5 minutes) to prevent edge cases
-- [ ] Return boolean: token_is_valid
+**Reason**: Completed as part of Story 2 implementation (OAuthCredentials.is_expired property with 5-minute buffer)
 
 ### Story 3: Browser-Based OAuth Login Flow
 **Status**: unassigned
