@@ -14,6 +14,8 @@ Public API:
     - display_message: Convenience function for quick usage
 """
 
+from .config import RendererConfig, RenderLevel
+
 # Placeholder exports - will be populated as components are implemented
 __all__ = [
     "MessageRenderer",
