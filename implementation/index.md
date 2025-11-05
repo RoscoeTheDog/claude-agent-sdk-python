@@ -21,13 +21,16 @@
 ## Stories
 
 ### Story 1: Research & Discovery
-**Status**: unassigned
+**Status**: completed
+**Claimed**: 2025-11-05 09:30
+**Completed**: 2025-11-05 09:45
 **Description**: Understand how Claude Code CLI authenticates with OAuth tokens and identify the API endpoints/headers used
 **Acceptance Criteria**:
-- [ ] Capture actual HTTP requests from Claude Code CLI using OAuth tokens
-- [ ] Identify OAuth vs API key endpoint differences (if any)
-- [ ] Document authentication header format (Bearer vs x-api-key)
-- [ ] Understand token refresh flow and endpoint
+- [x] Capture actual HTTP requests from Claude Code CLI using OAuth tokens
+- [x] Identify OAuth vs API key endpoint differences (if any)
+- [x] Document authentication header format (Bearer vs x-api-key)
+- [x] Understand token refresh flow and endpoint (partial - hypothesis documented)
+**Findings**: See `implementation/stories/story-1-research-findings.md`
 
 ### Story 1.1: Capture Claude Code CLI Network Traffic
 **Status**: unassigned
