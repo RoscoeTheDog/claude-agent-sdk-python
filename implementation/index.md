@@ -159,46 +159,32 @@
 **Reason**: Completed as part of Story 4 implementation (load_auth_config with precedence handling)
 
 ### Story 5: Smart Authentication Manager
-**Status**: unassigned
+**Status**: completed
+**Claimed**: 2025-11-05 11:50
+**Completed**: 2025-11-05 12:05
 **Description**: Implement intelligent authentication system that auto-detects, refreshes, and prompts for login when needed
 **Acceptance Criteria**:
-- [ ] Auto-detect authentication mode using config from Story 4
-- [ ] Check token validity before each request
-- [ ] Auto-refresh expired access tokens (using refresh token)
-- [ ] Auto-trigger browser login if refresh token expired (unless non-interactive)
-- [ ] Respect fallback policy (error vs fallback to API key)
-- [ ] Seamless user experience with minimal prompts
+- [x] Auto-detect authentication mode using config from Story 4
+- [x] Check token validity before each request
+- [x] Auto-refresh expired access tokens (using refresh token)
+- [x] Auto-trigger browser login if refresh token expired (unless non-interactive)
+- [x] Respect fallback policy (error vs fallback to API key)
+- [x] Seamless user experience with minimal prompts
+**Implementation**: `src/claude_agent_sdk/_internal/auth_manager.py`
+**Tests**: `tests/test_auth_manager.py` (29 tests, all passing)
 
 ### Story 5.1: Authentication State Machine
-**Status**: unassigned
+**Status**: superseded
 **Parent**: Story 5
 **Description**: Create state machine to manage authentication lifecycle with fallback support
-**States**:
-- API_KEY_MODE: Using ANTHROPIC_API_KEY (explicit or fallback)
-- OAUTH_VALID: OAuth tokens valid, ready to use
-- OAUTH_REFRESH_NEEDED: Access token expired, refresh token valid
-- OAUTH_LOGIN_NEEDED: No credentials or refresh token expired
-- AUTH_FAILED: All auth methods exhausted based on config
-**Acceptance Criteria**:
-- [ ] Implement state detection logic respecting config
-- [ ] Define state transitions (OAUTH_REFRESH_NEEDED → OAUTH_VALID)
-- [ ] Handle state transitions (OAUTH_FAILED → API_KEY_MODE if fallback enabled)
-- [ ] Handle state actions (LOGIN_NEEDED → trigger browser flow or error based on config)
-- [ ] Respect strict mode (error immediately on OAuth failure)
+**Reason**: Completed as part of Story 5 implementation (AuthState enum, detect_auth_state, state transition logic in AuthenticationManager)
 
 ### Story 5.2: Pre-Request Authentication Check
-**Status**: unassigned
+**Status**: superseded
 **Parent**: Story 5
 **Depends on**: Story 3.2, Story 3.3
 **Description**: Hook into SDK's HTTP client to verify/refresh authentication before each API request
-**Acceptance Criteria**:
-- [ ] Intercept requests before sending
-- [ ] Check token expiration (compare expiresAt with current time)
-- [ ] Auto-refresh if needed (call Story 3.3 refresh logic)
-- [ ] If refresh fails and interactive mode: prompt user to login (call Story 3.2 browser flow)
-- [ ] If refresh fails and fallback enabled: switch to API key mode
-- [ ] If refresh fails and strict mode: error with clear message
-- [ ] User-friendly prompts: "Your session expired. Opening browser to login..." (interactive only)
+**Reason**: Completed as part of Story 5 implementation (ensure_authenticated method handles all pre-request checks, refresh, login, and fallback logic)
 
 ### Story 6: Modify SDK HTTP Client
 **Status**: unassigned
