@@ -49,3 +49,43 @@ htmlcov/
 .dmypy.json
 dmypy.json
 .pyre/
+
+# Credentials & Secrets (CRITICAL - DO NOT COMMIT)
+.credentials.json
+*credentials*.json
+*.credentials.json
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+*.p12
+*.pfx
+secrets/
+secrets.json
+secrets.yaml
+secrets.yml
+oauth_tokens.json
+auth_tokens.json
+
+# API Keys & Tokens
+*_api_key*
+*_secret_key*
+*_access_token*
+*_refresh_token*
+sk-ant-*
+# Pattern: Anthropic API keys
+**/sk-ant-api*.txt
+**/sk-ant-oat*.txt
+**/sk-ant-ort*.txt
+
+# Testing with real credentials
+test_credentials.json
+test_secrets.py
+*_real_*.json
+
+# Backup files that might contain credentials
+*.bak
+*.backup
+*.old
+*_backup.*
