@@ -273,19 +273,27 @@
 **Note**: This requires live API access and manual dashboard verification. Can be performed during Story 8 (Documentation & Polish) or as post-sprint validation.
 
 ### Story 8: Documentation & Polish
-**Status**: unassigned
+**Status**: completed
+**Claimed**: 2025-11-05 13:20
+**Completed**: 2025-11-05 13:35
 **Description**: Document OAuth authentication setup, configuration options, and usage for end users
 **Acceptance Criteria**:
-- [ ] README section explaining OAuth authentication
-- [ ] Configuration guide (all env vars and SDK options)
-- [ ] Setup instructions for browser login flow
-- [ ] Troubleshooting guide (common errors, re-login process)
-- [ ] Code examples for all auth modes and configs
-- [ ] Document fallback behavior and when it occurs
-- [ ] Document interactive vs non-interactive modes
-- [ ] Document auto-refresh and smart detection features
-- [ ] Update docstrings for modified functions
-- [ ] User experience documentation (what to expect during login/refresh/fallback)
+- [x] README section explaining OAuth authentication
+- [x] Configuration guide (all env vars and SDK options)
+- [x] Setup instructions for browser login flow
+- [x] Troubleshooting guide (common errors, re-login process)
+- [x] Code examples for all auth modes and configs
+- [x] Document fallback behavior and when it occurs
+- [x] Document interactive vs non-interactive modes
+- [x] Document auto-refresh and smart detection features
+- [x] Update docstrings for modified functions
+- [x] User experience documentation (what to expect during login/refresh/fallback)
+**Implementation**:
+- Added comprehensive Authentication section to README.md
+- Documented all environment variables and SDK options
+- Added 5 practical examples covering all auth modes
+- Enhanced ClaudeAgentOptions docstring with detailed auth config documentation
+- All 260 tests passing, mypy clean
 
 ---
 
