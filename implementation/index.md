@@ -112,69 +112,124 @@
 - [ ] Update ~/.claude/.credentials.json with new tokens
 - [ ] If refresh fails, trigger browser login flow (Story 3.2)
 
-### Story 4: Smart Authentication Manager
+### Story 4: Authentication Configuration System
+**Status**: unassigned
+**Description**: Implement hierarchical configuration system for auth method priority and fallback behavior
+**Acceptance Criteria**:
+- [ ] Support CLAUDE_AUTH_MODE (auto|oauth|api_key)
+- [ ] Support CLAUDE_AUTH_FALLBACK (true|false) - allow fallback to API key
+- [ ] Support CLAUDE_AUTH_STRICT (true|false) - fail fast with no fallback
+- [ ] Support CLAUDE_AUTH_INTERACTIVE (true|false) - allow browser login
+- [ ] Programmatic config via ClaudeAgentOptions
+- [ ] Environment variables override SDK config
+- [ ] Clear error messages explaining auth failures and resolution steps
+
+### Story 4.1: Configuration Schema
+**Status**: unassigned
+**Parent**: Story 4
+**Description**: Define configuration schema for authentication options
+**Acceptance Criteria**:
+- [ ] Create AuthMode enum (AUTO, OAUTH, API_KEY)
+- [ ] Create AuthFallbackPolicy enum (ENABLED, DISABLED, STRICT)
+- [ ] Add auth config fields to ClaudeAgentOptions
+- [ ] Document environment variable precedence
+- [ ] Auto-detect non-interactive environments (CI/CD)
+
+### Story 4.2: Priority Chain Implementation
+**Status**: unassigned
+**Parent**: Story 4
+**Description**: Implement configurable authentication priority and fallback chain
+**Acceptance Criteria**:
+- [ ] Default chain: env override → OAuth → API key fallback
+- [ ] Strict mode: OAuth only, error on failure
+- [ ] API key mode: Skip OAuth entirely
+- [ ] Non-interactive mode: No browser login, use existing creds only
+- [ ] Log authentication method used
+
+### Story 5: Smart Authentication Manager
 **Status**: unassigned
 **Description**: Implement intelligent authentication system that auto-detects, refreshes, and prompts for login when needed
 **Acceptance Criteria**:
-- [ ] Auto-detect authentication mode (OAuth vs API key)
+- [ ] Auto-detect authentication mode using config from Story 4
 - [ ] Check token validity before each request
 - [ ] Auto-refresh expired access tokens (using refresh token)
-- [ ] Auto-trigger browser login if refresh token expired
+- [ ] Auto-trigger browser login if refresh token expired (unless non-interactive)
+- [ ] Respect fallback policy (error vs fallback to API key)
 - [ ] Seamless user experience with minimal prompts
 
-### Story 4.1: Authentication State Machine
+### Story 5.1: Authentication State Machine
 **Status**: unassigned
-**Parent**: Story 4
-**Description**: Create state machine to manage authentication lifecycle
+**Parent**: Story 5
+**Description**: Create state machine to manage authentication lifecycle with fallback support
 **States**:
-- API_KEY_MODE: Using ANTHROPIC_API_KEY
+- API_KEY_MODE: Using ANTHROPIC_API_KEY (explicit or fallback)
 - OAUTH_VALID: OAuth tokens valid, ready to use
 - OAUTH_REFRESH_NEEDED: Access token expired, refresh token valid
 - OAUTH_LOGIN_NEEDED: No credentials or refresh token expired
+- AUTH_FAILED: All auth methods exhausted based on config
 **Acceptance Criteria**:
-- [ ] Implement state detection logic
+- [ ] Implement state detection logic respecting config
 - [ ] Define state transitions (OAUTH_REFRESH_NEEDED → OAUTH_VALID)
-- [ ] Handle state actions (LOGIN_NEEDED → trigger browser flow)
+- [ ] Handle state transitions (OAUTH_FAILED → API_KEY_MODE if fallback enabled)
+- [ ] Handle state actions (LOGIN_NEEDED → trigger browser flow or error based on config)
+- [ ] Respect strict mode (error immediately on OAuth failure)
 
-### Story 4.2: Pre-Request Authentication Check
+### Story 5.2: Pre-Request Authentication Check
 **Status**: unassigned
-**Parent**: Story 4
+**Parent**: Story 5
 **Description**: Hook into SDK's HTTP client to verify/refresh authentication before each API request
 **Acceptance Criteria**:
 - [ ] Intercept requests before sending
 - [ ] Check token expiration (compare expiresAt with current time)
 - [ ] Auto-refresh if needed (call Story 3.3 refresh logic)
-- [ ] If refresh fails, prompt user to login (call Story 3.2 browser flow)
-- [ ] User-friendly prompts: "Your session expired. Opening browser to login..."
+- [ ] If refresh fails and interactive mode: prompt user to login (call Story 3.2 browser flow)
+- [ ] If refresh fails and fallback enabled: switch to API key mode
+- [ ] If refresh fails and strict mode: error with clear message
+- [ ] User-friendly prompts: "Your session expired. Opening browser to login..." (interactive only)
 
-### Story 5: Modify SDK HTTP Client
+### Story 6: Modify SDK HTTP Client
 **Status**: unassigned
-**Description**: Patch the Anthropic SDK's HTTP client to use OAuth Bearer tokens instead of x-api-key header
+**Description**: Patch the Anthropic SDK's HTTP client to use OAuth Bearer tokens or API key based on active auth mode
 **Acceptance Criteria**:
-- [ ] Inject OAuth Bearer token into Authorization header
-- [ ] Replace x-api-key header when using OAuth
+- [ ] Inject OAuth Bearer token into Authorization header (OAuth mode)
+- [ ] Inject x-api-key header (API key mode)
+- [ ] Switch headers dynamically if fallback occurs
 - [ ] Handle endpoint URL differences (if any)
-- [ ] Maintain backward compatibility with API key auth
-- [ ] Support forced OAuth mode via CLAUDE_USE_SUBSCRIPTION=true
+- [ ] Maintain backward compatibility with existing API key usage
+- [ ] Log warnings when falling back from OAuth to API key
 
-### Story 5.1: HTTP Header Injection
+### Story 6.1: HTTP Header Injection
 **Status**: unassigned
-**Parent**: Story 5
-**Description**: Modify SDK's HTTP client to inject OAuth Bearer token when in subscription mode
+**Parent**: Story 6
+**Description**: Modify SDK's HTTP client to inject appropriate auth headers based on current mode
 
-### Story 6: Integration & Testing
+### Story 7: Integration & Testing
 **Status**: unassigned
-**Description**: Test the complete OAuth authentication flow end-to-end with all smart detection features
+**Description**: Test the complete authentication system with all configuration options and fallback scenarios
 **Acceptance Criteria**:
+- [ ] Test all auth modes (auto, oauth, api_key)
+- [ ] Test all fallback policies (enabled, disabled, strict)
+- [ ] Test interactive vs non-interactive modes
 - [ ] Test browser login flow from scratch (no credentials)
 - [ ] Test with valid OAuth credentials (fresh token)
 - [ ] Test with expired access token (trigger auto-refresh)
-- [ ] Test with expired refresh token (trigger browser login)
-- [ ] Test fallback to API key when ANTHROPIC_API_KEY set
-- [ ] Test forced OAuth mode (CLAUDE_USE_SUBSCRIPTION=true)
+- [ ] Test with expired refresh token (trigger browser login or fallback)
+- [ ] Test fallback to API key when OAuth fails
+- [ ] Test strict mode errors when fallback disabled
+- [ ] Test non-interactive mode skips browser login
 - [ ] Verify actual API calls are counted against subscription, not API credits
 
-### Story 6.1: OAuth Flow Tests
+### Story 7.1: Configuration Tests
+**Status**: unassigned
+**Parent**: Story 7
+**Description**: Test all configuration combinations and precedence
+**Acceptance Criteria**:
+- [ ] Test env var override of SDK config
+- [ ] Test default configuration behavior
+- [ ] Test priority chain with different configs
+- [ ] Test error messages for invalid configs
+
+### Story 7.2: OAuth Flow Tests
 **Status**: unassigned
 **Parent**: Story 6
 **Description**: Test browser-based OAuth login and token management
@@ -184,42 +239,57 @@
 - [ ] Test token exchange and persistence
 - [ ] Test credentials file format and permissions
 
-### Story 6.2: Token Lifecycle Tests
+### Story 7.3: Fallback Behavior Tests
 **Status**: unassigned
-**Parent**: Story 6
+**Parent**: Story 7
+**Description**: Test all fallback scenarios and error conditions
+**Acceptance Criteria**:
+- [ ] Test OAuth fails + fallback enabled + API key exists → use API key
+- [ ] Test OAuth fails + fallback disabled → error with clear message
+- [ ] Test OAuth fails + fallback enabled + no API key → error
+- [ ] Test strict mode prevents any fallback
+- [ ] Test warnings logged when falling back
+
+### Story 7.4: Token Lifecycle Tests
+**Status**: unassigned
+**Parent**: Story 7
 **Description**: Test automatic token refresh and expiration handling
 **Acceptance Criteria**:
 - [ ] Mock expired access token, verify auto-refresh
-- [ ] Mock expired refresh token, verify browser login triggered
+- [ ] Mock expired refresh token, verify browser login triggered (interactive)
+- [ ] Mock expired refresh token, verify fallback used (non-interactive)
 - [ ] Test concurrent requests don't cause duplicate refreshes
-- [ ] Test refresh failures prompt re-login
+- [ ] Test refresh failures handled per config
 
-### Story 6.3: Unit Tests
+### Story 7.5: Unit Tests
 **Status**: unassigned
-**Parent**: Story 6
-**Description**: Write unit tests for credentials manager, state machine, and authentication logic
+**Parent**: Story 7
+**Description**: Write unit tests for credentials manager, state machine, config system, and authentication logic
 
-### Story 6.4: Integration Tests
+### Story 7.6: Integration Tests
 **Status**: unassigned
-**Parent**: Story 6
+**Parent**: Story 7
 **Description**: Write integration tests that make actual API calls using OAuth tokens
 
-### Story 6.5: Manual Verification
+### Story 7.7: Manual Verification
 **Status**: unassigned
-**Parent**: Story 6
+**Parent**: Story 7
 **Description**: Manually verify subscription usage is deducted (not API credits) via Claude dashboard
 
-### Story 7: Documentation & Polish
+### Story 8: Documentation & Polish
 **Status**: unassigned
-**Description**: Document OAuth authentication setup and usage for end users
+**Description**: Document OAuth authentication setup, configuration options, and usage for end users
 **Acceptance Criteria**:
 - [ ] README section explaining OAuth authentication
+- [ ] Configuration guide (all env vars and SDK options)
 - [ ] Setup instructions for browser login flow
 - [ ] Troubleshooting guide (common errors, re-login process)
-- [ ] Code examples showing both auth modes
+- [ ] Code examples for all auth modes and configs
+- [ ] Document fallback behavior and when it occurs
+- [ ] Document interactive vs non-interactive modes
 - [ ] Document auto-refresh and smart detection features
 - [ ] Update docstrings for modified functions
-- [ ] User experience documentation (what to expect during login/refresh)
+- [ ] User experience documentation (what to expect during login/refresh/fallback)
 
 ---
 
@@ -238,6 +308,16 @@
 - Enhanced testing stories to cover full OAuth lifecycle
 - Total: 7 major stories, 16 sub-stories
 - Key features: Browser login, auto-refresh, smart detection
+
+### 2025-11-05 00:05 - Added Authentication Configuration System
+- Inserted Story 4: Authentication Configuration System
+- Renumbered remaining stories (4→5, 5→6, 6→7, 7→8)
+- Added hierarchical configuration with env vars + SDK options
+- Added fallback policy: ENABLED, DISABLED, STRICT
+- Added interactive vs non-interactive mode detection
+- Created design doc: implementation/stories/auth-config-design.md
+- Total: 8 major stories, 21 sub-stories
+- Key features: Configurable fallback, strict mode, CI/CD support
 
 ---
 
