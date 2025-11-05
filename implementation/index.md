@@ -63,7 +63,7 @@
 ### Story 2.2: Token Expiration Checker
 **Status**: unassigned
 **Parent**: Story 2
-**Description**: Implement logic to check if access token is expired
+**Description**: Implement validation logic to check if OAuth access token has expired based on timestamp comparison
 **Acceptance Criteria**:
 - [ ] Compare expiresAt timestamp with current time
 - [ ] Add buffer (e.g., 5 minutes) to prevent edge cases
@@ -177,6 +177,7 @@
 ### Story 5.2: Pre-Request Authentication Check
 **Status**: unassigned
 **Parent**: Story 5
+**Depends on**: Story 3.2, Story 3.3
 **Description**: Hook into SDK's HTTP client to verify/refresh authentication before each API request
 **Acceptance Criteria**:
 - [ ] Intercept requests before sending
@@ -231,7 +232,7 @@
 
 ### Story 7.2: OAuth Flow Tests
 **Status**: unassigned
-**Parent**: Story 6
+**Parent**: Story 7
 **Description**: Test browser-based OAuth login and token management
 **Acceptance Criteria**:
 - [ ] Test initial login (no credentials file)
