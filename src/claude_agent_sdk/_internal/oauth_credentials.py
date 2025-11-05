@@ -22,9 +22,6 @@ class OAuthCredentials:
     @property
     def is_expired(self) -> bool:
         """Check if access token is expired (with 5-minute buffer)."""
-        if self.expires_at is None:
-            return True
-
         current_time_ms = int(datetime.now(timezone.utc).timestamp() * 1000)
         # Add 5-minute buffer (300,000 ms) to prevent edge cases
         buffer_ms = 5 * 60 * 1000

@@ -64,7 +64,7 @@ def trigger_oauth_login(interactive: bool = True) -> bool:
     try:
         # Run claude /login command
         # Don't capture output so user sees prompts and browser launch messages
-        result = subprocess.run(
+        subprocess.run(
             ["claude", "/login"],
             check=True,
             text=True,

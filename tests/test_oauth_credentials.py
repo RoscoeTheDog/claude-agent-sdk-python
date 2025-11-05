@@ -202,11 +202,12 @@ class TestReadCredentials:
     def test_read_credentials_file_not_found(self):
         """Test reading credentials when file doesn't exist."""
         nonexistent_path = Path("/nonexistent/path/.credentials.json")
-        with patch(
-            "claude_agent_sdk._internal.oauth_credentials.get_credentials_path",
-            return_value=nonexistent_path,
-        ), pytest.raises(
-            CredentialsNotFoundError, match="Credentials file not found"
+        with (
+            patch(
+                "claude_agent_sdk._internal.oauth_credentials.get_credentials_path",
+                return_value=nonexistent_path,
+            ),
+            pytest.raises(CredentialsNotFoundError, match="Credentials file not found"),
         ):
             read_credentials()
 
@@ -218,10 +219,13 @@ class TestReadCredentials:
         temp_path = Path(temp_file.name)
 
         try:
-            with patch(
-                "claude_agent_sdk._internal.oauth_credentials.get_credentials_path",
-                return_value=temp_path,
-            ), pytest.raises(CredentialsInvalidError, match="not valid JSON"):
+            with (
+                patch(
+                    "claude_agent_sdk._internal.oauth_credentials.get_credentials_path",
+                    return_value=temp_path,
+                ),
+                pytest.raises(CredentialsInvalidError, match="not valid JSON"),
+            ):
                 read_credentials()
         finally:
             temp_path.unlink()
@@ -232,11 +236,14 @@ class TestReadCredentials:
         temp_path = self.create_temp_credentials_file(data)
 
         try:
-            with patch(
-                "claude_agent_sdk._internal.oauth_credentials.get_credentials_path",
-                return_value=temp_path,
-            ), pytest.raises(
-                CredentialsInvalidError, match="missing 'claudeAiOauth' field"
+            with (
+                patch(
+                    "claude_agent_sdk._internal.oauth_credentials.get_credentials_path",
+                    return_value=temp_path,
+                ),
+                pytest.raises(
+                    CredentialsInvalidError, match="missing 'claudeAiOauth' field"
+                ),
             ):
                 read_credentials()
         finally:
@@ -254,11 +261,12 @@ class TestReadCredentials:
         temp_path = self.create_temp_credentials_file(data)
 
         try:
-            with patch(
-                "claude_agent_sdk._internal.oauth_credentials.get_credentials_path",
-                return_value=temp_path,
-            ), pytest.raises(
-                CredentialsInvalidError, match="missing required field"
+            with (
+                patch(
+                    "claude_agent_sdk._internal.oauth_credentials.get_credentials_path",
+                    return_value=temp_path,
+                ),
+                pytest.raises(CredentialsInvalidError, match="missing required field"),
             ):
                 read_credentials()
         finally:
@@ -276,11 +284,14 @@ class TestReadCredentials:
         temp_path = self.create_temp_credentials_file(data)
 
         try:
-            with patch(
-                "claude_agent_sdk._internal.oauth_credentials.get_credentials_path",
-                return_value=temp_path,
-            ), pytest.raises(
-                TokenFormatError, match="must start with 'sk-ant-oat01-'"
+            with (
+                patch(
+                    "claude_agent_sdk._internal.oauth_credentials.get_credentials_path",
+                    return_value=temp_path,
+                ),
+                pytest.raises(
+                    TokenFormatError, match="must start with 'sk-ant-oat01-'"
+                ),
             ):
                 read_credentials()
         finally:

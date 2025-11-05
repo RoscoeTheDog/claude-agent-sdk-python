@@ -89,10 +89,7 @@ def _detect_non_interactive() -> bool:
         return True
 
     # Check if stdin has a TTY
-    if not sys.stdin.isatty():
-        return True
-
-    return False
+    return bool(not sys.stdin.isatty())
 
 
 @dataclass

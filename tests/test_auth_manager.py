@@ -138,13 +138,11 @@ class TestAuthenticationResult:
 class TestAuthenticationManager:
     """Test AuthenticationManager."""
 
-    @patch("claude_agent_sdk._internal.auth_manager.credentials_exist")
     @patch("claude_agent_sdk._internal.auth_manager.read_credentials")
     def test_detect_state_oauth_valid(
-        self, mock_read_creds, mock_creds_exist, valid_oauth_creds, clear_env
+        self, mock_read_creds, valid_oauth_creds, clear_env
     ):
         """Test detecting OAUTH_VALID state."""
-        mock_creds_exist.return_value = True
         mock_read_creds.return_value = valid_oauth_creds
 
         manager = AuthenticationManager()
@@ -153,13 +151,11 @@ class TestAuthenticationManager:
         assert state == AuthState.OAUTH_VALID
         assert manager._current_credentials == valid_oauth_creds
 
-    @patch("claude_agent_sdk._internal.auth_manager.credentials_exist")
     @patch("claude_agent_sdk._internal.auth_manager.read_credentials")
     def test_detect_state_oauth_refresh_needed(
-        self, mock_read_creds, mock_creds_exist, expired_oauth_creds, clear_env
+        self, mock_read_creds, expired_oauth_creds, clear_env
     ):
         """Test detecting OAUTH_REFRESH_NEEDED state."""
-        mock_creds_exist.return_value = True
         mock_read_creds.return_value = expired_oauth_creds
 
         manager = AuthenticationManager()
@@ -168,13 +164,9 @@ class TestAuthenticationManager:
         assert state == AuthState.OAUTH_REFRESH_NEEDED
         assert manager._current_credentials == expired_oauth_creds
 
-    @patch("claude_agent_sdk._internal.auth_manager.credentials_exist")
     @patch("claude_agent_sdk._internal.auth_manager.read_credentials")
-    def test_detect_state_oauth_login_needed(
-        self, mock_read_creds, mock_creds_exist, clear_env
-    ):
+    def test_detect_state_oauth_login_needed(self, mock_read_creds, clear_env):
         """Test detecting OAUTH_LOGIN_NEEDED state."""
-        mock_creds_exist.return_value = False
         mock_read_creds.side_effect = Exception("No credentials")
 
         manager = AuthenticationManager()
@@ -193,12 +185,9 @@ class TestAuthenticationManager:
         assert state == AuthState.API_KEY_MODE
 
     @patch("claude_agent_sdk._internal.auth_manager.read_credentials")
-    @patch("claude_agent_sdk._internal.auth_manager.credentials_exist")
-    def test_detect_state_fallback_to_api_key(
-        self, mock_creds_exist, mock_read_creds, clear_env
-    ):
+    def test_detect_state_fallback_to_api_key(self, mock_read_creds, clear_env):
         """Test fallback to API key when OAuth not available."""
-        mock_creds_exist.return_value = False
+
         mock_read_creds.side_effect = Exception("No credentials")
         os.environ["ANTHROPIC_API_KEY"] = "test-api-key"
         os.environ["CLAUDE_AUTH_MODE"] = "auto"
@@ -311,13 +300,12 @@ class TestAuthenticationManager:
         assert result.error is not None
         assert "non-interactive" in result.error.lower()
 
-    @patch("claude_agent_sdk._internal.auth_manager.credentials_exist")
     @patch("claude_agent_sdk._internal.auth_manager.read_credentials")
     def test_ensure_authenticated_oauth_valid(
-        self, mock_read_creds, mock_creds_exist, valid_oauth_creds, clear_env
+        self, mock_read_creds, valid_oauth_creds, clear_env
     ):
         """Test ensure_authenticated with valid OAuth."""
-        mock_creds_exist.return_value = True
+
         mock_read_creds.return_value = valid_oauth_creds
 
         manager = AuthenticationManager()
@@ -342,19 +330,17 @@ class TestAuthenticationManager:
         assert headers == {"x-api-key": "test-api-key"}
 
     @patch("claude_agent_sdk._internal.auth_manager.refresh_oauth_token")
-    @patch("claude_agent_sdk._internal.auth_manager.credentials_exist")
     @patch("claude_agent_sdk._internal.auth_manager.read_credentials")
     def test_ensure_authenticated_with_refresh(
         self,
         mock_read_creds,
-        mock_creds_exist,
         mock_refresh,
         expired_oauth_creds,
         valid_oauth_creds,
         clear_env,
     ):
         """Test ensure_authenticated triggers refresh."""
-        mock_creds_exist.return_value = True
+
         mock_read_creds.return_value = expired_oauth_creds
         mock_refresh.return_value = valid_oauth_creds
 
@@ -367,17 +353,15 @@ class TestAuthenticationManager:
 
     @patch("claude_agent_sdk._internal.auth_manager.trigger_oauth_login")
     @patch("claude_agent_sdk._internal.auth_manager.read_credentials")
-    @patch("claude_agent_sdk._internal.auth_manager.credentials_exist")
     def test_ensure_authenticated_with_login(
         self,
-        mock_creds_exist,
         mock_read_creds,
         mock_login,
         valid_oauth_creds,
         clear_env,
     ):
         """Test ensure_authenticated triggers login."""
-        mock_creds_exist.return_value = False
+
         # First call returns None (detect state), second call returns valid creds (after login)
         mock_read_creds.side_effect = [None, valid_oauth_creds]
         mock_login.return_value = True
@@ -391,12 +375,9 @@ class TestAuthenticationManager:
         mock_login.assert_called_once()
 
     @patch("claude_agent_sdk._internal.auth_manager.read_credentials")
-    @patch("claude_agent_sdk._internal.auth_manager.credentials_exist")
-    def test_ensure_authenticated_strict_mode_failure(
-        self, mock_creds_exist, mock_read_creds, clear_env
-    ):
+    def test_ensure_authenticated_strict_mode_failure(self, mock_read_creds, clear_env):
         """Test ensure_authenticated raises in strict mode."""
-        mock_creds_exist.return_value = False
+
         mock_read_creds.side_effect = Exception("No credentials")
         os.environ["CLAUDE_AUTH_STRICT"] = "true"
         os.environ["CLAUDE_AUTH_INTERACTIVE"] = "false"
@@ -443,13 +424,10 @@ class TestGetAuthenticatedHeaders:
 
         assert headers == {"x-api-key": "test-api-key"}
 
-    @patch("claude_agent_sdk._internal.auth_manager.credentials_exist")
     @patch("claude_agent_sdk._internal.auth_manager.read_credentials")
-    def test_get_headers_oauth(
-        self, mock_read_creds, mock_creds_exist, valid_oauth_creds, clear_env
-    ):
+    def test_get_headers_oauth(self, mock_read_creds, valid_oauth_creds, clear_env):
         """Test getting headers with OAuth."""
-        mock_creds_exist.return_value = True
+
         mock_read_creds.return_value = valid_oauth_creds
 
         headers = get_authenticated_headers()
@@ -458,10 +436,9 @@ class TestGetAuthenticatedHeaders:
         assert headers["Authorization"].startswith("Bearer ")
 
     @patch("claude_agent_sdk._internal.auth_manager.read_credentials")
-    @patch("claude_agent_sdk._internal.auth_manager.credentials_exist")
-    def test_get_headers_failure(self, mock_creds_exist, mock_read_creds, clear_env):
+    def test_get_headers_failure(self, mock_read_creds, clear_env):
         """Test get_authenticated_headers raises on failure."""
-        mock_creds_exist.return_value = False
+
         mock_read_creds.side_effect = Exception("No credentials")
         os.environ["CLAUDE_AUTH_STRICT"] = "true"
         os.environ["CLAUDE_AUTH_INTERACTIVE"] = "false"
