@@ -1,0 +1,59 @@
+# Pre-commit hooks for security and code quality
+# Install: pip install pre-commit
+# Setup: pre-commit install
+
+repos:
+  # Detect secrets and credentials
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.1
+    hooks:
+      - id: gitleaks
+
+  # Detect high-entropy strings (potential secrets)
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: package.lock.json
+
+  # Prevent committing to main/master
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+      - id: check-json
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: detect-private-key
+      - id: check-merge-conflict
+
+  # Python-specific hooks
+  - repo: https://github.com/psf/black
+    rev: 23.12.1
+    hooks:
+      - id: black
+        language_version: python3
+
+  # Custom credential pattern detection
+  - repo: local
+    hooks:
+      - id: check-anthropic-keys
+        name: Check for Anthropic API Keys
+        entry: bash -c 'if grep -r "sk-ant-api[0-9]" --exclude-dir=.git --exclude="*.md" --exclude=".pre-commit-config.yaml" .; then echo "ERROR: Found Anthropic API key pattern!"; exit 1; fi'
+        language: system
+        pass_filenames: false
+
+      - id: check-oauth-tokens
+        name: Check for OAuth Tokens
+        entry: bash -c 'if grep -r "sk-ant-o[ar]t[0-9]" --exclude-dir=.git --exclude="*.md" --exclude=".pre-commit-config.yaml" .; then echo "ERROR: Found OAuth token pattern!"; exit 1; fi'
+        language: system
+        pass_filenames: false
+
+      - id: check-credentials-json
+        name: Check for credentials.json
+        entry: bash -c 'if git diff --cached --name-only | grep -i "credentials.*.json"; then echo "ERROR: Attempting to commit credentials JSON!"; exit 1; fi'
+        language: system
+        pass_filenames: false
