@@ -131,38 +131,32 @@
 **Tests**: `tests/test_oauth_refresh.py` (25 tests, all passing)
 
 ### Story 4: Authentication Configuration System
-**Status**: unassigned
+**Status**: completed
+**Claimed**: 2025-11-05 11:10
+**Completed**: 2025-11-05 11:45
 **Description**: Implement hierarchical configuration system for auth method priority and fallback behavior
 **Acceptance Criteria**:
-- [ ] Support CLAUDE_AUTH_MODE (auto|oauth|api_key)
-- [ ] Support CLAUDE_AUTH_FALLBACK (true|false) - allow fallback to API key
-- [ ] Support CLAUDE_AUTH_STRICT (true|false) - fail fast with no fallback
-- [ ] Support CLAUDE_AUTH_INTERACTIVE (true|false) - allow browser login
-- [ ] Programmatic config via ClaudeAgentOptions
-- [ ] Environment variables override SDK config
-- [ ] Clear error messages explaining auth failures and resolution steps
+- [x] Support CLAUDE_AUTH_MODE (auto|oauth|api_key)
+- [x] Support CLAUDE_AUTH_FALLBACK (true|false) - allow fallback to API key
+- [x] Support CLAUDE_AUTH_STRICT (true|false) - fail fast with no fallback
+- [x] Support CLAUDE_AUTH_INTERACTIVE (true|false) - allow browser login
+- [x] Programmatic config via ClaudeAgentOptions
+- [x] Environment variables override SDK config
+- [x] Clear error messages explaining auth failures and resolution steps
+**Implementation**: `src/claude_agent_sdk/_internal/auth_config.py`
+**Tests**: `tests/test_auth_config.py` (38 tests, all passing)
 
 ### Story 4.1: Configuration Schema
-**Status**: unassigned
+**Status**: superseded
 **Parent**: Story 4
 **Description**: Define configuration schema for authentication options
-**Acceptance Criteria**:
-- [ ] Create AuthMode enum (AUTO, OAUTH, API_KEY)
-- [ ] Create AuthFallbackPolicy enum (ENABLED, DISABLED, STRICT)
-- [ ] Add auth config fields to ClaudeAgentOptions
-- [ ] Document environment variable precedence
-- [ ] Auto-detect non-interactive environments (CI/CD)
+**Reason**: Completed as part of Story 4 implementation (AuthMode, AuthFallbackPolicy enums, ClaudeAgentOptions fields)
 
 ### Story 4.2: Priority Chain Implementation
-**Status**: unassigned
+**Status**: superseded
 **Parent**: Story 4
 **Description**: Implement configurable authentication priority and fallback chain
-**Acceptance Criteria**:
-- [ ] Default chain: env override → OAuth → API key fallback
-- [ ] Strict mode: OAuth only, error on failure
-- [ ] API key mode: Skip OAuth entirely
-- [ ] Non-interactive mode: No browser login, use existing creds only
-- [ ] Log authentication method used
+**Reason**: Completed as part of Story 4 implementation (load_auth_config with precedence handling)
 
 ### Story 5: Smart Authentication Manager
 **Status**: unassigned

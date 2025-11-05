@@ -10,6 +10,7 @@ from typing_extensions import NotRequired
 
 if TYPE_CHECKING:
     from mcp.server import Server as McpServer
+    from claude_agent_sdk._internal.auth_config import AuthMode, AuthFallbackPolicy
 
 # Permission modes
 PermissionMode = Literal["default", "acceptEdits", "plan", "bypassPermissions"]
@@ -557,6 +558,12 @@ class ClaudeAgentOptions:
     plugins: list[SdkPluginConfig] = field(default_factory=list)
     # Max tokens for thinking blocks
     max_thinking_tokens: int | None = None
+
+    # Authentication configuration
+    # These options control authentication behavior and are overridden by environment variables
+    auth_mode: "str | AuthMode | None" = None  # AUTO, OAUTH, or API_KEY
+    auth_fallback: "str | AuthFallbackPolicy | None" = None  # ENABLED, DISABLED, or STRICT
+    auth_interactive: bool | None = None  # Allow browser login prompts
 
 
 # SDK Control Protocol
