@@ -258,6 +258,69 @@ class SubprocessCLITransport(Transport):
 
         return cmd
 
+    def _build_auth_env(self) -> dict[str, str]:
+        """Build authentication environment variables based on config.
+
+        Returns:
+            Environment variables for authentication configuration.
+
+        Raises:
+            CLIConnectionError: If authentication fails and cannot be established.
+        """
+        from ..auth_manager import AuthenticationManager, AuthState
+
+        try:
+            # Create auth manager with options from ClaudeAgentOptions
+            # Note: auth_fallback can be AuthFallbackPolicy enum, string, or None
+            auth_fallback_str: str | None = None
+            if self._options.auth_fallback is not None:
+                if hasattr(self._options.auth_fallback, "value"):
+                    # It's an enum
+                    auth_fallback_str = str(self._options.auth_fallback.value)
+                else:
+                    # It's already a string
+                    auth_fallback_str = str(self._options.auth_fallback)
+
+            auth_manager = AuthenticationManager(
+                auth_mode=self._options.auth_mode,
+                auth_fallback=auth_fallback_str,
+                auth_interactive=self._options.auth_interactive,
+            )
+
+            # Ensure we have valid authentication
+            auth_result = auth_manager.ensure_authenticated()
+
+            # Check if authentication failed
+            if auth_result.state == AuthState.AUTH_FAILED:
+                raise CLIConnectionError(
+                    auth_result.error or "Authentication failed without specific error"
+                )
+
+            # Build environment variables based on auth mode
+            auth_env: dict[str, str] = {}
+
+            if auth_result.is_oauth:
+                # OAuth mode: Remove API key and enable subscription
+                # The CLI will automatically use credentials from ~/.claude/.credentials.json
+                auth_env["CLAUDE_USE_SUBSCRIPTION"] = "true"
+                # Note: We intentionally don't set ANTHROPIC_API_KEY in OAuth mode
+            elif auth_result.is_api_key:
+                # API key mode: Set the API key
+                if auth_result.api_key:
+                    auth_env["ANTHROPIC_API_KEY"] = auth_result.api_key
+
+            return auth_env
+
+        except RuntimeError as e:
+            # Convert runtime errors (from strict mode) to CLI connection errors
+            raise CLIConnectionError(
+                f"Authentication failed: {e}\n\n"
+                "Possible solutions:\n"
+                "  1. Run 'claude /login' to set up OAuth authentication\n"
+                "  2. Set ANTHROPIC_API_KEY environment variable\n"
+                "  3. Configure auth_mode in ClaudeAgentOptions"
+            ) from e
+
     async def connect(self) -> None:
         """Start subprocess."""
         if self._process:
@@ -268,13 +331,21 @@ class SubprocessCLITransport(Transport):
 
         cmd = self._build_command()
         try:
-            # Merge environment variables: system -> user -> SDK required
+            # Build authentication environment
+            auth_env = self._build_auth_env()
+
+            # Merge environment variables: system -> user -> auth -> SDK required
             process_env = {
                 **os.environ,
                 **self._options.env,  # User-provided env vars
+                **auth_env,  # Authentication config
                 "CLAUDE_CODE_ENTRYPOINT": "sdk-py",
                 "CLAUDE_AGENT_SDK_VERSION": __version__,
             }
+
+            # In OAuth mode, ensure ANTHROPIC_API_KEY is not set
+            if auth_env.get("CLAUDE_USE_SUBSCRIPTION") == "true":
+                process_env.pop("ANTHROPIC_API_KEY", None)
 
             if self._cwd:
                 process_env["PWD"] = self._cwd

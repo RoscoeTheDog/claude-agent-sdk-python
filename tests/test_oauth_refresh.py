@@ -1,6 +1,5 @@
 """Tests for OAuth token refresh module."""
 
-import time
 from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock, patch
 
@@ -23,7 +22,9 @@ def mock_valid_credentials():
     return OAuthCredentials(
         access_token="sk-ant-oat01-valid-token",
         refresh_token="sk-ant-ort01-valid-refresh",
-        expires_at=int((datetime.now(timezone.utc) + timedelta(hours=1)).timestamp() * 1000),
+        expires_at=int(
+            (datetime.now(timezone.utc) + timedelta(hours=1)).timestamp() * 1000
+        ),
         scopes=["user:inference", "user:profile"],
         subscription="max",
     )
@@ -35,7 +36,9 @@ def mock_expiring_soon_credentials():
     return OAuthCredentials(
         access_token="sk-ant-oat01-expiring-token",
         refresh_token="sk-ant-ort01-expiring-refresh",
-        expires_at=int((datetime.now(timezone.utc) + timedelta(minutes=2)).timestamp() * 1000),
+        expires_at=int(
+            (datetime.now(timezone.utc) + timedelta(minutes=2)).timestamp() * 1000
+        ),
         scopes=["user:inference", "user:profile"],
         subscription="max",
     )
@@ -47,7 +50,9 @@ def mock_expired_credentials():
     return OAuthCredentials(
         access_token="sk-ant-oat01-expired-token",
         refresh_token="sk-ant-ort01-expired-refresh",
-        expires_at=int((datetime.now(timezone.utc) - timedelta(hours=1)).timestamp() * 1000),
+        expires_at=int(
+            (datetime.now(timezone.utc) - timedelta(hours=1)).timestamp() * 1000
+        ),
         scopes=["user:inference", "user:profile"],
         subscription="max",
     )
@@ -150,7 +155,9 @@ class TestRefreshOAuthToken:
     @patch("claude_agent_sdk._internal.oauth_refresh.subprocess.run")
     @patch("claude_agent_sdk._internal.oauth_refresh.read_credentials")
     @patch("claude_agent_sdk._internal.oauth_refresh.time.sleep")
-    def test_subprocess_error(self, mock_sleep, mock_read, mock_subprocess, mock_expired_credentials):
+    def test_subprocess_error(
+        self, mock_sleep, mock_read, mock_subprocess, mock_expired_credentials
+    ):
         """Test handling of subprocess errors."""
         mock_read.return_value = mock_expired_credentials
         mock_subprocess.side_effect = FileNotFoundError()

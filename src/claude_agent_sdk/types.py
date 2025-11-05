@@ -10,7 +10,8 @@ from typing_extensions import NotRequired
 
 if TYPE_CHECKING:
     from mcp.server import Server as McpServer
-    from claude_agent_sdk._internal.auth_config import AuthMode, AuthFallbackPolicy
+
+    from claude_agent_sdk._internal.auth_config import AuthFallbackPolicy, AuthMode
 
 # Permission modes
 PermissionMode = Literal["default", "acceptEdits", "plan", "bypassPermissions"]
@@ -562,7 +563,9 @@ class ClaudeAgentOptions:
     # Authentication configuration
     # These options control authentication behavior and are overridden by environment variables
     auth_mode: "str | AuthMode | None" = None  # AUTO, OAUTH, or API_KEY
-    auth_fallback: "str | AuthFallbackPolicy | None" = None  # ENABLED, DISABLED, or STRICT
+    auth_fallback: "str | AuthFallbackPolicy | None" = (
+        None  # ENABLED, DISABLED, or STRICT
+    )
     auth_interactive: bool | None = None  # Allow browser login prompts
 
 

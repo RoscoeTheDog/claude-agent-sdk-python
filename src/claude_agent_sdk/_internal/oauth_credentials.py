@@ -3,12 +3,10 @@
 from __future__ import annotations
 
 import json
-import os
 import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
@@ -36,29 +34,31 @@ class OAuthCredentials:
     def is_valid(self) -> bool:
         """Check if credentials are valid (tokens present and not expired)."""
         return (
-            bool(self.access_token)
-            and bool(self.refresh_token)
-            and not self.is_expired
+            bool(self.access_token) and bool(self.refresh_token) and not self.is_expired
         )
 
 
 class CredentialsError(Exception):
     """Base exception for credentials-related errors."""
+
     pass
 
 
 class CredentialsNotFoundError(CredentialsError):
     """Credentials file not found."""
+
     pass
 
 
 class CredentialsInvalidError(CredentialsError):
     """Credentials file is invalid or corrupted."""
+
     pass
 
 
 class TokenFormatError(CredentialsError):
     """Token format is invalid."""
+
     pass
 
 
@@ -101,13 +101,13 @@ def validate_token_format(token: str, token_type: str) -> None:
         )
 
     # Basic validation: should be alphanumeric + hyphens after prefix
-    if not re.match(r'^sk-ant-o[ar]t01-[\w-]+$', token):
+    if not re.match(r"^sk-ant-o[ar]t01-[\w-]+$", token):
         raise TokenFormatError(
             f"{token_type} token has invalid format: '{token[:15]}...'"
         )
 
 
-def read_credentials() -> Optional[OAuthCredentials]:
+def read_credentials() -> OAuthCredentials | None:
     """
     Read OAuth credentials from ~/.claude/.credentials.json.
 
@@ -128,23 +128,17 @@ def read_credentials() -> Optional[OAuthCredentials]:
         )
 
     try:
-        with open(creds_path, 'r', encoding='utf-8') as f:
+        with open(creds_path, encoding="utf-8") as f:
             data = json.load(f)
     except json.JSONDecodeError as e:
-        raise CredentialsInvalidError(
-            f"Credentials file is not valid JSON: {e}"
-        ) from e
+        raise CredentialsInvalidError(f"Credentials file is not valid JSON: {e}") from e
     except Exception as e:
-        raise CredentialsInvalidError(
-            f"Failed to read credentials file: {e}"
-        ) from e
+        raise CredentialsInvalidError(f"Failed to read credentials file: {e}") from e
 
     # Extract claudeAiOauth object
     oauth_data = data.get("claudeAiOauth")
     if not oauth_data:
-        raise CredentialsInvalidError(
-            "Credentials file missing 'claudeAiOauth' field"
-        )
+        raise CredentialsInvalidError("Credentials file missing 'claudeAiOauth' field")
 
     # Extract required fields
     try:
@@ -164,16 +158,14 @@ def read_credentials() -> Optional[OAuthCredentials]:
 
     # Validate expires_at is a reasonable timestamp
     if not isinstance(expires_at, (int, float)) or expires_at < 0:
-        raise CredentialsInvalidError(
-            f"Invalid expiresAt value: {expires_at}"
-        )
+        raise CredentialsInvalidError(f"Invalid expiresAt value: {expires_at}")
 
     return OAuthCredentials(
         access_token=access_token,
         refresh_token=refresh_token,
         expires_at=int(expires_at),
         scopes=scopes if isinstance(scopes, list) else [],
-        subscription=subscription
+        subscription=subscription,
     )
 
 
@@ -187,7 +179,7 @@ def credentials_exist() -> bool:
     return get_credentials_path().exists()
 
 
-def get_valid_credentials() -> Optional[OAuthCredentials]:
+def get_valid_credentials() -> OAuthCredentials | None:
     """
     Get valid OAuth credentials if available.
 

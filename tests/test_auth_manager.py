@@ -2,11 +2,10 @@
 
 import os
 from datetime import datetime, timezone
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import patch
 
 import pytest
 
-from claude_agent_sdk._internal.auth_config import AuthMode
 from claude_agent_sdk._internal.auth_manager import (
     AuthenticationManager,
     AuthenticationResult,
@@ -105,9 +104,7 @@ class TestAuthenticationResult:
 
     def test_auth_failed_result(self):
         """Test result for auth failed."""
-        result = AuthenticationResult(
-            state=AuthState.AUTH_FAILED, error="Test error"
-        )
+        result = AuthenticationResult(state=AuthState.AUTH_FAILED, error="Test error")
 
         assert not result.is_oauth
         assert not result.is_api_key
@@ -121,15 +118,11 @@ class TestAuthenticationResult:
         )
 
         headers = result.get_auth_header()
-        assert headers == {
-            "Authorization": f"Bearer {valid_oauth_creds.access_token}"
-        }
+        assert headers == {"Authorization": f"Bearer {valid_oauth_creds.access_token}"}
 
     def test_get_auth_header_api_key(self):
         """Test getting API key auth header."""
-        result = AuthenticationResult(
-            state=AuthState.API_KEY_MODE, api_key="test-key"
-        )
+        result = AuthenticationResult(state=AuthState.API_KEY_MODE, api_key="test-key")
 
         headers = result.get_auth_header()
         assert headers == {"x-api-key": "test-key"}
@@ -233,9 +226,7 @@ class TestAuthenticationManager:
         assert manager._current_state == AuthState.OAUTH_VALID
 
     @patch("claude_agent_sdk._internal.auth_manager.refresh_oauth_token")
-    def test_handle_oauth_refresh_failure_with_fallback(
-        self, mock_refresh, clear_env
-    ):
+    def test_handle_oauth_refresh_failure_with_fallback(self, mock_refresh, clear_env):
         """Test OAuth refresh failure with API key fallback."""
         mock_refresh.return_value = None
         os.environ["ANTHROPIC_API_KEY"] = "test-api-key"
@@ -250,9 +241,7 @@ class TestAuthenticationManager:
         assert result.api_key == "test-api-key"
 
     @patch("claude_agent_sdk._internal.auth_manager.refresh_oauth_token")
-    def test_handle_oauth_refresh_failure_strict_mode(
-        self, mock_refresh, clear_env
-    ):
+    def test_handle_oauth_refresh_failure_strict_mode(self, mock_refresh, clear_env):
         """Test OAuth refresh failure in strict mode."""
         mock_refresh.return_value = None
         os.environ["CLAUDE_AUTH_STRICT"] = "true"
@@ -281,9 +270,7 @@ class TestAuthenticationManager:
         assert result.credentials == valid_oauth_creds
 
     @patch("claude_agent_sdk._internal.auth_manager.trigger_oauth_login")
-    def test_handle_oauth_login_failure_with_fallback(
-        self, mock_login, clear_env
-    ):
+    def test_handle_oauth_login_failure_with_fallback(self, mock_login, clear_env):
         """Test OAuth login failure with API key fallback."""
         mock_login.return_value = False
         os.environ["ANTHROPIC_API_KEY"] = "test-api-key"
@@ -382,7 +369,12 @@ class TestAuthenticationManager:
     @patch("claude_agent_sdk._internal.auth_manager.read_credentials")
     @patch("claude_agent_sdk._internal.auth_manager.credentials_exist")
     def test_ensure_authenticated_with_login(
-        self, mock_creds_exist, mock_read_creds, mock_login, valid_oauth_creds, clear_env
+        self,
+        mock_creds_exist,
+        mock_read_creds,
+        mock_login,
+        valid_oauth_creds,
+        clear_env,
     ):
         """Test ensure_authenticated triggers login."""
         mock_creds_exist.return_value = False

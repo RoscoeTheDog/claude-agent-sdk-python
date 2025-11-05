@@ -12,12 +12,11 @@ Strategies:
 
 import subprocess
 import time
-from typing import Optional
 
 from .oauth_credentials import OAuthCredentials, read_credentials
 
 
-def refresh_oauth_token(interactive: bool = False) -> Optional[OAuthCredentials]:
+def refresh_oauth_token(interactive: bool = False) -> OAuthCredentials | None:
     """Attempt to refresh expired OAuth access token.
 
     This function implements a multi-strategy approach to token refresh:
@@ -168,7 +167,7 @@ def is_refresh_needed(creds: OAuthCredentials, buffer_seconds: int = 300) -> boo
     return creds.is_expired
 
 
-def trigger_proactive_refresh(creds: OAuthCredentials) -> Optional[OAuthCredentials]:
+def trigger_proactive_refresh(creds: OAuthCredentials) -> OAuthCredentials | None:
     """Trigger proactive token refresh if nearing expiration.
 
     This is a non-interactive refresh that only attempts auto-refresh.

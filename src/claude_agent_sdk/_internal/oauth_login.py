@@ -12,10 +12,8 @@ This approach is:
 """
 
 import subprocess
-import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
 from .oauth_credentials import OAuthCredentials, read_credentials
 
@@ -81,10 +79,10 @@ def trigger_oauth_login(interactive: bool = True) -> bool:
             print("=" * 60)
             print(f"  Subscription: {creds.subscription.upper()}")
             # Convert milliseconds timestamp to datetime
-            expires_dt = datetime.fromtimestamp(creds.expires_at / 1000, tz=timezone.utc)
-            print(
-                f"  Token expires: {expires_dt.strftime('%Y-%m-%d %H:%M:%S')} UTC"
+            expires_dt = datetime.fromtimestamp(
+                creds.expires_at / 1000, tz=timezone.utc
             )
+            print(f"  Token expires: {expires_dt.strftime('%Y-%m-%d %H:%M:%S')} UTC")
             print("=" * 60 + "\n")
             return True
         else:
@@ -220,7 +218,7 @@ def check_claude_cli_installed() -> bool:
         return False
 
 
-def get_claude_cli_version() -> Optional[str]:
+def get_claude_cli_version() -> str | None:
     """Get the installed Claude CLI version.
 
     Returns:
@@ -247,5 +245,9 @@ def get_claude_cli_version() -> Optional[str]:
             if len(parts) >= 2:
                 return parts[-1]  # Last part is version number
         return output  # Return full output if format unexpected
-    except (FileNotFoundError, subprocess.TimeoutExpired, subprocess.CalledProcessError):
+    except (
+        FileNotFoundError,
+        subprocess.TimeoutExpired,
+        subprocess.CalledProcessError,
+    ):
         return None

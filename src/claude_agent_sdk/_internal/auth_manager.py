@@ -13,17 +13,13 @@ handle transitions gracefully with minimal user disruption.
 
 from __future__ import annotations
 
-import os
 import warnings
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
-from .auth_config import AuthConfig, AuthMode, load_auth_config
+from .auth_config import AuthMode, load_auth_config
 from .oauth_credentials import (
     OAuthCredentials,
-    credentials_exist,
-    get_valid_credentials,
     read_credentials,
 )
 from .oauth_login import trigger_oauth_login
@@ -60,9 +56,9 @@ class AuthenticationResult:
     """
 
     state: AuthState
-    credentials: Optional[OAuthCredentials] = None
-    api_key: Optional[str] = None
-    error: Optional[str] = None
+    credentials: OAuthCredentials | None = None
+    api_key: str | None = None
+    error: str | None = None
 
     @property
     def is_oauth(self) -> bool:
@@ -134,9 +130,9 @@ class AuthenticationManager:
 
     def __init__(
         self,
-        auth_mode: Optional[str | AuthMode] = None,
-        auth_fallback: Optional[str] = None,
-        auth_interactive: Optional[bool] = None,
+        auth_mode: str | AuthMode | None = None,
+        auth_fallback: str | None = None,
+        auth_interactive: bool | None = None,
     ):
         """Initialize authentication manager.
 
@@ -150,8 +146,8 @@ class AuthenticationManager:
             sdk_auth_fallback=auth_fallback,
             sdk_auth_interactive=auth_interactive,
         )
-        self._current_state: Optional[AuthState] = None
-        self._current_credentials: Optional[OAuthCredentials] = None
+        self._current_state: AuthState | None = None
+        self._current_credentials: OAuthCredentials | None = None
 
     def detect_auth_state(self) -> AuthState:
         """Detect current authentication state.
@@ -380,7 +376,7 @@ class AuthenticationManager:
             # Unknown state (shouldn't happen)
             raise RuntimeError(f"Unknown authentication state: {current_state}")
 
-    def get_current_state(self) -> Optional[AuthState]:
+    def get_current_state(self) -> AuthState | None:
         """Get current authentication state without triggering refresh/login.
 
         Returns:
@@ -398,9 +394,9 @@ class AuthenticationManager:
 
 
 def get_authenticated_headers(
-    auth_mode: Optional[str] = None,
-    auth_fallback: Optional[str] = None,
-    auth_interactive: Optional[bool] = None,
+    auth_mode: str | None = None,
+    auth_fallback: str | None = None,
+    auth_interactive: bool | None = None,
 ) -> dict[str, str]:
     """Convenience function to get authentication headers.
 
@@ -430,8 +426,6 @@ def get_authenticated_headers(
     result = manager.ensure_authenticated()
 
     if not result.is_ready:
-        raise RuntimeError(
-            result.error or "Authentication failed with unknown error"
-        )
+        raise RuntimeError(result.error or "Authentication failed with unknown error")
 
     return result.get_auth_header()

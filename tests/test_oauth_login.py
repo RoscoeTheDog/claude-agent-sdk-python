@@ -2,8 +2,7 @@
 
 import subprocess
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -22,7 +21,9 @@ def mock_valid_credentials():
     return OAuthCredentials(
         access_token="sk-ant-oat01-test-access-token",
         refresh_token="sk-ant-ort01-test-refresh-token",
-        expires_at=int((datetime.now(timezone.utc) + timedelta(hours=1)).timestamp() * 1000),
+        expires_at=int(
+            (datetime.now(timezone.utc) + timedelta(hours=1)).timestamp() * 1000
+        ),
         scopes=["user:inference", "user:profile"],
         subscription="max",
     )
@@ -34,7 +35,9 @@ def mock_expired_credentials():
     return OAuthCredentials(
         access_token="sk-ant-oat01-expired-token",
         refresh_token="sk-ant-ort01-expired-refresh",
-        expires_at=int((datetime.now(timezone.utc) - timedelta(hours=1)).timestamp() * 1000),
+        expires_at=int(
+            (datetime.now(timezone.utc) - timedelta(hours=1)).timestamp() * 1000
+        ),
         scopes=["user:inference", "user:profile"],
         subscription="max",
     )
@@ -169,7 +172,9 @@ class TestEnsureValidCredentials:
         mock_read.return_value = mock_expired_credentials
         mock_trigger.return_value = False
 
-        with pytest.raises(RuntimeError, match="Failed to obtain valid OAuth credentials"):
+        with pytest.raises(
+            RuntimeError, match="Failed to obtain valid OAuth credentials"
+        ):
             ensure_valid_credentials(interactive=True)
 
     @patch("claude_agent_sdk._internal.oauth_login.trigger_oauth_login")
@@ -277,7 +282,9 @@ class TestGetClaudeCLIVersion:
     @patch("claude_agent_sdk._internal.oauth_login.subprocess.run")
     def test_get_version_error(self, mock_subprocess):
         """Test version retrieval error."""
-        mock_subprocess.side_effect = subprocess.CalledProcessError(1, "claude --version")
+        mock_subprocess.side_effect = subprocess.CalledProcessError(
+            1, "claude --version"
+        )
 
         version = get_claude_cli_version()
 

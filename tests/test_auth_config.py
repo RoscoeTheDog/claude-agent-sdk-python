@@ -4,8 +4,6 @@ import os
 import sys
 from unittest.mock import patch
 
-import pytest
-
 from claude_agent_sdk import AuthConfig, AuthFallbackPolicy, AuthMode
 from claude_agent_sdk._internal.auth_config import (
     _detect_non_interactive,
@@ -161,7 +159,9 @@ class TestAuthConfig:
             "Set ANTHROPIC_API_KEY environment variable",
             "Run: python -m claude_agent_sdk login",
         ]
-        message = config.format_error_message("No authentication available", suggestions)
+        message = config.format_error_message(
+            "No authentication available", suggestions
+        )
         assert "No authentication available" in message
         assert "Set ANTHROPIC_API_KEY" in message
         assert "python -m claude_agent_sdk login" in message

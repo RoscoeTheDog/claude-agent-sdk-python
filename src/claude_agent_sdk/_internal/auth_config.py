@@ -13,7 +13,6 @@ import os
 import sys
 from dataclasses import dataclass
 from enum import Enum
-from typing import Literal
 
 
 class AuthMode(Enum):
@@ -24,6 +23,7 @@ class AuthMode(Enum):
         OAUTH: Use OAuth tokens exclusively
         API_KEY: Use API key exclusively (skip OAuth)
     """
+
     AUTO = "auto"
     OAUTH = "oauth"
     API_KEY = "api_key"
@@ -37,6 +37,7 @@ class AuthFallbackPolicy(Enum):
         DISABLED: No fallback - error if primary auth method fails
         STRICT: Same as DISABLED (alias for clarity)
     """
+
     ENABLED = "enabled"
     DISABLED = "disabled"
     STRICT = "strict"
@@ -109,6 +110,7 @@ class AuthConfig:
         auth_interactive: Whether browser login prompts are allowed
         api_key: Explicit API key (from ANTHROPIC_API_KEY)
     """
+
     auth_mode: AuthMode
     auth_fallback: AuthFallbackPolicy
     auth_interactive: bool
@@ -130,12 +132,13 @@ class AuthConfig:
         Returns:
             True if fallback is disabled or strict
         """
-        return self.auth_fallback in (AuthFallbackPolicy.DISABLED, AuthFallbackPolicy.STRICT)
+        return self.auth_fallback in (
+            AuthFallbackPolicy.DISABLED,
+            AuthFallbackPolicy.STRICT,
+        )
 
     def format_error_message(
-        self,
-        error: str,
-        suggestions: list[str] | None = None
+        self, error: str, suggestions: list[str] | None = None
     ) -> str:
         """Format authentication error message with suggestions.
 

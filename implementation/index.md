@@ -187,20 +187,26 @@
 **Reason**: Completed as part of Story 5 implementation (ensure_authenticated method handles all pre-request checks, refresh, login, and fallback logic)
 
 ### Story 6: Modify SDK HTTP Client
-**Status**: unassigned
-**Description**: Patch the Anthropic SDK's HTTP client to use OAuth Bearer tokens or API key based on active auth mode
+**Status**: completed
+**Claimed**: 2025-11-05 12:10
+**Completed**: 2025-11-05 12:45
+**Description**: Integrate authentication manager into subprocess CLI transport to configure environment variables for OAuth vs API key authentication
 **Acceptance Criteria**:
-- [ ] Inject OAuth Bearer token into Authorization header (OAuth mode)
-- [ ] Inject x-api-key header (API key mode)
-- [ ] Switch headers dynamically if fallback occurs
-- [ ] Handle endpoint URL differences (if any)
-- [ ] Maintain backward compatibility with existing API key usage
-- [ ] Log warnings when falling back from OAuth to API key
+- [x] Inject OAuth environment variables (CLAUDE_USE_SUBSCRIPTION) in OAuth mode
+- [x] Inject x-api-key via ANTHROPIC_API_KEY environment variable in API key mode
+- [x] Switch environment variables dynamically if fallback occurs
+- [x] Handle authentication failures with clear error messages
+- [x] Maintain backward compatibility with existing API key usage
+- [x] Unit tests for environment variable configuration (6 tests, all passing)
+**Implementation**: Modified `SubprocessCLITransport._build_auth_env()` to integrate with `AuthenticationManager`
+**Tests**: `tests/test_transport_auth_integration.py` (6 tests, all passing)
+**Note**: The SDK communicates with Claude Code CLI via subprocess, not directly with Anthropic API. Authentication is handled by configuring environment variables before launching the CLI subprocess. The CLI itself manages all HTTP communication and header injection.
 
 ### Story 6.1: HTTP Header Injection
-**Status**: unassigned
+**Status**: superseded
 **Parent**: Story 6
 **Description**: Modify SDK's HTTP client to inject appropriate auth headers based on current mode
+**Reason**: Completed as part of Story 6 implementation. The SDK uses subprocess transport to communicate with Claude CLI, which handles all HTTP headers internally. Authentication is configured via environment variables (CLAUDE_USE_SUBSCRIPTION for OAuth, ANTHROPIC_API_KEY for API key mode).
 
 ### Story 7: Integration & Testing
 **Status**: unassigned
