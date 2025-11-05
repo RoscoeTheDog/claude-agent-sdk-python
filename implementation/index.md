@@ -33,15 +33,19 @@
 **Findings**: See `implementation/stories/story-1-research-findings.md`
 
 ### Story 1.1: Capture Claude Code CLI Network Traffic
-**Status**: unassigned
+**Status**: superseded
+**Claimed**: 2025-11-05 09:50
+**Completed**: 2025-11-05 09:55
 **Parent**: Story 1
 **Description**: Use network inspection tools to capture actual authentication requests from Claude Code CLI
 **Technical Approach**: Use mitmproxy, Charles Proxy, or similar to intercept HTTPS traffic
+**Reason**: SDK communicates with Claude CLI (subprocess), not directly with Anthropic API. Claude CLI handles all OAuth protocol internally. Network capture provides no implementation value. See `story-1.1-superseded.md`
 
 ### Story 1.2: Document Authentication Patterns
-**Status**: unassigned
+**Status**: superseded
 **Parent**: Story 1
 **Description**: Create technical specification document for OAuth authentication flow based on captured traffic
+**Reason**: Story 1 findings document already provides all necessary authentication patterns. No additional traffic capture needed.
 
 ### Story 2: OAuth Credentials Manager
 **Status**: unassigned
