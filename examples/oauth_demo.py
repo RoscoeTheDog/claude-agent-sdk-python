@@ -17,7 +17,15 @@ The SDK will:
 
 import asyncio
 
-from claude_agent_sdk import query, ClaudeAgentOptions
+from claude_agent_sdk import (
+    query,
+    ClaudeAgentOptions,
+    AssistantMessage,
+    TextBlock,
+    ToolUseBlock,
+    ResultMessage,
+    SystemMessage,
+)
 
 
 async def basic_oauth_example():
@@ -29,7 +37,15 @@ async def basic_oauth_example():
     print("(This will use your subscription, not API credits)\n")
 
     async for message in query(prompt="What is 2 + 2? Keep your answer brief."):
-        print(message)
+        if isinstance(message, AssistantMessage):
+            for block in message.content:
+                if isinstance(block, TextBlock):
+                    print(f"Claude: {block.text}")
+        elif isinstance(message, ResultMessage):
+            print(f"\n✓ Query completed in {message.duration_ms}ms")
+            print(f"  Cost: ${message.total_cost_usd:.6f}")
+            print(f"  Tokens: {message.usage.get('output_tokens', 0)} output")
+            print(f"  API Key Source: {message.usage.get('apiKeySource', 'N/A')}")
 
     print("\n" + "=" * 60 + "\n")
 
@@ -51,7 +67,14 @@ async def explicit_oauth_example():
         prompt="Tell me a fun fact about Python programming. Be brief.",
         options=options,
     ):
-        print(message)
+        if isinstance(message, AssistantMessage):
+            for block in message.content:
+                if isinstance(block, TextBlock):
+                    print(f"Claude: {block.text}")
+        elif isinstance(message, ResultMessage):
+            print(f"\n✓ Query completed in {message.duration_ms}ms")
+            print(f"  Cost: ${message.total_cost_usd:.6f}")
+            print(f"  Tokens: {message.usage.get('output_tokens', 0)} output")
 
     print("\n" + "=" * 60 + "\n")
 
@@ -73,7 +96,24 @@ async def oauth_with_tools_example():
         prompt="Create a file called hello_oauth.txt with the message 'Hello from OAuth!'",
         options=options,
     ):
-        print(message)
+        if isinstance(message, SystemMessage):
+            if message.subtype == "init":
+                print(f"Session started: {message.data.get('session_id', 'N/A')[:8]}...")
+                print(f"Model: {message.data.get('model', 'N/A')}")
+                print(f"Permission mode: {message.data.get('permissionMode', 'N/A')}")
+                print()
+        elif isinstance(message, AssistantMessage):
+            for block in message.content:
+                if isinstance(block, TextBlock):
+                    print(f"Claude: {block.text}")
+                elif isinstance(block, ToolUseBlock):
+                    print(f"\n[Tool: {block.name}]")
+                    print(f"  Input: {block.input}")
+        elif isinstance(message, ResultMessage):
+            print(f"\n✓ Task completed in {message.duration_ms}ms")
+            print(f"  Turns: {message.num_turns}")
+            print(f"  Cost: ${message.total_cost_usd:.6f}")
+            print(f"  Total tokens: {message.usage.get('input_tokens', 0)} input + {message.usage.get('output_tokens', 0)} output")
 
     print("\n" + "=" * 60 + "\n")
 
