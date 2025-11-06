@@ -279,12 +279,16 @@ class ClaudeCodeFormatter(Formatter):
         lines = content_str.split("\n")
         formatted_lines = []
 
+        # Calculate indent for continuation lines
+        # Indent = 2 spaces + tree_connector width + 2 spaces
+        indent = " " * (2 + len(self.config.tree_connector) + 2)
+
         for i, line in enumerate(lines):
             if i == 0:
                 # First line uses tree connector
                 formatted_lines.append(f"  {self.config.tree_connector}  {line}")
             else:
-                # Continuation lines use regular indent
-                formatted_lines.append(f"     {line}")
+                # Continuation lines align with first line content
+                formatted_lines.append(f"{indent}{line}")
 
         return "\n".join(formatted_lines)

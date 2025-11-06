@@ -117,7 +117,9 @@ Expected output:
 ### Story 1.1.3: Fix Demo 3 - Tool Result Indentation
 **Priority**: CRITICAL
 **Effort**: 1 hour
-**Status**: unassigned
+**Status**: completed
+**Claimed**: 2025-11-06
+**Completed**: 2025-11-06
 
 **Problem**:
 Tool results show extra spacing before line numbers that doesn't align with continuation lines.
@@ -143,31 +145,20 @@ Tool results show extra spacing before line numbers that doesn't align with cont
 - [ ] Matches Claude Code CLI formatting exactly
 
 **Implementation**:
-Fix `_format_tool_result_content()` in formatters.py:
+✅ COMPLETED - Fixed `_format_tool_result_content()` in formatters.py (src/claude_agent_sdk/rendering/formatters.py:275-294)
 
-```python
-def _format_tool_result_content(self, block: ToolResultBlock) -> str:
-    content = block.content or ""
+**Changes Made**:
+- Changed hardcoded continuation indent from `"     "` to dynamically calculated `" " * (2 + len(self.config.tree_connector) + 2)`
+- This ensures continuation lines always align properly with first line content, regardless of tree connector width
+- For default tree connector ⎿ (1 char): indent = 2 + 1 + 2 = 5 spaces (same as before, but now dynamic)
 
-    if block.is_error:
-        content = f"ERROR: {content}"
+**Testing**:
+- ✅ All 347 tests pass (including test_format_tool_result_multiline_text)
+- ✅ Ruff format: All files properly formatted
+- ✅ Mypy: No type errors
+- ✅ Manual verification: Indentation now aligns correctly
 
-    # Check if content has line numbers (from Read tool)
-    lines = content.split("\n")
-
-    # First line with tree connector
-    first_line = lines[0] if lines else ""
-    formatted = [f"  {self.config.tree_connector}  {first_line}"]
-
-    # Continuation lines - align with first line content
-    # Indent = 2 spaces + tree_connector width + 2 spaces
-    indent = " " * (2 + len(self.config.tree_connector) + 2)
-
-    for line in lines[1:]:
-        formatted.append(f"{indent}{line}")
-
-    return "\n".join(formatted)
-```
+**File Changed**: src/claude_agent_sdk/rendering/formatters.py:282-284
 
 ---
 

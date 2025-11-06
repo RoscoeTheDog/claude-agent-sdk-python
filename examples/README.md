@@ -1,6 +1,66 @@
-# OAuth Demo Examples
+# Claude Agent SDK Examples
 
-This folder contains examples demonstrating OAuth authentication with the Claude Agent SDK.
+This folder contains examples demonstrating various features of the Claude Agent SDK.
+
+## 📚 Available Examples
+
+- **[Pretty Printer Demos](#pretty-printer-demos)** - Message rendering and formatting (NEW!)
+- **[OAuth Authentication](#oauth-authentication)** - Using Claude subscription credentials
+- **[Other Examples](#other-examples)** - Various SDK features
+
+---
+
+# Pretty Printer Demos
+
+Interactive demonstrations of the message rendering system added in Sprint 1.
+
+## Quick Start
+
+### 30-Second Demo
+```bash
+python quick_demo.py
+```
+Shows the simplest usage with one line of code.
+
+### Full Interactive Demo (5-10 minutes)
+```bash
+python demo_pretty_printer.py
+```
+Comprehensive showcase of all rendering features with 7 interactive demos.
+
+### Menu Launcher
+```bash
+./run_demo.sh
+# or on Windows Git Bash:
+bash run_demo.sh
+```
+Interactive menu to choose which demo to run.
+
+## What's Included
+
+- **quick_demo.py** - Minimal 30-second demo
+- **demo_pretty_printer.py** - Full feature showcase with 7 demos
+- **pretty_printer_basic.py** - Code examples and usage patterns
+- **run_demo.sh** - Interactive launcher script
+- **DEMO_README.md** - Complete demo guide with troubleshooting
+
+## Features Demonstrated
+
+1. Simple `display_message()` usage
+2. Render levels (MINIMAL, STANDARD, DETAILED)
+3. Multiple destinations (console + file)
+4. Custom configuration
+5. Tool use formatting
+6. UTF-8 character rendering
+7. Before/after comparison
+
+For complete documentation, see `DEMO_README.md` in this folder.
+
+---
+
+# OAuth Authentication
+
+Examples demonstrating OAuth authentication with the Claude Agent SDK.
 
 ## Prerequisites
 
@@ -158,3 +218,23 @@ export CLAUDE_AUTH_INTERACTIVE=false
 ```
 
 See the main [README.md](../README.md#authentication) for complete documentation.
+
+---
+
+# Other Examples
+
+Additional examples demonstrating various SDK features:
+
+- **quick_start.py** - Basic SDK usage and queries
+- **streaming_mode.py** - Streaming responses with async iteration
+- **hooks.py** - Custom hooks for tool calls and permissions
+- **agents.py** - Multi-agent workflows
+- **mcp_calculator.py** - MCP (Model Context Protocol) integration
+- **tool_permission_callback.py** - Custom tool permission handling
+- **system_prompt.py** - Custom system prompts
+- **max_budget_usd.py** - Budget limits and cost control
+
+Run any example with:
+```bash
+python <example_name>.py
+```

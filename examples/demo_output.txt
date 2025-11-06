@@ -1,0 +1,181 @@
+● I'll read the README.md file for you.
+
+● Read(file_path: "README.md")
+
+● User:
+  ⎿       1→# Claude Agent SDK Examples
+          2→
+          3→This folder contains examples demonstrating various features of the Claude Agent SDK.
+          4→
+          5→## 📚 Available Examples
+          6→
+          7→- **[Pretty Printer Demos](#pretty-printer-demos)** - Message rendering and formatting (NEW!)
+          8→- **[OAuth Authentication](#oauth-authentication)** - Using Claude subscription credentials
+          9→- **[Other Examples](#other-examples)** - Various SDK features
+         10→
+         11→---
+         12→
+         13→# Pretty Printer Demos
+         14→
+         15→Interactive demonstrations of the message rendering system added in Sprint 1.
+         16→
+         17→## Quick Start
+         18→
+         19→### 30-Second Demo
+         20→```bash
+         21→python quick_demo.py
+         22→```
+         23→Shows the simplest usage with one line of code.
+         24→
+         25→### Full Interactive Demo (5-10 minutes)
+         26→```bash
+         27→python demo_pretty_printer.py
+         28→```
+         29→Comprehensive showcase of all rendering features with 7 interactive demos.
+         30→
+         31→### Menu Launcher
+         32→```bash
+         33→./run_demo.sh
+         34→# or on Windows Git Bash:
+         35→bash run_demo.sh
+         36→```
+         37→Interactive menu to choose which demo to run.
+         38→
+         39→## What's Included
+         40→
+         41→- **quick_demo.py** - Minimal 30-second demo
+         42→- **demo_pretty_printer.py** - Full feature showcase with 7 demos
+         43→- **pretty_printer_basic.py** - Code examples and usage patterns
+         44→- **run_demo.sh** - Interactive launcher script
+         45→- **DEMO_README.md** - Complete demo guide with troubleshooting
+         46→
+         47→## Features Demonstrated
+         48→
+         49→1. Simple `display_message()` usage
+         50→2. Render levels (MINIMAL, STANDARD, DETAILED)
+         51→3. Multiple destinations (console + file)
+         52→4. Custom configuration
+         53→5. Tool use formatting
+         54→6. UTF-8 character rendering
+         55→7. Before/after comparison
+         56→
+         57→For complete documentation, see `DEMO_README.md` in this folder.
+         58→
+         59→---
+         60→
+         61→# OAuth Authentication
+         62→
+         63→Examples demonstrating OAuth authentication with the Claude Agent SDK.
+         64→
+         65→## Prerequisites
+         66→
+         67→1. **Claude Code CLI installed**:
+         68→   ```bash
+         69→   npm install -g @anthropic-ai/claude-code
+         70→   ```
+         71→
+         72→2. **OAuth credentials** (one-time setup):
+         73→   ```bash
+         74→   claude /login
+         75→   ```
+         76→   This will open your browser to authenticate with your Claude Max/Pro subscription.
+         77→
+         78→## Setup
+         79→
+         80→The virtual environment has already been created for you! If you need to recreate it:
+         81→
+         82→```bash
+         83→# Create virtual environment
+         84→python -m venv venv
+         85→
+         86→# Activate it
+         87→# Windows (Git Bash/MSYS):
+         88→source venv/Scripts/activate
+         89→# Windows (Command Prompt):
+         90→venv\Scripts\activate.bat
+         91→# macOS/Linux:
+         92→source venv/bin/activate
+         93→
+         94→# Install the SDK in editable mode
+         95→pip install -e ..
+         96→```
+         97→
+         98→## Running the Examples
+         99→
+        100→### Simple Demo (Recommended for first-time users)
+        101→
+        102→The simplest possible OAuth example:
+        103→
+        104→```bash
+        105→# Windows (Git Bash/MSYS):
+        106→./venv/Scripts/python.exe oauth_simple.py
+        107→
+        108→# Windows (Command Prompt):
+        109→venv\Scripts\python.exe oauth_simple.py
+        110→
+        111→# macOS/Linux:
+        112→./venv/bin/python oauth_simple.py
+        113→```
+        114→
+        115→**What it does**: Sends a simple query using your OAuth credentials automatically.
+        116→
+        117→### Comprehensive Demo
+        118→
+        119→Full-featured demo with multiple examples:
+        120→
+        121→```bash
+        122→# Windows (Git Bash/MSYS):
+        123→./venv/Scripts/python.exe oauth_demo.py
+        124→
+        125→# Windows (Command Prompt):
+        126→venv\Scripts\python.exe oauth_demo.py
+        127→
+        128→# macOS/Linux:
+        129→./venv/bin/python oauth_demo.py
+        130→```
+        131→
+        132→**What it includes**:
+        133→- OAuth credentials status checker
+        134→- Basic OAuth query (auto-detect)
+        135→- Explicit OAuth mode (no fallback)
+        136→- OAuth with file operations (Read/Write tools)
+        137→
+        138→## Examples Overview
+        139→
+        140→### oauth_simple.py
+        141→- **Lines of code**: ~10
+        142→- **Complexity**: Minimal
+        143→- **Use case**: Quick test to verify OAuth is working
+        144→
+        145→### oauth_demo.py
+        146→- **Lines of code**: ~170
+        147→- **Complexity**: Comprehensive
+        148→- **Use case**: Learn all OAuth configuration options and features
+        149→
+        150→## Troubleshooting
+        151→
+        152→**Error: "OAuth credentials not found"**
+        153→```bash
+        154→# Solution: Run the login command
+        155→claude /login
+        156→```
+        157→
+        158→**Error: "Claude Code not installed"**
+        159→```bash
+        160→# Solution: Install Claude Code CLI
+        161→npm install -g @anthropic-ai/claude-code
+        162→```
+        163→
+        164→**Error: "Module not found"**
+        165→```bash
+        166→# Solution: Install SDK in the virtual environment
+        167→./venv/Scripts/python.exe -m pip install -e ..
+        168→```
+        1
+     … +78 lines (ctrl+o to expand)
+
+● This project is a collection of examples demonstrating various features of the Claude Agent SDK, including message rendering, OAuth authentication, streaming, multi-agent workflows, and tool integration.
+
+● Result ended
+  Cost: $0.0257
+
