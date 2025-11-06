@@ -17,6 +17,7 @@ Public API:
 from .base import Formatter, Handler, MessageRenderer
 from .config import RendererConfig, RenderLevel
 from .formatters import ClaudeCodeFormatter
+from .handlers import FileHandler, NullHandler, StreamHandler
 
 # Placeholder exports - will be populated as components are implemented
 __all__ = [

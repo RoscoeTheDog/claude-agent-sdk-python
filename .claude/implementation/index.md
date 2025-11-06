@@ -220,17 +220,27 @@ class RenderLevel(IntEnum):
 ---
 
 ### Story 4: Handler Implementations
-**Status**: unassigned
+**Status**: completed
+**Claimed**: 2025-11-05 15:50
+**Completed**: 2025-11-05 16:00
 **Description**: Implement concrete handlers for console and file output
 **Acceptance Criteria**:
-- [ ] `StreamHandler` writes to stdout/stderr with UTF-8 encoding
-- [ ] `FileHandler` creates files with parent directories, UTF-8 encoding
-- [ ] `NullHandler` does nothing (for testing/silencing)
-- [ ] All handlers respect filtering (should_render)
-- [ ] Error handling for I/O failures
+- [x] `StreamHandler` writes to stdout/stderr with UTF-8 encoding
+- [x] `FileHandler` creates files with parent directories, UTF-8 encoding
+- [x] `NullHandler` does nothing (for testing/silencing)
+- [x] All handlers respect filtering (should_render)
+- [x] Error handling for I/O failures
+**Implementation Notes**:
+- Created `src/claude_agent_sdk/rendering/handlers.py` with all three handler classes
+- StreamHandler: Configurable stream (default stdout), auto-flush option, UTF-8 encoding via reconfigure
+- FileHandler: Path.open() for proper typing, parent directory creation, proper file handle cleanup
+- NullHandler: Simple no-op implementation for testing
+- All handlers exported from `__init__.py`
+- All 260 existing tests pass, mypy type checking passes, ruff formatting applied
 
 ### Story 4.1: StreamHandler
-**Status**: unassigned
+**Status**: completed
+**Completed**: 2025-11-05 16:00
 **Parent**: Story 4
 **Description**: Console output handler
 **Features**:
@@ -241,7 +251,8 @@ class RenderLevel(IntEnum):
 - Double newline between messages (Claude Code CLI convention)
 
 ### Story 4.2: FileHandler
-**Status**: unassigned
+**Status**: completed
+**Completed**: 2025-11-05 16:00
 **Parent**: Story 4
 **Description**: File output handler
 **Features**:
@@ -252,7 +263,8 @@ class RenderLevel(IntEnum):
 - Proper file handle cleanup (__del__ and close())
 
 ### Story 4.3: NullHandler
-**Status**: unassigned
+**Status**: completed
+**Completed**: 2025-11-05 16:00
 **Parent**: Story 4
 **Description**: No-op handler for testing
 **Implementation**: emit() does nothing, always returns successfully

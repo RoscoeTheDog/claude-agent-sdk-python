@@ -592,11 +592,15 @@ class ClaudeAgentOptions:
 
     # Authentication configuration
     # These options control authentication behavior and are overridden by environment variables
-    auth_mode: "str | AuthMode | None" = None  # Authentication mode: "auto" (default), "oauth", or "api_key"
+    auth_mode: "str | AuthMode | None" = (
+        None  # Authentication mode: "auto" (default), "oauth", or "api_key"
+    )
     auth_fallback: "str | AuthFallbackPolicy | None" = (
         None  # Fallback policy: "enabled" (default), "disabled", or "strict"
     )
-    auth_interactive: bool | None = None  # Allow browser login prompts (default: auto-detect based on terminal)
+    auth_interactive: bool | None = (
+        None  # Allow browser login prompts (default: auto-detect based on terminal)
+    )
 
 
 # SDK Control Protocol

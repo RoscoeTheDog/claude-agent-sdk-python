@@ -90,3 +90,4 @@ test_secrets.py
 *.old
 *_backup.*
 .serena/
+.claude/
