@@ -245,6 +245,73 @@ options = ClaudeAgentOptions(
 )
 ```
 
+## Message Rendering
+
+The SDK includes a flexible rendering system that formats and displays messages in various styles and destinations, matching the Claude Code CLI UTF-8 rendering format.
+
+### Quick Start
+
+```python
+from claude_agent_sdk.rendering import display_message
+
+# Simple console output
+async for message in query(prompt="Hello"):
+    display_message(message)
+```
+
+### Multiple Destinations
+
+Send messages to console and file simultaneously with different detail levels:
+
+```python
+from claude_agent_sdk.rendering import (
+    MessageRenderer,
+    ClaudeCodeFormatter,
+    StreamHandler,
+    FileHandler,
+    RendererConfig,
+    RenderLevel,
+)
+
+# Console: minimal output
+console_config = RendererConfig(render_level=RenderLevel.MINIMAL)
+console_handler = StreamHandler(ClaudeCodeFormatter(console_config))
+
+# File: detailed output
+file_config = RendererConfig(render_level=RenderLevel.DETAILED)
+file_handler = FileHandler(ClaudeCodeFormatter(file_config), "session.log")
+
+# Combine handlers
+renderer = MessageRenderer()
+renderer.add_handler(console_handler)
+renderer.add_handler(file_handler)
+
+# Render to both destinations
+async for message in query(prompt="Explain quantum computing"):
+    renderer.render(message)
+```
+
+### Render Levels
+
+Control the amount of detail displayed:
+
+- `MINIMAL`: Only user and assistant text
+- `STANDARD`: + tool names and summaries (default)
+- `DETAILED`: + tool inputs and outputs
+- `DEBUG`: + system messages
+- `ALL`: Everything including stream events
+
+### Custom Formatters and Handlers
+
+Create custom formatters by extending `Formatter` or custom output destinations by extending `Handler`. See [docs/rendering.md](docs/rendering.md) for complete documentation including:
+
+- Architecture overview
+- Configuration options
+- Custom formatters and handlers
+- Thread safety
+- Error handling
+- Performance considerations
+
 ## ClaudeSDKClient
 
 `ClaudeSDKClient` supports bidirectional, interactive conversations with Claude
