@@ -76,23 +76,33 @@ class TestClaudeCodeFormatter:
         """Test formatting assistant message with text content."""
         formatter = ClaudeCodeFormatter()
         text_block = TextBlock(text="Hello, human!")
-        message = AssistantMessage(content=[text_block], model="claude-3-5-sonnet-20241022")
+        message = AssistantMessage(
+            content=[text_block], model="claude-3-5-sonnet-20241022"
+        )
         result = formatter.format_assistant_message(message)
         assert result == "\u25cf Hello, human!"
 
     def test_format_assistant_message_with_thinking(self):
         """Test formatting assistant message with thinking block."""
         formatter = ClaudeCodeFormatter()
-        thinking_block = ThinkingBlock(thinking="Let me analyze this...", signature="sig-123")
-        message = AssistantMessage(content=[thinking_block], model="claude-3-5-sonnet-20241022")
+        thinking_block = ThinkingBlock(
+            thinking="Let me analyze this...", signature="sig-123"
+        )
+        message = AssistantMessage(
+            content=[thinking_block], model="claude-3-5-sonnet-20241022"
+        )
         result = formatter.format_assistant_message(message)
         assert result == "\u25cf Let me analyze this..."
 
     def test_format_assistant_message_with_tool_use(self):
         """Test formatting assistant message with tool use."""
         formatter = ClaudeCodeFormatter()
-        tool_block = ToolUseBlock(id="tool-123", name="Read", input={"file_path": "test.py"})
-        message = AssistantMessage(content=[tool_block], model="claude-3-5-sonnet-20241022")
+        tool_block = ToolUseBlock(
+            id="tool-123", name="Read", input={"file_path": "test.py"}
+        )
+        message = AssistantMessage(
+            content=[tool_block], model="claude-3-5-sonnet-20241022"
+        )
         result = formatter.format_assistant_message(message)
         assert result == '\u25cf Read(file_path: "test.py")'
 
@@ -100,7 +110,9 @@ class TestClaudeCodeFormatter:
         """Test formatting assistant message with multiple content blocks."""
         formatter = ClaudeCodeFormatter()
         text_block = TextBlock(text="Let me check that file.")
-        tool_block = ToolUseBlock(id="tool-123", name="Read", input={"file_path": "test.py"})
+        tool_block = ToolUseBlock(
+            id="tool-123", name="Read", input={"file_path": "test.py"}
+        )
         message = AssistantMessage(
             content=[text_block, tool_block], model="claude-3-5-sonnet-20241022"
         )
@@ -112,9 +124,13 @@ class TestClaudeCodeFormatter:
         """Test that string parameters are quoted in tool use."""
         formatter = ClaudeCodeFormatter()
         tool_block = ToolUseBlock(
-            id="tool-123", name="Read", input={"file_path": "test.py", "encoding": "utf-8"}
+            id="tool-123",
+            name="Read",
+            input={"file_path": "test.py", "encoding": "utf-8"},
         )
-        message = AssistantMessage(content=[tool_block], model="claude-3-5-sonnet-20241022")
+        message = AssistantMessage(
+            content=[tool_block], model="claude-3-5-sonnet-20241022"
+        )
         result = formatter.format_assistant_message(message)
         assert 'file_path: "test.py"' in result
         assert 'encoding: "utf-8"' in result
@@ -123,7 +139,9 @@ class TestClaudeCodeFormatter:
         """Test that non-string parameters are not quoted in tool use."""
         formatter = ClaudeCodeFormatter()
         tool_block = ToolUseBlock(id="tool-123", name="Read", input={"limit": 100})
-        message = AssistantMessage(content=[tool_block], model="claude-3-5-sonnet-20241022")
+        message = AssistantMessage(
+            content=[tool_block], model="claude-3-5-sonnet-20241022"
+        )
         result = formatter.format_assistant_message(message)
         assert "limit: 100" in result
         assert '"100"' not in result
@@ -132,9 +150,13 @@ class TestClaudeCodeFormatter:
         """Test that boolean parameters are lowercase."""
         formatter = ClaudeCodeFormatter()
         tool_block = ToolUseBlock(
-            id="tool-123", name="Search", input={"recursive": True, "case_sensitive": False}
+            id="tool-123",
+            name="Search",
+            input={"recursive": True, "case_sensitive": False},
         )
-        message = AssistantMessage(content=[tool_block], model="claude-3-5-sonnet-20241022")
+        message = AssistantMessage(
+            content=[tool_block], model="claude-3-5-sonnet-20241022"
+        )
         result = formatter.format_assistant_message(message)
         assert "recursive: true" in result
         assert "case_sensitive: false" in result
@@ -143,15 +165,21 @@ class TestClaudeCodeFormatter:
         """Test that None parameters are rendered as null."""
         formatter = ClaudeCodeFormatter()
         tool_block = ToolUseBlock(id="tool-123", name="Process", input={"config": None})
-        message = AssistantMessage(content=[tool_block], model="claude-3-5-sonnet-20241022")
+        message = AssistantMessage(
+            content=[tool_block], model="claude-3-5-sonnet-20241022"
+        )
         result = formatter.format_assistant_message(message)
         assert "config: null" in result
 
     def test_format_tool_use_list_parameters(self):
         """Test that list parameters are JSON-formatted."""
         formatter = ClaudeCodeFormatter()
-        tool_block = ToolUseBlock(id="tool-123", name="Process", input={"items": [1, 2, 3]})
-        message = AssistantMessage(content=[tool_block], model="claude-3-5-sonnet-20241022")
+        tool_block = ToolUseBlock(
+            id="tool-123", name="Process", input={"items": [1, 2, 3]}
+        )
+        message = AssistantMessage(
+            content=[tool_block], model="claude-3-5-sonnet-20241022"
+        )
         result = formatter.format_assistant_message(message)
         assert "items: [1, 2, 3]" in result or "items: [1,2,3]" in result
 
@@ -161,7 +189,9 @@ class TestClaudeCodeFormatter:
         tool_block = ToolUseBlock(
             id="tool-123", name="Process", input={"config": {"key": "value"}}
         )
-        message = AssistantMessage(content=[tool_block], model="claude-3-5-sonnet-20241022")
+        message = AssistantMessage(
+            content=[tool_block], model="claude-3-5-sonnet-20241022"
+        )
         result = formatter.format_assistant_message(message)
         assert '"key": "value"' in result or '"key":"value"' in result
 
@@ -171,7 +201,9 @@ class TestClaudeCodeFormatter:
         tool_block = ToolUseBlock(
             id="tool-123", name="Echo", input={"text": 'He said "hello"'}
         )
-        message = AssistantMessage(content=[tool_block], model="claude-3-5-sonnet-20241022")
+        message = AssistantMessage(
+            content=[tool_block], model="claude-3-5-sonnet-20241022"
+        )
         result = formatter.format_assistant_message(message)
         assert 'text: "He said \\"hello\\""' in result
 
@@ -181,7 +213,9 @@ class TestClaudeCodeFormatter:
         result_block = ToolResultBlock(
             tool_use_id="tool-123", content="File contents here"
         )
-        message = AssistantMessage(content=[result_block], model="claude-3-5-sonnet-20241022")
+        message = AssistantMessage(
+            content=[result_block], model="claude-3-5-sonnet-20241022"
+        )
         result = formatter.format_assistant_message(message)
         expected = "  \u23bf  File contents here"
         assert expected in result
@@ -192,7 +226,9 @@ class TestClaudeCodeFormatter:
         result_block = ToolResultBlock(
             tool_use_id="tool-123", content="Line 1\nLine 2\nLine 3"
         )
-        message = AssistantMessage(content=[result_block], model="claude-3-5-sonnet-20241022")
+        message = AssistantMessage(
+            content=[result_block], model="claude-3-5-sonnet-20241022"
+        )
         result = formatter.format_assistant_message(message)
         assert "  \u23bf  Line 1" in result
         assert "     Line 2" in result
@@ -204,7 +240,9 @@ class TestClaudeCodeFormatter:
         result_block = ToolResultBlock(
             tool_use_id="tool-123", content="File not found", is_error=True
         )
-        message = AssistantMessage(content=[result_block], model="claude-3-5-sonnet-20241022")
+        message = AssistantMessage(
+            content=[result_block], model="claude-3-5-sonnet-20241022"
+        )
         result = formatter.format_assistant_message(message)
         assert "ERROR: File not found" in result
 
@@ -212,7 +250,9 @@ class TestClaudeCodeFormatter:
         """Test formatting tool result with empty content."""
         formatter = ClaudeCodeFormatter()
         result_block = ToolResultBlock(tool_use_id="tool-123", content="")
-        message = AssistantMessage(content=[result_block], model="claude-3-5-sonnet-20241022")
+        message = AssistantMessage(
+            content=[result_block], model="claude-3-5-sonnet-20241022"
+        )
         result = formatter.format_assistant_message(message)
         assert "(empty)" in result
 
@@ -220,7 +260,9 @@ class TestClaudeCodeFormatter:
         """Test formatting tool result with None content."""
         formatter = ClaudeCodeFormatter()
         result_block = ToolResultBlock(tool_use_id="tool-123", content=None)
-        message = AssistantMessage(content=[result_block], model="claude-3-5-sonnet-20241022")
+        message = AssistantMessage(
+            content=[result_block], model="claude-3-5-sonnet-20241022"
+        )
         result = formatter.format_assistant_message(message)
         assert "(empty)" in result
 
@@ -230,7 +272,9 @@ class TestClaudeCodeFormatter:
         formatter = ClaudeCodeFormatter(config)
         long_content = "x" * 50 + "\n" + "y" * 50
         result_block = ToolResultBlock(tool_use_id="tool-123", content=long_content)
-        message = AssistantMessage(content=[result_block], model="claude-3-5-sonnet-20241022")
+        message = AssistantMessage(
+            content=[result_block], model="claude-3-5-sonnet-20241022"
+        )
         result = formatter.format_assistant_message(message)
         assert "(ctrl+o to expand)" in result
         assert len(result) < len(long_content) + 100  # Should be truncated
@@ -278,7 +322,9 @@ class TestClaudeCodeFormatter:
         """Test formatting stream event."""
         formatter = ClaudeCodeFormatter()
         message = StreamEvent(
-            uuid="uuid-123", session_id="session-123", event={"type": "content_block_start"}
+            uuid="uuid-123",
+            session_id="session-123",
+            event={"type": "content_block_start"},
         )
         result = formatter.format_stream_event(message)
         assert "content_block_start" in result
@@ -325,7 +371,9 @@ class TestClaudeCodeFormatter:
         assert "Result ended" in result
 
         # Test StreamEvent
-        stream_msg = StreamEvent(uuid="uuid-123", session_id="session-123", event={"type": "test"})
+        stream_msg = StreamEvent(
+            uuid="uuid-123", session_id="session-123", event={"type": "test"}
+        )
         result = formatter.format(stream_msg)
         assert "Stream:" in result
 

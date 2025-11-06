@@ -98,7 +98,9 @@ class TestRendererConfig:
 
     def test_custom_include_message_types(self):
         """Test creating config with include message types."""
-        config = RendererConfig(include_message_types=["UserMessage", "AssistantMessage"])
+        config = RendererConfig(
+            include_message_types=["UserMessage", "AssistantMessage"]
+        )
         assert config.include_message_types == ["UserMessage", "AssistantMessage"]
 
     def test_custom_exclude_message_types(self):
@@ -113,7 +115,9 @@ class TestRendererConfig:
 
     def test_negative_max_tool_output_length_raises_error(self):
         """Test that negative max_tool_output_length raises ValueError."""
-        with pytest.raises(ValueError, match="max_tool_output_length must be non-negative"):
+        with pytest.raises(
+            ValueError, match="max_tool_output_length must be non-negative"
+        ):
             RendererConfig(max_tool_output_length=-1)
 
     def test_zero_content_limits_allowed(self):

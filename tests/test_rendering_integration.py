@@ -93,7 +93,9 @@ class TestEndToEndRendering:
         renderer.render(assistant_msg)
 
         # Tool result
-        result_content = "# My Project\n\nThis is a test project.\n\nMore content here..."
+        result_content = (
+            "# My Project\n\nThis is a test project.\n\nMore content here..."
+        )
         result_block = ToolResultBlock(tool_use_id="tool-123", content=result_content)
         assistant_result = AssistantMessage(
             content=[result_block], model="claude-3-5-sonnet-20241022"
@@ -221,7 +223,9 @@ class TestEndToEndRendering:
         error_block = ToolResultBlock(
             tool_use_id="tool-123", content="File not found: missing.txt", is_error=True
         )
-        msg = AssistantMessage(content=[error_block], model="claude-3-5-sonnet-20241022")
+        msg = AssistantMessage(
+            content=[error_block], model="claude-3-5-sonnet-20241022"
+        )
         renderer.render(msg)
 
         output = stream.getvalue()
@@ -238,7 +242,9 @@ class TestEndToEndRendering:
         # Create long tool result
         long_content = "\n".join([f"Line {i}" for i in range(100)])
         result_block = ToolResultBlock(tool_use_id="tool-123", content=long_content)
-        msg = AssistantMessage(content=[result_block], model="claude-3-5-sonnet-20241022")
+        msg = AssistantMessage(
+            content=[result_block], model="claude-3-5-sonnet-20241022"
+        )
 
         handler.handle(msg)
 
@@ -268,7 +274,9 @@ class TestEndToEndRendering:
 
         # Empty tool result
         empty_block = ToolResultBlock(tool_use_id="tool-123", content="")
-        msg = AssistantMessage(content=[empty_block], model="claude-3-5-sonnet-20241022")
+        msg = AssistantMessage(
+            content=[empty_block], model="claude-3-5-sonnet-20241022"
+        )
         handler.handle(msg)
 
         output = stream.getvalue()

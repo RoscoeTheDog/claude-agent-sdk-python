@@ -64,7 +64,6 @@ class TestStreamHandler:
         handler.handle(message2)
 
         output = stream.getvalue()
-        lines = output.split("\n")
         # Should have: "First", "", "Second", "", ""
         assert "First" in output
         assert "Second" in output
@@ -288,7 +287,9 @@ class TestHandlerFiltering:
         config_debug = RendererConfig(render_level=RenderLevel.DEBUG)
         formatter_debug = ClaudeCodeFormatter(config_debug)
         stream_debug = StringIO()
-        handler_debug = StreamHandler(formatter_debug, config=config_debug, stream=stream_debug)
+        handler_debug = StreamHandler(
+            formatter_debug, config=config_debug, stream=stream_debug
+        )
 
         handler_debug.handle(system_msg)
         assert "System:" in stream_debug.getvalue()
