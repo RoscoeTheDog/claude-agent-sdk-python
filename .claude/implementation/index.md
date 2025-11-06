@@ -272,17 +272,28 @@ class RenderLevel(IntEnum):
 ---
 
 ### Story 5: Integration & Examples
-**Status**: unassigned
+**Status**: completed
+**Claimed**: 2025-11-05 16:05
+**Completed**: 2025-11-05 16:15
 **Description**: Package exports, examples, and convenience functions
 **Acceptance Criteria**:
-- [ ] All public classes exported from `claude_agent_sdk.rendering`
-- [ ] Example `examples/pretty_printer_basic.py` works
-- [ ] Convenience function `display_message()` available
-- [ ] Example shows console + file output simultaneously
-- [ ] Easy migration from old `examples/streaming_mode.py` pattern
+- [x] All public classes exported from `claude_agent_sdk.rendering`
+- [x] Example `examples/pretty_printer_basic.py` works
+- [x] Convenience function `display_message()` available
+- [x] Example shows console + file output simultaneously
+- [x] Easy migration from old `examples/streaming_mode.py` pattern
+**Implementation Notes**:
+- Added `display_message()` convenience function with singleton pattern
+- Created comprehensive example with three usage patterns:
+  1. Simple usage with display_message()
+  2. Multi-handler setup (console + file)
+  3. Custom configuration
+- All code linted and formatted with ruff
+- Type checking passes with mypy
 
 ### Story 5.1: Package Exports
-**Status**: unassigned
+**Status**: completed
+**Completed**: 2025-11-05 16:10
 **Parent**: Story 5
 **Description**: Update `__init__.py` files with public API
 **Exports**:
@@ -291,9 +302,11 @@ class RenderLevel(IntEnum):
 - `ClaudeCodeFormatter`
 - `StreamHandler`, `FileHandler`, `NullHandler`
 - `display_message()` convenience function
+**Notes**: All classes already exported. Added `display_message()` convenience function with singleton renderer pattern.
 
 ### Story 5.2: Create Basic Example
-**Status**: unassigned
+**Status**: completed
+**Completed**: 2025-11-05 16:15
 **Parent**: Story 5
 **Description**: `examples/pretty_printer_basic.py` demonstrating usage
 **Shows**:
@@ -301,12 +314,15 @@ class RenderLevel(IntEnum):
 - File rendering (detailed level)
 - Multi-handler setup
 - Real SDK integration
+**Notes**: Created comprehensive example with three patterns: simple display_message(), multi-handler, and custom config.
 
 ### Story 5.3: Convenience Function
-**Status**: unassigned
+**Status**: completed
+**Completed**: 2025-11-05 16:10
 **Parent**: Story 5
 **Description**: Add `display_message()` helper for quick usage
 **Implementation**: Singleton renderer, lazy initialization, simple API
+**Notes**: Implemented in `__init__.py` with proper type hints. Uses global singleton pattern with lazy initialization.
 
 ---
 

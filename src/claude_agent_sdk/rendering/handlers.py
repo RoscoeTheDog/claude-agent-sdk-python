@@ -126,7 +126,9 @@ class FileHandler(Handler):
         self.filepath.parent.mkdir(parents=True, exist_ok=True)
 
         # Open file handle using Path.open()
-        self._file_handle = cast(TextIO, self.filepath.open(mode=self.mode, encoding=self.encoding))
+        self._file_handle = cast(
+            TextIO, self.filepath.open(mode=self.mode, encoding=self.encoding)
+        )
 
     def emit(self, formatted_output: str, message: Message) -> None:
         """Write formatted output to the file.
@@ -139,9 +141,15 @@ class FileHandler(Handler):
         """
         if self._file_handle is None or self._file_handle.closed:
             # Reopen file if it was closed
-            self._file_handle = cast(TextIO, self.filepath.open(mode=self.mode, encoding=self.encoding))
-            self._file_handle = cast(TextIO, self.filepath.open(mode=self.mode, encoding=self.encoding))
-            self._file_handle = cast(TextIO, self.filepath.open(mode=self.mode, encoding=self.encoding))
+            self._file_handle = cast(
+                TextIO, self.filepath.open(mode=self.mode, encoding=self.encoding)
+            )
+            self._file_handle = cast(
+                TextIO, self.filepath.open(mode=self.mode, encoding=self.encoding)
+            )
+            self._file_handle = cast(
+                TextIO, self.filepath.open(mode=self.mode, encoding=self.encoding)
+            )
 
         # Write message with double newline separator
         # At this point, _file_handle is guaranteed to be open

@@ -14,12 +14,53 @@ Public API:
     - display_message: Convenience function for quick usage
 """
 
+from typing import TextIO
+
+from ..types import Message
 from .base import Formatter, Handler, MessageRenderer
 from .config import RendererConfig, RenderLevel
 from .formatters import ClaudeCodeFormatter
 from .handlers import FileHandler, NullHandler, StreamHandler
 
-# Placeholder exports - will be populated as components are implemented
+# Singleton renderer for convenience function
+_default_renderer: MessageRenderer | None = None
+
+
+def display_message(
+    message: Message,
+    level: RenderLevel = RenderLevel.STANDARD,
+    stream: TextIO | None = None,
+) -> None:
+    """Display a message using a singleton renderer with default configuration.
+
+    This is a convenience function for quick usage without setting up a full
+    renderer. It uses a singleton MessageRenderer with ClaudeCodeFormatter
+    and StreamHandler.
+
+    Args:
+        message: The Message object to render
+        level: The render level to use (default: STANDARD)
+        stream: The output stream (default: stdout)
+
+    Example:
+        >>> from claude_agent_sdk.rendering import display_message, RenderLevel
+        >>> display_message(message)
+        >>> display_message(message, level=RenderLevel.DETAILED)
+    """
+    global _default_renderer
+    import sys
+
+    if _default_renderer is None:
+        # Initialize singleton renderer
+        config = RendererConfig(render_level=level)
+        formatter = ClaudeCodeFormatter(config)
+        handler = StreamHandler(stream=stream or sys.stdout, formatter=formatter)
+        _default_renderer = MessageRenderer()
+        _default_renderer.add_handler(handler)
+
+    _default_renderer.render(message)
+
+
 __all__ = [
     "Formatter",
     "Handler",
