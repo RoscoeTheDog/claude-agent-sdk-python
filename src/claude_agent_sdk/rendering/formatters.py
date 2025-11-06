@@ -148,7 +148,7 @@ class ClaudeCodeFormatter(Formatter):
 
         Format:
             ● Result ended
-              Cost: $<total_cost_usd>
+              Cost: $<total_cost_usd>  (only if show_cost=True)
 
         Args:
             message: ResultMessage to format
@@ -158,8 +158,8 @@ class ClaudeCodeFormatter(Formatter):
         """
         lines = [f"{self.config.bullet} Result ended"]
 
-        # Add cost if available
-        if message.total_cost_usd is not None:
+        # Only show cost if enabled and available
+        if self.config.show_cost and message.total_cost_usd is not None:
             lines.append(f"  Cost: ${message.total_cost_usd:.4f}")
 
         return "\n".join(lines)

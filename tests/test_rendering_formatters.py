@@ -286,9 +286,27 @@ class TestClaudeCodeFormatter:
         result = formatter.format_system_message(message)
         assert result == "\u25cf System: usage_limit_exceeded"
 
-    def test_format_result_message_with_cost(self):
-        """Test formatting result message with cost."""
+    def test_format_result_message_with_cost_default(self):
+        """Test formatting result message with cost (default show_cost=False)."""
         formatter = ClaudeCodeFormatter()
+        message = ResultMessage(
+            subtype="ended",
+            duration_ms=1000,
+            duration_api_ms=500,
+            is_error=False,
+            num_turns=1,
+            session_id="session-123",
+            total_cost_usd=0.0042,
+        )
+        result = formatter.format_result_message(message)
+        # Cost should be hidden by default
+        assert result == "\u25cf Result ended"
+        assert "Cost" not in result
+
+    def test_format_result_message_with_cost_enabled(self):
+        """Test formatting result message with cost when show_cost=True."""
+        config = RendererConfig(show_cost=True)
+        formatter = ClaudeCodeFormatter(config)
         message = ResultMessage(
             subtype="ended",
             duration_ms=1000,

@@ -68,7 +68,8 @@ class TestEndToEndRendering:
         assert "Let me calculate..." in output
         assert "The answer is 4." in output
         assert "Result ended" in output
-        assert "$0.0012" in output
+        # Cost should not be shown by default (show_cost=False)
+        assert "$0.0012" not in output
 
     def test_tool_use_workflow(self):
         """Test rendering a workflow with tool use."""

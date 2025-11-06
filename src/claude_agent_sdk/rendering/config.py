@@ -44,6 +44,7 @@ class RendererConfig:
     show_tool_inputs: bool = True
     show_tool_outputs: bool = True
     compact_mode: bool = False
+    show_cost: bool = False  # Hide cost by default (matches Claude CLI)
 
     # Content limits
     max_text_length: int = 10000
