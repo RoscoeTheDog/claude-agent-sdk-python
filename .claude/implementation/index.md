@@ -320,45 +320,33 @@ async def demo_7_comparison():
 ### Story 1.1.7: Update Tests for Cost Display Configuration
 **Priority**: HIGH
 **Effort**: 30 minutes
-**Status**: unassigned
+**Status**: completed
+**Claimed**: 2025-11-06
+**Completed**: 2025-11-06
 
 **Problem**:
 Existing tests assume cost is always shown. Need to update for new default.
 
 **Acceptance Criteria**:
-- [ ] All existing tests pass with show_cost=False default
-- [ ] Add test for show_cost=True explicitly
-- [ ] Add test for show_cost=False (default)
-- [ ] Test that cost is hidden when show_cost=False
-- [ ] No regressions in test suite
+- [x] All existing tests pass with show_cost=False default
+- [x] Add test for show_cost=True explicitly
+- [x] Add test for show_cost=False (default)
+- [x] Test that cost is hidden when show_cost=False
+- [x] No regressions in test suite
 
 **Implementation**:
-1. Update test_rendering_formatters.py:
-   ```python
-   def test_format_result_message_without_cost():
-       """Test result message without cost (default)."""
-       config = RendererConfig()  # show_cost=False by default
-       formatter = ClaudeCodeFormatter(config)
-       message = ResultMessage(total_cost_usd=0.0042)
+✅ COMPLETED - Tests already exist in test_rendering_formatters.py (tests/test_rendering_formatters.py:289-337)
 
-       output = formatter.format_result_message(message)
+**Tests Verified**:
+1. `test_format_result_message_with_cost_default` (line 289) - Verifies cost hidden by default
+2. `test_format_result_message_with_cost_enabled` (line 306) - Verifies cost shown when show_cost=True
+3. `test_format_result_message_without_cost` (line 323) - Verifies cost hidden when total_cost_usd=None
 
-       assert "● Result ended" in output
-       assert "Cost:" not in output  # Cost should be hidden
-
-   def test_format_result_message_with_cost():
-       """Test result message with cost enabled."""
-       config = RendererConfig(show_cost=True)
-       formatter = ClaudeCodeFormatter(config)
-       message = ResultMessage(total_cost_usd=0.0042)
-
-       output = formatter.format_result_message(message)
-
-       assert "● Result ended" in output
-       assert "Cost: $0.0042" in output  # Cost should be shown
-   ```
-
-2. Update any other tests that check for cost in output
+**Testing**:
+- ✅ All 347 tests pass (including all 3 cost-related tests)
+- ✅ No regressions in test suite
+- ✅ show_cost=False default behavior verified
+- ✅ show_cost=True explicit behavior verified
 
 ---
 
@@ -417,15 +405,15 @@ python -m mypy src/
 
 ## Definition of Done
 
-- [ ] All 7 stories completed
-- [ ] All 346+ tests passing
-- [ ] Code formatted with ruff
-- [ ] Type checking passes (mypy)
-- [ ] All demos run without errors
-- [ ] Manual verification of demo outputs
-- [ ] Documentation updated
-- [ ] Git commit created
-- [ ] Changes pushed to remote
+- [x] All 7 stories completed
+- [x] All 347 tests passing
+- [x] Code formatted with ruff
+- [x] Type checking passes (mypy)
+- [ ] All demos run without errors (manual verification pending)
+- [ ] Manual verification of demo outputs (pending)
+- [ ] Documentation updated (pending)
+- [ ] Git commit created (pending)
+- [ ] Changes pushed to remote (pending)
 
 ---
 
