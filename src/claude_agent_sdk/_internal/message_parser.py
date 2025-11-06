@@ -147,7 +147,9 @@ def parse_message(data: dict[str, Any]) -> Message:
                             content_blocks.append(
                                 ToolResultBlock(
                                     tool_use_id=block["tool_use_id"],
-                                    content=_strip_system_reminders(block.get("content")),
+                                    content=_strip_system_reminders(
+                                        block.get("content")
+                                    ),
                                     is_error=block.get("is_error"),
                                 )
                             )

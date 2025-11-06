@@ -333,6 +333,37 @@ class TestClaudeCodeFormatter:
         assert "    return 42" in result
         assert "        nested" in result
 
+    def test_format_tool_result_preserves_indentation_after_line_numbers(self):
+        """Test that indentation after line numbers (→) is preserved."""
+        config = RendererConfig(render_level=RenderLevel.DETAILED)
+        formatter = ClaudeCodeFormatter(config)
+
+        # CLI output format: "     1→# Header" and "     7→   - List item"
+        # The spaces AFTER → are meaningful indentation that must be preserved
+        content_with_line_numbers = (
+            "     1→# Claude Agent SDK Examples\n"
+            "     2→\n"
+            "     3→This folder contains examples.\n"
+            "     4→\n"
+            "     5→## Available Examples\n"
+            "     6→\n"
+            "     7→   - **[Pretty Printer Demos]** - Message rendering (NEW!)\n"
+            "     8→      - More indented item"
+        )
+
+        result_block = ToolResultBlock(
+            tool_use_id="tool-123", content=content_with_line_numbers
+        )
+        message = AssistantMessage(
+            content=[result_block], model="claude-3-5-sonnet-20241022"
+        )
+        result = formatter.format_assistant_message(message)
+
+        # Should strip the leading whitespace before line numbers
+        # but preserve indentation AFTER the arrow
+        assert "7→   - **[Pretty Printer Demos]**" in result  # 3 spaces after →
+        assert "8→      - More indented item" in result  # 6 spaces after →
+
     def test_format_system_message(self):
         """Test formatting system message."""
         formatter = ClaudeCodeFormatter()

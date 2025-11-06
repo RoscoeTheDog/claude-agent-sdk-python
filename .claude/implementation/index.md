@@ -276,7 +276,9 @@ If formatter adds spaces:
 ### Story 1.2.4: Preserve Indentation in Tool Results
 **Priority**: CRITICAL
 **Effort**: 1 hour
-**Status**: unassigned
+**Status**: completed
+**Claimed**: 2025-11-06 10:35
+**Completed**: 2025-11-06 11:00
 
 **Problem**:
 Tool results are having their indentation whitespace stripped, making code blocks and structured content unreadable. This affects readability of code examples, diffs, and any content with meaningful indentation.
@@ -323,13 +325,13 @@ Expected (preserving indentation):
 - Likely in `_format_tool_result_content()` line processing
 
 **Acceptance Criteria**:
-- [ ] Leading whitespace preserved within each line of tool results
-- [ ] Code indentation remains intact
-- [ ] List item indentation preserved
-- [ ] Diff format indentation preserved (git diff output)
-- [ ] Only remove truly empty lines at start/end of content
-- [ ] All existing tests pass
-- [ ] Add test for indentation preservation
+- [x] Leading whitespace preserved within each line of tool results
+- [x] Code indentation remains intact
+- [x] List item indentation preserved
+- [x] Diff format indentation preserved (git diff output)
+- [x] Only remove truly empty lines at start/end of content
+- [x] All existing tests pass (361 tests passing)
+- [x] Add test for indentation preservation
 
 **Implementation**:
 
@@ -397,6 +399,29 @@ def test_preserve_indentation_in_tool_results():
     assert "    indented line 2" in result
     assert "        more indented line 3" in result
 ```
+
+**Implementation Summary**:
+This story was **already completed** by Story 1.2.3! Investigation revealed:
+
+1. **Root Cause**: Story 1.2.3 added regex `re.sub(r"^\s+(\d+→)", r"\1", line)` to formatters.py:305
+2. **How it works**:
+   - Strips whitespace BEFORE line numbers (e.g., `"     7→"` becomes `"7→"`)
+   - Preserves whitespace AFTER the arrow (e.g., `"7→   - item"` keeps the 3 spaces)
+3. **Testing**: Added `test_format_tool_result_preserves_indentation_after_line_numbers()` to verify
+4. **Result**: All 361 tests pass, indentation is correctly preserved
+
+**Files Changed**:
+- tests/test_rendering_formatters.py:336-365 (added comprehensive test)
+- .claude/implementation/index.md (marked story completed)
+
+**Key Findings**:
+- No `.strip()` or `.lstrip()` calls found in formatters.py that affect content
+- The subprocess transport's `.strip()` calls only affect JSON parsing, not content
+- The regex in Story 1.2.3 already handles both requirements:
+  - Remove CLI formatting whitespace (before →)
+  - Preserve meaningful indentation (after →)
+
+**Superseded By**: Story 1.2.3 (which implemented both whitespace fixing AND indentation preservation)
 
 ---
 

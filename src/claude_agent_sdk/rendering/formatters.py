@@ -306,7 +306,9 @@ class ClaudeCodeFormatter(Formatter):
 
             if i == 0:
                 # First line uses tree connector
-                formatted_lines.append(f"  {self.config.tree_connector}  {cleaned_line}")
+                formatted_lines.append(
+                    f"  {self.config.tree_connector}  {cleaned_line}"
+                )
             else:
                 # Continuation lines align with first line content
                 formatted_lines.append(f"{indent}{cleaned_line}")

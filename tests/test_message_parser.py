@@ -410,7 +410,9 @@ class TestMessageParser:
 
     def test_strip_system_reminders_preserves_content_without_reminders(self):
         """Test that content without system reminders is unchanged."""
-        original_content = "This is normal content\nWith multiple lines\nNo reminders here"
+        original_content = (
+            "This is normal content\nWith multiple lines\nNo reminders here"
+        )
         data = {
             "type": "user",
             "message": {
