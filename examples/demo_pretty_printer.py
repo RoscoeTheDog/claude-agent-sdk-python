@@ -11,28 +11,28 @@ This demo showcases all the rendering features added in Sprint 1:
 Run this script to see the pretty printer in action!
 """
 
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import anyio
 
-from claude_agent_sdk import query, ClaudeAgentOptions
+from claude_agent_sdk import ClaudeAgentOptions, query
 from claude_agent_sdk.rendering import (
-    MessageRenderer,
     ClaudeCodeFormatter,
-    StreamHandler,
     FileHandler,
+    MessageRenderer,
     RendererConfig,
     RenderLevel,
+    StreamHandler,
     display_message,
 )
 
 
 def print_section(title: str) -> None:
     """Print a section header."""
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"  {title}")
-    print(f"{'='*70}\n")
+    print(f"{'=' * 70}\n")
 
 
 async def demo_1_simple_usage():
@@ -69,7 +69,7 @@ async def demo_2_render_levels():
         options = ClaudeAgentOptions(allowed_tools=["Read"])
         async for message in query(
             prompt="Read the first 5 lines of README.md and summarize the project in one sentence",
-            options=options
+            options=options,
         ):
             renderer.render(message)
 
@@ -112,22 +112,23 @@ async def demo_3_multi_handler():
         renderer.render(message)
 
     print(f"\n✓ Detailed output saved to: {output_file.absolute()}")
-    print(f"  Open it to see the DETAILED level with full tool inputs/outputs!")
+    print("  Open it to see the DETAILED level with full tool inputs/outputs!")
 
 
 async def demo_4_custom_config():
-    """Demo 4: Custom configuration."""
-    print_section("DEMO 4: Custom Configuration")
+    """Demo 4: Custom configuration with truncation."""
+    print_section("DEMO 4: Custom Configuration with Truncation")
 
-    print("Using custom settings:")
+    print("Using custom settings to demonstrate tool output truncation:")
     print("  - Compact mode: True")
-    print("  - Max text length: 300 characters")
-    print("  - Custom UTF-8 bullet: ▸\n")
+    print("  - Max tool output length: 200 characters (truncates long outputs)")
+    print("  - Custom UTF-8 bullet: ▸")
+    print("  - Show metadata: False\n")
 
     config = RendererConfig(
         render_level=RenderLevel.STANDARD,
         compact_mode=True,
-        max_text_length=300,
+        max_tool_output_length=200,  # Truncate tool output
         bullet="▸",  # Custom bullet character
         show_metadata=False,
     )
@@ -137,8 +138,10 @@ async def demo_4_custom_config():
     handler = StreamHandler(formatter=formatter)
     renderer.add_handler(handler)
 
+    # Use a query that generates tool output to show truncation
+    options = ClaudeAgentOptions(allowed_tools=["Read"])
     async for message in query(
-        prompt="Explain quantum computing in one paragraph."
+        prompt="Read README.md and tell me what it's about", options=options
     ):
         renderer.render(message)
 
@@ -149,7 +152,7 @@ async def demo_5_tool_use():
 
     print("Watch how tool calls and results are beautifully formatted!\n")
     print("Format:")
-    print("  ● Tool(param: \"value\", number: 123)")
+    print('  ● Tool(param: "value", number: 123)')
     print("    ⎿  Result line 1")
     print("       Result line 2\n")
 
@@ -204,7 +207,10 @@ async def demo_7_comparison():
 
     # Collect all messages first
     messages = []
-    async for message in query(prompt="What is Python? Answer in one sentence.", options=ClaudeAgentOptions(max_turns=1)):
+    async for message in query(
+        prompt="What is Python? Answer in one sentence.",
+        options=ClaudeAgentOptions(max_turns=1),
+    ):
         messages.append(message)
 
     # Show first message raw
@@ -235,7 +241,7 @@ Features demonstrated:
   1. Simple usage with display_message()
   2. Render levels (MINIMAL, STANDARD, DETAILED)
   3. Multiple handlers (console + file simultaneously)
-  4. Custom configuration
+  4. Custom configuration with truncation
   5. Tool use formatting
   6. UTF-8 character showcase
   7. Before/after comparison

@@ -165,49 +165,38 @@ Tool results show extra spacing before line numbers that doesn't align with cont
 ### Story 1.1.4: Fix Demo 4 - Demonstrate Truncation Properly
 **Priority**: MEDIUM
 **Effort**: 30 minutes
-**Status**: unassigned
+**Status**: completed
+**Claimed**: 2025-11-06
+**Completed**: 2025-11-06
 
 **Problem**:
 Demo doesn't show truncation indicator. Text just wraps in console.
 
 **Acceptance Criteria**:
-- [ ] Truncation indicator visible: "... +N chars (ctrl+o to expand)"
-- [ ] Clear that SDK truncated content, not console word wrap
-- [ ] Demonstrates max_tool_output_length limit
+- [x] Truncation indicator visible: "... +N chars (ctrl+o to expand)"
+- [x] Clear that SDK truncated content, not console word wrap
+- [x] Demonstrates max_tool_output_length limit
 
 **Implementation**:
-Change to demonstrate tool output truncation:
+✅ COMPLETED - Updated demo_pretty_printer.py (examples/demo_pretty_printer.py:118-147)
 
-```python
-config = RendererConfig(
-    render_level=RenderLevel.STANDARD,
-    compact_mode=True,
-    max_tool_output_length=200,  # Truncate tool output
-    bullet="▸",
-    show_metadata=False,
-)
+**Changes Made**:
+1. Changed title from "Custom Configuration" to "Custom Configuration with Truncation"
+2. Updated description to emphasize truncation feature:
+   - Changed from `max_text_length=300` to `max_tool_output_length=200`
+   - Added explicit mention of truncation in printed description
+3. Changed query from "Explain quantum computing" (no tools) to:
+   - "Read README.md and tell me what it's about" with `allowed_tools=["Read"]`
+   - This generates tool output that will be truncated
+4. Updated main demo list to show "Custom configuration with truncation"
 
-renderer = MessageRenderer()
-formatter = ClaudeCodeFormatter(config)
-handler = StreamHandler(formatter=formatter)
-renderer.add_handler(handler)
+**Testing**:
+- ✅ All 347 tests pass
+- ✅ Ruff format: All files properly formatted
+- ✅ Ruff check: No linting errors
+- ✅ Demo now uses tool output truncation instead of text truncation
 
-async for message in query(
-    prompt="Read README.md and tell me what it's about",
-    options=ClaudeAgentOptions(allowed_tools=["Read"])
-):
-    renderer.render(message)
-```
-
-Expected output shows truncation:
-```
-▸ Read(file_path: "README.md")
-  ⎿  # Claude Agent SDK Examples
-
-     This folder contains examples...
-     [truncated content]
-     ... +150 lines (ctrl+o to expand)
-```
+**File Changed**: examples/demo_pretty_printer.py:118-147, 242
 
 ---
 
