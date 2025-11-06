@@ -68,7 +68,9 @@ Currently `ResultMessage` always shows cost. Claude Code CLI does NOT show cost 
 ### Story 1.1.2: Fix Demo 2 - Render Levels Not Showing Differences
 **Priority**: CRITICAL
 **Effort**: 30 minutes
-**Status**: unassigned
+**Status**: completed
+**Claimed**: 2025-11-06
+**Completed**: 2025-11-06
 
 **Problem**:
 Demo uses "What is 2+2?" which has no tool use. All three levels look identical.
