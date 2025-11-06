@@ -446,15 +446,16 @@ class RenderLevel(IntEnum):
 ---
 
 ### Story 8: Polish & Completion
-**Status**: in_progress
+**Status**: completed
 **Claimed**: 2025-11-05 17:05
+**Completed**: 2025-11-05 17:15
 **Description**: Final cleanup, git commit, and sprint summary
 **Acceptance Criteria**:
 - [x] All tests passing
 - [x] No regressions in existing SDK functionality
 - [x] Code formatted with ruff
 - [x] Type checking passes (mypy)
-- [ ] Git commit with all changes
+- [x] Git commit with all changes
 - [x] Sprint summary completed
 
 ### Story 8.1: Code Quality
@@ -472,10 +473,12 @@ python -m pytest tests/
 **Notes**: All code quality checks pass. Fixed one unused variable in test_rendering_handlers.py. Remaining 9 ruff warnings are in pre-existing code. All 346 tests pass (260 existing + 86 new). Mypy type checking passes with no errors.
 
 ### Story 8.2: Git Commit
-**Status**: unassigned
+**Status**: completed
+**Completed**: 2025-11-05 17:15
 **Parent**: Story 8
 **Description**: Commit all changes
-**Message**: `feat: Add pretty printer with Claude Code CLI rendering`
+**Message**: `feat: Complete Story 8: Polish & Completion`
+**Notes**: Committed and pushed to dev/oauth-private branch. Commit hash: 86f14a8
 
 ### Story 8.3: Sprint Summary
 **Status**: completed
