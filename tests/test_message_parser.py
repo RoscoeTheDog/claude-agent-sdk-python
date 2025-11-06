@@ -282,3 +282,150 @@ class TestMessageParser:
         with pytest.raises(MessageParseError) as exc_info:
             parse_message(data)
         assert exc_info.value.data == data
+
+    def test_strip_system_reminders_from_user_tool_result(self):
+        """Test that system reminders are removed from user message tool results."""
+        data = {
+            "type": "user",
+            "message": {
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": "test_id",
+                        "content": "Line 1\n\n<system-reminder>\nThis is a system reminder that should be removed.\n</system-reminder>\n\nLine 2",
+                        "is_error": False,
+                    }
+                ]
+            },
+        }
+        message = parse_message(data)
+        assert isinstance(message, UserMessage)
+        assert len(message.content) == 1
+        assert isinstance(message.content[0], ToolResultBlock)
+        # System reminder should be stripped
+        assert "<system-reminder>" not in message.content[0].content
+        assert "</system-reminder>" not in message.content[0].content
+        # Original content should remain
+        assert "Line 1" in message.content[0].content
+        assert "Line 2" in message.content[0].content
+
+    def test_strip_system_reminders_from_assistant_tool_result(self):
+        """Test that system reminders are removed from assistant message tool results."""
+        data = {
+            "type": "assistant",
+            "message": {
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": "test_id",
+                        "content": "Result text\n\n<system-reminder>\nInternal reminder\n</system-reminder>\n\nMore text",
+                        "is_error": False,
+                    }
+                ],
+                "model": "claude-3-5-sonnet-20241022",
+            },
+        }
+        message = parse_message(data)
+        assert isinstance(message, AssistantMessage)
+        assert len(message.content) == 1
+        assert isinstance(message.content[0], ToolResultBlock)
+        # System reminder should be stripped
+        assert "<system-reminder>" not in message.content[0].content
+        assert "</system-reminder>" not in message.content[0].content
+        # Original content should remain
+        assert "Result text" in message.content[0].content
+        assert "More text" in message.content[0].content
+
+    def test_strip_multiple_system_reminders(self):
+        """Test that multiple system reminders are all removed."""
+        data = {
+            "type": "user",
+            "message": {
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": "test_id",
+                        "content": "<system-reminder>First</system-reminder>\nContent\n<system-reminder>Second</system-reminder>",
+                        "is_error": False,
+                    }
+                ]
+            },
+        }
+        message = parse_message(data)
+        assert isinstance(message, UserMessage)
+        assert isinstance(message.content[0], ToolResultBlock)
+        # Both system reminders should be stripped
+        assert "<system-reminder>" not in message.content[0].content
+        assert "First" not in message.content[0].content
+        assert "Second" not in message.content[0].content
+        # Original content should remain
+        assert "Content" in message.content[0].content
+
+    def test_strip_system_reminders_with_multiline_content(self):
+        """Test that system reminders with multiline content are removed."""
+        data = {
+            "type": "user",
+            "message": {
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": "test_id",
+                        "content": "Before\n\n<system-reminder>\nLine 1 of reminder\nLine 2 of reminder\nLine 3 of reminder\n</system-reminder>\n\nAfter",
+                        "is_error": False,
+                    }
+                ]
+            },
+        }
+        message = parse_message(data)
+        assert isinstance(message, UserMessage)
+        assert isinstance(message.content[0], ToolResultBlock)
+        # System reminder should be completely removed
+        assert "<system-reminder>" not in message.content[0].content
+        assert "Line 1 of reminder" not in message.content[0].content
+        assert "Line 2 of reminder" not in message.content[0].content
+        # Original content should remain
+        assert "Before" in message.content[0].content
+        assert "After" in message.content[0].content
+
+    def test_strip_system_reminders_handles_none_content(self):
+        """Test that None content is handled gracefully."""
+        data = {
+            "type": "user",
+            "message": {
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": "test_id",
+                        "content": None,
+                        "is_error": False,
+                    }
+                ]
+            },
+        }
+        message = parse_message(data)
+        assert isinstance(message, UserMessage)
+        assert isinstance(message.content[0], ToolResultBlock)
+        # Should handle None gracefully
+        assert message.content[0].content is None
+
+    def test_strip_system_reminders_preserves_content_without_reminders(self):
+        """Test that content without system reminders is unchanged."""
+        original_content = "This is normal content\nWith multiple lines\nNo reminders here"
+        data = {
+            "type": "user",
+            "message": {
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": "test_id",
+                        "content": original_content,
+                        "is_error": False,
+                    }
+                ]
+            },
+        }
+        message = parse_message(data)
+        assert isinstance(message, UserMessage)
+        assert isinstance(message.content[0], ToolResultBlock)
+        # Content should be exactly the same
+        assert message.content[0].content == original_content

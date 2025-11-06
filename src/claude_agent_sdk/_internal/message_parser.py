@@ -1,6 +1,7 @@
 """Message parser for Claude Code SDK responses."""
 
 import logging
+import re
 from typing import Any
 
 from .._errors import MessageParseError
@@ -19,6 +20,39 @@ from ..types import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _strip_system_reminders(content: str | None) -> str | None:
+    """
+    Remove <system-reminder> blocks from content.
+
+    System reminders are internal Claude Code messages that should never
+    be visible in SDK output. This function removes them along with any
+    surrounding whitespace to avoid leaving blank lines.
+
+    Args:
+        content: The content string to clean, or None
+
+    Returns:
+        Cleaned content string with system reminders removed, or None if input was None
+    """
+    if content is None:
+        return None
+
+    if not isinstance(content, str):
+        return content
+
+    # Pattern matches:
+    # \s* - optional whitespace before tag
+    # <system-reminder> - opening tag
+    # .*? - content (non-greedy)
+    # </system-reminder> - closing tag
+    # \s* - optional whitespace after tag
+    # Flags: re.DOTALL makes . match newlines too
+    pattern = r"\s*<system-reminder>.*?</system-reminder>\s*"
+    cleaned = re.sub(pattern, "", content, flags=re.DOTALL)
+
+    return cleaned
 
 
 def parse_message(data: dict[str, Any]) -> Message:
@@ -68,7 +102,9 @@ def parse_message(data: dict[str, Any]) -> Message:
                                 user_content_blocks.append(
                                     ToolResultBlock(
                                         tool_use_id=block["tool_use_id"],
-                                        content=block.get("content"),
+                                        content=_strip_system_reminders(
+                                            block.get("content")
+                                        ),
                                         is_error=block.get("is_error"),
                                     )
                                 )
@@ -111,7 +147,7 @@ def parse_message(data: dict[str, Any]) -> Message:
                             content_blocks.append(
                                 ToolResultBlock(
                                     tool_use_id=block["tool_use_id"],
-                                    content=block.get("content"),
+                                    content=_strip_system_reminders(block.get("content")),
                                     is_error=block.get("is_error"),
                                 )
                             )

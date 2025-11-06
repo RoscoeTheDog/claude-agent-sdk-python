@@ -94,7 +94,9 @@ def format_assistant_message(self, message: AssistantMessage) -> str:
 ### Story 1.2.2: Filter System Reminders from Tool Results
 **Priority**: CRITICAL
 **Effort**: 1 hour
-**Status**: unassigned
+**Status**: completed
+**Claimed**: 2025-11-06 09:51
+**Completed**: 2025-11-06 09:56
 
 **Problem**:
 Claude Code CLI subprocess output includes `<system-reminder>` tags that are being captured in tool results and displayed to end users. These are internal Claude Code messages that should never be visible in SDK output.
@@ -157,6 +159,29 @@ def _format_tool_result_content(self, block: ToolResultBlock) -> str:
   OR
 - src/claude_agent_sdk/rendering/formatters.py (Option 2, fallback)
 - tests/test_message_parser.py or tests/test_rendering_formatters.py (add filtering test)
+
+**Implementation Summary**:
+- Chose Option 1: Filter in message parser (catches at source)
+- Added `_strip_system_reminders()` helper function to message_parser.py:95-131
+- Applied filtering in two locations where ToolResultBlock is created:
+  - User messages: message_parser.py:104-106
+  - Assistant messages: message_parser.py:149
+- Added 7 comprehensive tests to test_message_parser.py:286-431:
+  - User message tool results
+  - Assistant message tool results
+  - Multiple system reminders
+  - Multiline content
+  - None content handling
+  - Content without reminders (no change)
+- All 358 tests passing
+
+**Acceptance Criteria Status**:
+- [x] All `<system-reminder>...</system-reminder>` blocks removed from tool results
+- [x] Removal happens before formatting (in message parser)
+- [x] No extra blank lines left after removal (regex strips surrounding whitespace)
+- [x] Works for all tool result types (filters all ToolResultBlock content)
+- [x] All existing tests pass (358 tests passing)
+- [x] Add test for system reminder filtering (7 new tests added)
 
 ---
 
