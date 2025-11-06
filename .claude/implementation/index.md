@@ -143,20 +143,30 @@ class RenderLevel(IntEnum):
 ---
 
 ### Story 3: ClaudeCodeFormatter Implementation
-**Status**: unassigned
+**Status**: completed
+**Claimed**: 2025-11-05 15:30
+**Completed**: 2025-11-05 15:45
 **Description**: Concrete formatter matching Claude Code CLI UTF-8 rendering exactly
 **Acceptance Criteria**:
-- [ ] All message types render correctly
-- [ ] User messages: `● User: <content>` or `● User answered Claude's questions:`
-- [ ] Assistant text: `● <text>`
-- [ ] Tool use: `● <tool>(<param>: <value>)`
-- [ ] Tool results: `  ⎿  <line1>\n     <line2>\n     … +N lines (ctrl+o to expand)`
-- [ ] Result messages: `● Result ended\n  Cost: $<amount>`
-- [ ] Parameters formatted: strings quoted, others not
-- [ ] Truncation works for long outputs
+- [x] All message types render correctly
+- [x] User messages: `● User: <content>` or `● User answered Claude's questions:`
+- [x] Assistant text: `● <text>`
+- [x] Tool use: `● <tool>(<param>: <value>)`
+- [x] Tool results: `  ⎿  <line1>\n     <line2>\n     … +N lines (ctrl+o to expand)`
+- [x] Result messages: `● Result ended\n  Cost: $<amount>`
+- [x] Parameters formatted: strings quoted, others not
+- [x] Truncation works for long outputs
+**Implementation Notes**:
+- Created `src/claude_agent_sdk/rendering/formatters.py` with ClaudeCodeFormatter class
+- Implemented all abstract methods from Formatter base class
+- Added helper methods for tool formatting and parameter value formatting
+- Supports JSON serialization for complex parameter types (lists, dicts)
+- Uses config UTF-8 characters (●, ⎿, …) from RendererConfig
+- All 260 existing tests pass, mypy type checking passes, ruff formatting applied
 
 ### Story 3.1: User Message Formatting
-**Status**: unassigned
+**Status**: completed
+**Completed**: 2025-11-05 15:45
 **Parent**: Story 3
 **Description**: Format UserMessage with simple and structured content
 **Formats**:
@@ -164,7 +174,8 @@ class RenderLevel(IntEnum):
 - Structured (questions): Multi-line with `⎿` and `·` bullets
 
 ### Story 3.2: Assistant Message Formatting
-**Status**: unassigned
+**Status**: completed
+**Completed**: 2025-11-05 15:45
 **Parent**: Story 3
 **Description**: Format AssistantMessage with text and tool blocks
 **Formats**:
@@ -173,7 +184,8 @@ class RenderLevel(IntEnum):
 - Thinking blocks: `● <thinking text>` (basic, can enhance later)
 
 ### Story 3.3: Tool Formatting
-**Status**: unassigned
+**Status**: completed
+**Completed**: 2025-11-05 15:45
 **Parent**: Story 3
 **Description**: Format ToolUseBlock and ToolResultBlock
 **ToolUseBlock**:
@@ -187,7 +199,8 @@ class RenderLevel(IntEnum):
 - Error handling: Prefix with "ERROR:" if `is_error=True`
 
 ### Story 3.4: System & Result Message Formatting
-**Status**: unassigned
+**Status**: completed
+**Completed**: 2025-11-05 15:45
 **Parent**: Story 3
 **Description**: Format SystemMessage and ResultMessage
 **SystemMessage**: Basic bullet format (only in DEBUG+ levels)
@@ -198,7 +211,8 @@ class RenderLevel(IntEnum):
 ```
 
 ### Story 3.5: Stream Event Formatting
-**Status**: unassigned
+**Status**: completed
+**Completed**: 2025-11-05 15:45
 **Parent**: Story 3
 **Description**: Format StreamEvent (partial messages)
 **Approach**: Basic rendering for Sprint 1, defer incremental updates to Sprint 2
