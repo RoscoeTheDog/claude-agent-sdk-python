@@ -18,13 +18,13 @@ The SDK will:
 import asyncio
 
 from claude_agent_sdk import (
-    query,
-    ClaudeAgentOptions,
     AssistantMessage,
-    TextBlock,
-    ToolUseBlock,
+    ClaudeAgentOptions,
     ResultMessage,
     SystemMessage,
+    TextBlock,
+    ToolUseBlock,
+    query,
 )
 
 
@@ -98,7 +98,9 @@ async def oauth_with_tools_example():
     ):
         if isinstance(message, SystemMessage):
             if message.subtype == "init":
-                print(f"Session started: {message.data.get('session_id', 'N/A')[:8]}...")
+                print(
+                    f"Session started: {message.data.get('session_id', 'N/A')[:8]}..."
+                )
                 print(f"Model: {message.data.get('model', 'N/A')}")
                 print(f"Permission mode: {message.data.get('permissionMode', 'N/A')}")
                 print()
@@ -113,7 +115,9 @@ async def oauth_with_tools_example():
             print(f"\n✓ Task completed in {message.duration_ms}ms")
             print(f"  Turns: {message.num_turns}")
             print(f"  Cost: ${message.total_cost_usd:.6f}")
-            print(f"  Total tokens: {message.usage.get('input_tokens', 0)} input + {message.usage.get('output_tokens', 0)} output")
+            print(
+                f"  Total tokens: {message.usage.get('input_tokens', 0)} input + {message.usage.get('output_tokens', 0)} output"
+            )
 
     print("\n" + "=" * 60 + "\n")
 
@@ -126,13 +130,13 @@ async def check_auth_status():
 
     try:
         from claude_agent_sdk._internal.oauth_credentials import (
-            read_credentials,
             CredentialsNotFoundError,
+            read_credentials,
         )
 
         try:
             creds = read_credentials()
-            print(f"\n✓ OAuth credentials found!")
+            print("\n✓ OAuth credentials found!")
             print(f"  - Subscription: {creds.subscription}")
             print(f"  - Scopes: {', '.join(creds.scopes)}")
             print(f"  - Expired: {'Yes' if creds.is_expired else 'No'}")

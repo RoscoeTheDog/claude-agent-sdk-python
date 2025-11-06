@@ -6,8 +6,9 @@ For a full feature showcase, run: python demo_pretty_printer.py
 """
 
 import anyio
+
 from claude_agent_sdk import query
-from claude_agent_sdk.rendering import display_message, RenderLevel
+from claude_agent_sdk.rendering import display_message
 
 print("""
 ╔══════════════════════════════════════════════════════════════╗
@@ -31,7 +32,7 @@ async def main():
     async for message in query(prompt="What is 2 + 2? Answer in one sentence."):
         display_message(message)
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("\n✓ That's it! One line of code for beautiful output.")
     print("\nFor more features, run: python demo_pretty_printer.py")
     print("\nFeatures:")

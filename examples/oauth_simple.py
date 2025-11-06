@@ -6,7 +6,8 @@ If you already ran 'claude /login', this will just work!
 """
 
 import asyncio
-from claude_agent_sdk import query, AssistantMessage, TextBlock, ResultMessage
+
+from claude_agent_sdk import AssistantMessage, ResultMessage, TextBlock, query
 
 
 async def main():

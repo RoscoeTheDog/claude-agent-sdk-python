@@ -91,3 +91,8 @@ test_secrets.py
 *_backup.*
 .serena/
 .claude/
+.venv/
+node_modules/
+__pycache__/
+*.pyc
+.claude/

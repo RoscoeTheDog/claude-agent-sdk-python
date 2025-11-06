@@ -188,12 +188,13 @@ async def demo_6_utf8_characters():
     print("Let's see them in action:\n")
 
     renderer = MessageRenderer()
-    formatter = ClaudeCodeFormatter()
+    formatter = ClaudeCodeFormatter(RendererConfig(max_tool_output_length=150))
     handler = StreamHandler(formatter=formatter)
     renderer.add_handler(handler)
 
     async for message in query(
-        prompt="Say 'Hello from the pretty printer!' in one sentence."
+        prompt="Use Glob to find Python files in src/ and list them",
+        options=ClaudeAgentOptions(allowed_tools=["Glob"]),
     ):
         renderer.render(message)
 
