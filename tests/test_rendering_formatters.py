@@ -1,6 +1,6 @@
 """Tests for message formatters."""
 
-from claude_agent_sdk.rendering import ClaudeCodeFormatter, RendererConfig
+from claude_agent_sdk.rendering import ClaudeCodeFormatter, RendererConfig, RenderLevel
 from claude_agent_sdk.types import (
     AssistantMessage,
     ResultMessage,
@@ -209,7 +209,9 @@ class TestClaudeCodeFormatter:
 
     def test_format_tool_result_simple_text(self):
         """Test formatting tool result with simple text."""
-        formatter = ClaudeCodeFormatter()
+        # Use DETAILED level to show tool results
+        config = RendererConfig(render_level=RenderLevel.DETAILED)
+        formatter = ClaudeCodeFormatter(config)
         result_block = ToolResultBlock(
             tool_use_id="tool-123", content="File contents here"
         )
@@ -222,7 +224,8 @@ class TestClaudeCodeFormatter:
 
     def test_format_tool_result_multiline_text(self):
         """Test formatting tool result with multiline text."""
-        formatter = ClaudeCodeFormatter()
+        config = RendererConfig(render_level=RenderLevel.DETAILED)
+        formatter = ClaudeCodeFormatter(config)
         result_block = ToolResultBlock(
             tool_use_id="tool-123", content="Line 1\nLine 2\nLine 3"
         )
@@ -236,7 +239,8 @@ class TestClaudeCodeFormatter:
 
     def test_format_tool_result_error(self):
         """Test formatting tool result with error."""
-        formatter = ClaudeCodeFormatter()
+        config = RendererConfig(render_level=RenderLevel.DETAILED)
+        formatter = ClaudeCodeFormatter(config)
         result_block = ToolResultBlock(
             tool_use_id="tool-123", content="File not found", is_error=True
         )
@@ -248,7 +252,8 @@ class TestClaudeCodeFormatter:
 
     def test_format_tool_result_empty_content(self):
         """Test formatting tool result with empty content."""
-        formatter = ClaudeCodeFormatter()
+        config = RendererConfig(render_level=RenderLevel.DETAILED)
+        formatter = ClaudeCodeFormatter(config)
         result_block = ToolResultBlock(tool_use_id="tool-123", content="")
         message = AssistantMessage(
             content=[result_block], model="claude-3-5-sonnet-20241022"
@@ -258,7 +263,8 @@ class TestClaudeCodeFormatter:
 
     def test_format_tool_result_none_content(self):
         """Test formatting tool result with None content."""
-        formatter = ClaudeCodeFormatter()
+        config = RendererConfig(render_level=RenderLevel.DETAILED)
+        formatter = ClaudeCodeFormatter(config)
         result_block = ToolResultBlock(tool_use_id="tool-123", content=None)
         message = AssistantMessage(
             content=[result_block], model="claude-3-5-sonnet-20241022"
@@ -268,7 +274,9 @@ class TestClaudeCodeFormatter:
 
     def test_format_tool_result_truncation(self):
         """Test that long tool results are truncated with indicator."""
-        config = RendererConfig(max_tool_output_length=20)
+        config = RendererConfig(
+            max_tool_output_length=20, render_level=RenderLevel.DETAILED
+        )
         formatter = ClaudeCodeFormatter(config)
         long_content = "x" * 50 + "\n" + "y" * 50
         result_block = ToolResultBlock(tool_use_id="tool-123", content=long_content)
@@ -423,3 +431,119 @@ class TestClaudeCodeFormatter:
         text = "A\nB"
         result = formatter._indent_lines(text, indent=">>> ")
         assert result == ">>> A\n>>> B"
+
+
+class TestRenderLevelFiltering:
+    """Test render level filtering behavior in format_assistant_message."""
+
+    def test_minimal_level_shows_only_text(self):
+        """Test MINIMAL level hides tool blocks and shows only text."""
+        config = RendererConfig(render_level=RenderLevel.MINIMAL)
+        formatter = ClaudeCodeFormatter(config)
+
+        # Create message with text, tool use, and tool result
+        message = AssistantMessage(
+            content=[
+                TextBlock(text="Let me check that for you."),
+                ToolUseBlock(id="1", name="Read", input={"file_path": "test.txt"}),
+                ToolResultBlock(tool_use_id="1", content="file content"),
+                TextBlock(text="Here's what I found."),
+            ],
+            model="claude-3-5-sonnet-20241022",
+        )
+
+        result = formatter.format_assistant_message(message)
+
+        # Should only show text blocks
+        assert "Let me check that for you." in result
+        assert "Here's what I found." in result
+        # Should NOT show tool blocks
+        assert "Read" not in result
+        assert "file content" not in result
+
+    def test_standard_level_shows_tools_not_results(self):
+        """Test STANDARD level shows tool use but hides tool results."""
+        config = RendererConfig(render_level=RenderLevel.STANDARD)
+        formatter = ClaudeCodeFormatter(config)
+
+        message = AssistantMessage(
+            content=[
+                TextBlock(text="Checking file."),
+                ToolUseBlock(id="1", name="Read", input={"file_path": "test.txt"}),
+                ToolResultBlock(tool_use_id="1", content="file content here"),
+            ],
+            model="claude-3-5-sonnet-20241022",
+        )
+
+        result = formatter.format_assistant_message(message)
+
+        # Should show text and tool use
+        assert "Checking file." in result
+        assert "Read" in result
+        # Should NOT show tool result content
+        assert "file content here" not in result
+
+    def test_detailed_level_shows_everything(self):
+        """Test DETAILED level shows all blocks including tool results."""
+        config = RendererConfig(render_level=RenderLevel.DETAILED)
+        formatter = ClaudeCodeFormatter(config)
+
+        message = AssistantMessage(
+            content=[
+                TextBlock(text="Reading file."),
+                ToolUseBlock(id="1", name="Read", input={"file_path": "test.txt"}),
+                ToolResultBlock(tool_use_id="1", content="file content"),
+            ],
+            model="claude-3-5-sonnet-20241022",
+        )
+
+        result = formatter.format_assistant_message(message)
+
+        # Should show everything
+        assert "Reading file." in result
+        assert "Read" in result
+        assert "file content" in result
+
+    def test_minimal_level_shows_thinking_blocks(self):
+        """Test MINIMAL level shows thinking blocks (they're always shown)."""
+        config = RendererConfig(render_level=RenderLevel.MINIMAL)
+        formatter = ClaudeCodeFormatter(config)
+
+        message = AssistantMessage(
+            content=[
+                ThinkingBlock(thinking="Let me think about this...", signature="sig-1"),
+                ToolUseBlock(id="1", name="Read", input={"file_path": "test.txt"}),
+            ],
+            model="claude-3-5-sonnet-20241022",
+        )
+
+        result = formatter.format_assistant_message(message)
+
+        # Should show thinking
+        assert "Let me think about this..." in result
+        # Should NOT show tool
+        assert "Read" not in result
+
+    def test_render_level_with_multiple_tool_blocks(self):
+        """Test render level filtering works with multiple tool blocks."""
+        config = RendererConfig(render_level=RenderLevel.STANDARD)
+        formatter = ClaudeCodeFormatter(config)
+
+        message = AssistantMessage(
+            content=[
+                ToolUseBlock(id="1", name="Read", input={"file": "a.txt"}),
+                ToolResultBlock(tool_use_id="1", content="content A"),
+                ToolUseBlock(id="2", name="Write", input={"file": "b.txt"}),
+                ToolResultBlock(tool_use_id="2", content="success"),
+            ],
+            model="claude-3-5-sonnet-20241022",
+        )
+
+        result = formatter.format_assistant_message(message)
+
+        # Should show both tool uses
+        assert "Read" in result
+        assert "Write" in result
+        # Should NOT show any tool results
+        assert "content A" not in result
+        assert "success" not in result

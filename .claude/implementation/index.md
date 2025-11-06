@@ -1,457 +1,455 @@
-# Sprint 1.1: Demo Fixes & Cost Display Configuration
+# Sprint 1.2: Critical Demo and Rendering Fixes
 
-**Created**: 2025-11-05
+**Created**: 2025-11-06 01:19
 **Status**: planned
-**Sprint Goal**: Fix critical demo issues and make cost display opt-in to match Claude Code CLI behavior
+**Sprint Goal**: Fix critical rendering bugs discovered during Sprint 1.1 demo testing
 
 ---
 
 ## Sprint Overview
 
-Sprint 1.1 addresses user-reported issues from Sprint 1 testing:
-- Make cost display opt-in (currently always shown, breaks CLI parity)
-- Fix demos that don't demonstrate their features effectively
-- Fix visual formatting bugs (indentation)
-- Ensure all demos showcase pretty printer capabilities
+Sprint 1.2 addresses critical bugs discovered during demo_pretty_printer.py testing:
+- Render levels (MINIMAL/STANDARD/DETAILED) not working - all show same output
+- System reminders appearing in user-facing output
+- Extra whitespace before line numbers in tool results
+- Indentation whitespace being stripped from tool results
+- Implement proper render level filtering in formatters
 
 **Estimated Duration**: 4-5 hours
-**Priority**: HIGH (blocks production readiness)
+**Priority**: CRITICAL (blocks production use)
 
 ---
 
 ## Stories
 
-### Story 1.1.1: Make Cost Display Opt-In Configuration
-**Priority**: HIGH
-**Effort**: 1 hour
+### Story 1.2.1: Implement Render Level Filtering in Formatter
+**Priority**: CRITICAL
+**Effort**: 2 hours
 **Status**: completed
-**Claimed**: 2025-11-05 (current session)
-**Completed**: 2025-11-05 (current session)
+**Claimed**: 2025-11-06 09:34
+**Completed**: 2025-11-06 09:45
 
 **Problem**:
-Currently `ResultMessage` always shows cost. Claude Code CLI does NOT show cost by default.
+The `ClaudeCodeFormatter.format_assistant_message()` method doesn't check `config.render_level` to control what content is displayed. All three render levels (MINIMAL, STANDARD, DETAILED) show identical output.
+
+**Current Behavior**:
+- MINIMAL: Shows tool use blocks (should hide them)
+- STANDARD: Shows tool use blocks (correct)
+- DETAILED: Shows tool use blocks (correct)
+
+**Expected Behavior**:
+- MINIMAL: Only text blocks, hide ToolUseBlock
+- STANDARD: Text + tool names (ToolUseBlock without full params), hide tool outputs
+- DETAILED: Everything including full tool params and outputs
 
 **Acceptance Criteria**:
-- [x] Add `show_cost: bool = False` to RendererConfig
-- [x] Update ClaudeCodeFormatter.format_result_message() to check config
-- [x] Cost only displays when `show_cost=True`
-- [x] All existing tests pass (347 tests passing)
-- [x] Add test for show_cost configuration
+- [ ] MINIMAL level hides ToolUseBlock completely
+- [ ] STANDARD level shows ToolUseBlock with tool name and summary params
+- [ ] DETAILED level shows full ToolUseBlock with all parameters
+- [ ] Config options `show_tool_inputs` and `show_tool_outputs` are used correctly
+- [ ] Demo 2 shows visually different output for each level
+- [ ] All existing tests pass
+- [ ] Add tests for each render level behavior
 
 **Implementation**:
-1. Add field to RendererConfig in config.py:
-   ```python
-   @dataclass
-   class RendererConfig:
-       # ... existing fields ...
-       show_cost: bool = False  # Hide cost by default (matches Claude CLI)
-   ```
+Update `format_assistant_message()` in formatters.py (src/claude_agent_sdk/rendering/formatters.py:95-130):
 
-2. Update formatters.py:
-   ```python
-   def format_result_message(self, message: ResultMessage) -> str:
-       lines = [f"{self.config.bullet} Result ended"]
+```python
+def format_assistant_message(self, message: AssistantMessage) -> str:
+    """Format an assistant message respecting render_level."""
+    lines = []
 
-       # Only show cost if enabled
-       if self.config.show_cost and message.total_cost_usd:
-           lines.append(f"  Cost: ${message.total_cost_usd:.4f}")
+    for block in message.content:
+        if isinstance(block, TextBlock):
+            # Always show text (all levels)
+            lines.append(f"{self.config.bullet} {block.text}")
 
-       return "\n".join(lines)
-   ```
+        elif isinstance(block, ThinkingBlock):
+            # Always show thinking (all levels)
+            lines.append(f"{self.config.bullet} {block.thinking}")
 
-3. Update tests to explicitly enable show_cost when testing cost display
+        elif isinstance(block, ToolUseBlock):
+            # Respect render_level for tool use
+            if self.config.render_level >= RenderLevel.STANDARD:
+                formatted_tool = self._format_tool_use(block)
+                lines.append(formatted_tool)
+            # MINIMAL level: skip tool use blocks
 
-4. Update documentation to mention show_cost option
+        elif isinstance(block, ToolResultBlock):
+            # Respect render_level for tool results
+            if self.config.render_level >= RenderLevel.DETAILED:
+                formatted_result = self._format_tool_result_content(block)
+                lines.append(formatted_result)
+            # MINIMAL/STANDARD: skip tool results
+
+    return "\n".join(lines)
+```
+
+**Files to Change**:
+- src/claude_agent_sdk/rendering/formatters.py (format_assistant_message method)
+- tests/test_rendering_formatters.py (add render level tests)
 
 ---
 
-### Story 1.1.2: Fix Demo 2 - Render Levels Not Showing Differences
+### Story 1.2.2: Filter System Reminders from Tool Results
 **Priority**: CRITICAL
-**Effort**: 30 minutes
-**Status**: completed
-**Claimed**: 2025-11-06
-**Completed**: 2025-11-06
+**Effort**: 1 hour
+**Status**: unassigned
 
 **Problem**:
-Demo uses "What is 2+2?" which has no tool use. All three levels look identical.
+Claude Code CLI subprocess output includes `<system-reminder>` tags that are being captured in tool results and displayed to end users. These are internal Claude Code messages that should never be visible in SDK output.
 
-**Acceptance Criteria**:
-- [ ] Demo 2 uses a query that REQUIRES tools
-- [ ] MINIMAL level shows only text (no tool names)
-- [ ] STANDARD level shows tool names
-- [ ] DETAILED level shows full tool parameters and output
-- [ ] Differences are visually obvious
+**Current Output**:
+```
+● User:
+  ⎿       1→# Claude Agent SDK Examples
+          2→
 
-**Implementation**:
-Replace query with:
-```python
-async for message in query(
-    prompt="Read the first 5 lines of README.md and summarize the project in one sentence",
-    options=ClaudeAgentOptions(allowed_tools=["Read"])
-):
-    renderer.render(message)
+     <system-reminder>
+     Whenever you read a file, you should consider whether it would be considered malware...
+     </system-reminder>
 ```
 
-Expected output:
+**Expected Output**:
 ```
---- MINIMAL ---
-● [Summary text]
-● Result ended
-
---- STANDARD ---
-● Read(...)
-● [Summary text]
-● Result ended
-
---- DETAILED ---
-● Read(file_path: "README.md", limit: 5)
+● User:
   ⎿  1→# Claude Agent SDK Examples
      2→
-     ...
-● [Summary text]
-● Result ended
 ```
+
+**Acceptance Criteria**:
+- [ ] All `<system-reminder>...</system-reminder>` blocks removed from tool results
+- [ ] Removal happens before formatting (in message parser or formatter)
+- [ ] No extra blank lines left after removal
+- [ ] Works for all tool result types (Read, Glob, Grep, etc.)
+- [ ] All existing tests pass
+- [ ] Add test for system reminder filtering
+
+**Implementation Options**:
+
+**Option 1: Filter in Message Parser** (recommended - catches at source):
+Update `_internal/message_parser.py` to strip system reminders from content before creating ToolResultBlock:
+
+```python
+import re
+
+def _strip_system_reminders(content: str) -> str:
+    """Remove <system-reminder> blocks from content."""
+    pattern = r'\s*<system-reminder>.*?</system-reminder>\s*'
+    return re.sub(pattern, '', content, flags=re.DOTALL)
+
+# In parse_tool_result or similar:
+content = _strip_system_reminders(raw_content)
+```
+
+**Option 2: Filter in Formatter**:
+Update `_format_tool_result_content()` to strip before formatting:
+
+```python
+def _format_tool_result_content(self, block: ToolResultBlock) -> str:
+    # ... existing code ...
+    content_str = self._strip_system_reminders(content_str)
+    # ... rest of formatting ...
+```
+
+**Files to Change**:
+- src/claude_agent_sdk/_internal/message_parser.py (Option 1, recommended)
+  OR
+- src/claude_agent_sdk/rendering/formatters.py (Option 2, fallback)
+- tests/test_message_parser.py or tests/test_rendering_formatters.py (add filtering test)
 
 ---
 
-### Story 1.1.3: Fix Demo 3 - Tool Result Indentation
-**Priority**: CRITICAL
+### Story 1.2.3: Fix Extra Whitespace Before Line Numbers
+**Priority**: HIGH
 **Effort**: 1 hour
-**Status**: completed
-**Claimed**: 2025-11-06
-**Completed**: 2025-11-06
+**Status**: unassigned
 
 **Problem**:
-Tool results show extra spacing before line numbers that doesn't align with continuation lines.
+Tool results (especially Read tool) show extra whitespace before line numbers, causing poor alignment:
 
 **Current**:
 ```
 ● User:
-  ⎿       1→# Header      # Extra spaces before line number
-          2→Content       # Doesn't align
+  ⎿       1→# Header    # 7 spaces before "1→"
+          2→Content     # Misaligned
 ```
 
 **Expected**:
 ```
 ● User:
-  ⎿  1→# Header          # Proper spacing
-     2→Content           # Aligned continuation
+  ⎿  1→# Header        # 2 spaces before "1→"
+     2→Content         # Aligned
 ```
 
-**Acceptance Criteria**:
-- [ ] Tree connector (⎿) properly aligned with "User:"
-- [ ] Continuation lines aligned with first line content
-- [ ] No extra whitespace before line numbers
-- [ ] Matches Claude Code CLI formatting exactly
-
-**Implementation**:
-✅ COMPLETED - Fixed `_format_tool_result_content()` in formatters.py (src/claude_agent_sdk/rendering/formatters.py:275-294)
-
-**Changes Made**:
-- Changed hardcoded continuation indent from `"     "` to dynamically calculated `" " * (2 + len(self.config.tree_connector) + 2)`
-- This ensures continuation lines always align properly with first line content, regardless of tree connector width
-- For default tree connector ⎿ (1 char): indent = 2 + 1 + 2 = 5 spaces (same as before, but now dynamic)
-
-**Testing**:
-- ✅ All 347 tests pass (including test_format_tool_result_multiline_text)
-- ✅ Ruff format: All files properly formatted
-- ✅ Mypy: No type errors
-- ✅ Manual verification: Indentation now aligns correctly
-
-**File Changed**: src/claude_agent_sdk/rendering/formatters.py:282-284
-
----
-
-### Story 1.1.4: Fix Demo 4 - Demonstrate Truncation Properly
-**Priority**: MEDIUM
-**Effort**: 30 minutes
-**Status**: completed
-**Claimed**: 2025-11-06
-**Completed**: 2025-11-06
-
-**Problem**:
-Demo doesn't show truncation indicator. Text just wraps in console.
+**Root Cause Analysis Needed**:
+- Is this coming from Claude CLI subprocess output? (likely)
+- Or is it added by our formatter? (less likely based on code review)
+- Check actual raw content from subprocess
 
 **Acceptance Criteria**:
-- [x] Truncation indicator visible: "... +N chars (ctrl+o to expand)"
-- [x] Clear that SDK truncated content, not console word wrap
-- [x] Demonstrates max_tool_output_length limit
+- [ ] Line numbers aligned at 2 spaces after tree connector
+- [ ] Continuation lines properly aligned
+- [ ] Works for all tools (Read, Grep, Bash output)
+- [ ] No regressions in indentation formatting
+- [ ] All existing tests pass
 
 **Implementation**:
-✅ COMPLETED - Updated demo_pretty_printer.py (examples/demo_pretty_printer.py:118-147)
 
-**Changes Made**:
-1. Changed title from "Custom Configuration" to "Custom Configuration with Truncation"
-2. Updated description to emphasize truncation feature:
-   - Changed from `max_text_length=300` to `max_tool_output_length=200`
-   - Added explicit mention of truncation in printed description
-3. Changed query from "Explain quantum computing" (no tools) to:
-   - "Read README.md and tell me what it's about" with `allowed_tools=["Read"]`
-   - This generates tool output that will be truncated
-4. Updated main demo list to show "Custom configuration with truncation"
-
-**Testing**:
-- ✅ All 347 tests pass
-- ✅ Ruff format: All files properly formatted
-- ✅ Ruff check: No linting errors
-- ✅ Demo now uses tool output truncation instead of text truncation
-
-**File Changed**: examples/demo_pretty_printer.py:118-147, 242
-
----
-
-### Story 1.1.5: Fix Demo 6 - Show UTF-8 Characters in Real Use Case
-**Priority**: CRITICAL
-**Effort**: 30 minutes
-**Status**: completed
-**Claimed**: 2025-11-06
-**Completed**: 2025-11-06
-
-**Problem**:
-Demo just shows "Hello from the pretty printer!" - doesn't demonstrate UTF-8 formatting.
-
-**Acceptance Criteria**:
-- [x] Shows ● bullet points
-- [x] Shows ⎿ tree connectors
-- [x] Shows … ellipsis (truncation)
-- [x] Shows proper indentation
-- [x] Demonstrates real tool output formatting
-
-**Implementation**:
-✅ COMPLETED - Updated demo_pretty_printer.py (examples/demo_pretty_printer.py:188-199)
-
-**Changes Made**:
-1. Changed query from "Say 'Hello from the pretty printer!' in one sentence." (no tools) to:
-   - "Use Glob to find Python files in src/ and list them" with `allowed_tools=["Glob"]`
-   - This generates tool output that showcases all UTF-8 characters in actual use
-2. Added `max_tool_output_length=150` to RendererConfig to demonstrate truncation
-3. Updated to use ClaudeAgentOptions to restrict allowed tools
-
-**Testing**:
-- ✅ All 347 tests pass
-- ✅ Ruff format: All files properly formatted
-- ✅ Demo now uses real tool output that will display bullet points, tree connectors, and truncation ellipsis
-
-**File Changed**: examples/demo_pretty_printer.py:188-199
-
-**Expected output**:
-```
-● Glob(pattern: "src/**/*.py")        # ● bullet
-  ⎿  src/claude_agent_sdk/client.py  # ⎿ tree connector
-     src/claude_agent_sdk/query.py
-     src/claude_agent_sdk/types.py
-     … +15 more files                 # … ellipsis
-
-● I found 18 Python files in src/
-```
-
----
-
-### Story 1.1.6: Fix Demo 7 - Display Formatted Output
-**Priority**: CRITICAL
-**Effort**: 30 minutes
-**Status**: completed
-**Claimed**: 2025-11-06
-**Completed**: 2025-11-06
-
-**Problem**:
-Formatted section is blank because first message is SystemMessage (filtered out).
-
-**Acceptance Criteria**:
-- [x] Raw message displays correctly
-- [x] Formatted message displays correctly
-- [x] Side-by-side comparison is clear
-- [x] Shows actual content difference
-
-**Implementation**:
-✅ COMPLETED - Updated demo_pretty_printer.py (examples/demo_pretty_printer.py:202-232)
-
-**Changes Made**:
-1. Modified demo_7_comparison to find first AssistantMessage instead of using first message (which could be SystemMessage)
-2. Added `AssistantMessage` import to demo_pretty_printer.py imports
-3. Added proper error handling if no assistant message found
-4. Ensured both raw and formatted output display the same message with actual content
-
-**Testing**:
-- ✅ All 347 tests pass
-- ✅ Ruff format: All files properly formatted
-- ✅ Ruff check: No linting errors
-- ✅ Demo now correctly displays both raw and formatted message content
-
-**File Changed**: examples/demo_pretty_printer.py:19, 202-232
-
-**Old Implementation**:
+**Phase 1: Investigate** (determine root cause):
 ```python
-async def demo_7_comparison():
-    """Demo 7: Before vs After comparison."""
-    print_section("DEMO 7: Before vs After")
+# Add debug logging to see raw content
+import logging
+logger.debug(f"Raw tool result content: {repr(content_str)}")
+```
 
-    print("WITHOUT pretty printer (raw message):")
-    print("-" * 70)
+**Phase 2: Fix** (based on findings):
 
-    # Collect all messages
-    messages = []
-    async for message in query(
-        prompt="What is Python? Answer in one sentence.",
-        options=ClaudeAgentOptions(max_turns=1)
-    ):
-        messages.append(message)
+If CLI output has extra spaces:
+```python
+def _format_tool_result_content(self, block: ToolResultBlock) -> str:
+    # ... existing code ...
 
-    # Find first assistant message (has actual content)
-    assistant_msg = next(
-        (m for m in messages if isinstance(m, AssistantMessage)),
-        None
+    # Strip leading whitespace from numbered lines
+    lines = content_str.split("\n")
+    cleaned_lines = []
+    for line in lines:
+        # Match pattern: "   1→content" and strip leading spaces before number
+        cleaned = re.sub(r'^\s+(\d+→)', r'\1', line)
+        cleaned_lines.append(cleaned)
+    content_str = "\n".join(cleaned_lines)
+
+    # ... continue with existing formatting ...
+```
+
+If formatter adds spaces:
+- Review `_format_tool_result_content()` indentation logic
+- Ensure indent calculation is correct
+
+**Files to Change**:
+- src/claude_agent_sdk/rendering/formatters.py (_format_tool_result_content)
+- tests/test_rendering_formatters.py (add line number alignment test)
+
+---
+
+### Story 1.2.4: Preserve Indentation in Tool Results
+**Priority**: CRITICAL
+**Effort**: 1 hour
+**Status**: unassigned
+
+**Problem**:
+Tool results are having their indentation whitespace stripped, making code blocks and structured content unreadable. This affects readability of code examples, diffs, and any content with meaningful indentation.
+
+**Current Output** (Demo 3):
+```
+● User:
+  ⎿       1→# Claude Agent SDK Examples
+          2→
+          3→This folder contains examples demonstrating various features of the Claude Agent SDK.
+          4→
+          5→## 📚 Available Examples
+          6→
+          7→- **[Pretty Printer Demos](#pretty-printer-demos)** - Message rendering and formatting (NEW!)
+```
+
+**Expected Output** (preserving markdown list indentation):
+```
+● User:
+  ⎿  1→# Claude Agent SDK Examples
+     2→
+     3→This folder contains examples demonstrating various features of the Claude Agent SDK.
+     4→
+     5→## 📚 Available Examples
+     6→
+     7→   - **[Pretty Printer Demos](#pretty-printer-demos)** - Message rendering and formatting (NEW!)
+```
+
+**Example with code indentation**:
+```
+Current (broken):
+  ⎿  100 +  **Version**: 1.0-experimental (2025-11-06)
+     101 +  **Deployment Target**: `~/.claude/commands/git/`
+
+Expected (preserving indentation):
+  ⎿  100 +     **Version**: 1.0-experimental (2025-11-06)
+     101 +     **Deployment Target**: `~/.claude/commands/git/`
+```
+
+**Root Cause Analysis Needed**:
+- Is content being `.strip()` or `.lstrip()` somewhere?
+- Check message parser content extraction
+- Check formatter line processing
+- Likely in `_format_tool_result_content()` line processing
+
+**Acceptance Criteria**:
+- [ ] Leading whitespace preserved within each line of tool results
+- [ ] Code indentation remains intact
+- [ ] List item indentation preserved
+- [ ] Diff format indentation preserved (git diff output)
+- [ ] Only remove truly empty lines at start/end of content
+- [ ] All existing tests pass
+- [ ] Add test for indentation preservation
+
+**Implementation**:
+
+**Phase 1: Investigate** (find where indentation is stripped):
+```python
+# Check message_parser.py
+# Check formatters.py _format_tool_result_content()
+# Look for .strip(), .lstrip(), or line.strip() calls
+```
+
+**Phase 2: Fix** (based on findings):
+
+If in formatter:
+```python
+def _format_tool_result_content(self, block: ToolResultBlock) -> str:
+    # ... existing code ...
+
+    lines = content_str.split("\n")
+    formatted_lines = []
+
+    for i, line in enumerate(lines):
+        if i == 0:
+            # First line uses tree connector
+            # DON'T strip leading whitespace from line content
+            formatted_lines.append(f"  {self.config.tree_connector}  {line}")
+        else:
+            # Continuation lines align with first line content
+            # PRESERVE indentation within the line
+            formatted_lines.append(f"{indent}{line}")
+
+    return "\n".join(formatted_lines)
+```
+
+Key principle: Only add our formatting indentation (tree connector, continuation indent), but preserve ALL whitespace within the actual content.
+
+If in message parser:
+```python
+# Don't use content.strip() globally
+# Only strip trailing newlines at very end if needed
+# Preserve all internal whitespace
+```
+
+**Files to Change**:
+- src/claude_agent_sdk/rendering/formatters.py (_format_tool_result_content)
+- src/claude_agent_sdk/_internal/message_parser.py (if stripping there)
+- tests/test_rendering_formatters.py (add indentation preservation test)
+
+**Test Case**:
+```python
+def test_preserve_indentation_in_tool_results():
+    """Test that indentation within tool result content is preserved."""
+    formatter = ClaudeCodeFormatter()
+
+    # Content with meaningful indentation
+    indented_content = "line1\n    indented line 2\n        more indented line 3"
+    block = ToolResultBlock(
+        tool_use_id="test",
+        content=indented_content,
+        is_error=False
     )
 
-    if assistant_msg:
-        print(assistant_msg)
-        print()
+    result = formatter._format_tool_result_content(block)
 
-        print("-" * 70)
-        print("\nWITH pretty printer (formatted):")
-        print("-" * 70)
-        display_message(assistant_msg)
-    else:
-        print("No assistant message found in response")
+    # Should preserve the 4 and 8 space indents
+    assert "    indented line 2" in result
+    assert "        more indented line 3" in result
 ```
-
----
-
-### Story 1.1.7: Update Tests for Cost Display Configuration
-**Priority**: HIGH
-**Effort**: 30 minutes
-**Status**: completed
-**Claimed**: 2025-11-06
-**Completed**: 2025-11-06
-
-**Problem**:
-Existing tests assume cost is always shown. Need to update for new default.
-
-**Acceptance Criteria**:
-- [x] All existing tests pass with show_cost=False default
-- [x] Add test for show_cost=True explicitly
-- [x] Add test for show_cost=False (default)
-- [x] Test that cost is hidden when show_cost=False
-- [x] No regressions in test suite
-
-**Implementation**:
-✅ COMPLETED - Tests already exist in test_rendering_formatters.py (tests/test_rendering_formatters.py:289-337)
-
-**Tests Verified**:
-1. `test_format_result_message_with_cost_default` (line 289) - Verifies cost hidden by default
-2. `test_format_result_message_with_cost_enabled` (line 306) - Verifies cost shown when show_cost=True
-3. `test_format_result_message_without_cost` (line 323) - Verifies cost hidden when total_cost_usd=None
-
-**Testing**:
-- ✅ All 347 tests pass (including all 3 cost-related tests)
-- ✅ No regressions in test suite
-- ✅ show_cost=False default behavior verified
-- ✅ show_cost=True explicit behavior verified
 
 ---
 
 ## Testing Plan
 
 ### Manual Testing
-Run all demos and verify:
-1. Demo 1: No cost shown
-2. Demo 2: Three distinct verbosity levels visible
-3. Demo 3: Proper indentation (tree connector aligned)
-4. Demo 4: Truncation indicator shows
-5. Demo 5: (already good, verify no regression)
-6. Demo 6: All UTF-8 characters in real use
-7. Demo 7: Side-by-side comparison works
+Run `demo_pretty_printer.py` and verify:
+1. **Demo 2**: Three visually distinct render levels
+   - MINIMAL: Only text responses
+   - STANDARD: Text + tool names
+   - DETAILED: Text + tool names + full params + outputs
+2. **All demos**: No `<system-reminder>` tags visible
+3. **All demos**: Line numbers properly aligned (2 spaces after tree connector)
+4. **Demo 3**: Indentation preserved in tool results (code blocks, lists, diffs)
 
 ### Automated Testing
 ```bash
 # Run all tests
-python -m pytest tests/test_rendering*.py -v
-
-# Check specific tests
-python -m pytest tests/test_rendering_formatters.py::test_format_result_message_without_cost
-python -m pytest tests/test_rendering_formatters.py::test_format_result_message_with_cost
-```
-
-### Regression Testing
-```bash
-# Full test suite must pass
 python -m pytest tests/ -v
 
-# Code quality
+# Specific test files
+python -m pytest tests/test_rendering_formatters.py -v
+python -m pytest tests/test_message_parser.py -v
+
+# Check code quality
 python -m ruff check src/ tests/ --fix
 python -m ruff format src/ tests/
 python -m mypy src/
 ```
 
----
+### Demo Verification Commands
+```bash
+# Test render levels
+PYTHONPATH=src python examples/demo_pretty_printer.py
 
-## Documentation Updates
-
-### Files to Update
-1. **docs/rendering.md**
-   - Add show_cost configuration option
-   - Explain default behavior matches Claude CLI
-
-2. **README.md**
-   - Update rendering examples (remove cost from output)
-
-3. **examples/DEMO_README.md**
-   - Update expected outputs (no cost shown)
-
-4. **config.py docstrings**
-   - Document show_cost field
+# Or with installed package
+pip install -e .
+python examples/demo_pretty_printer.py
+```
 
 ---
 
 ## Definition of Done
 
-- [x] All 7 stories completed
-- [x] All 347 tests passing
-- [x] Code formatted with ruff
-- [x] Type checking passes (mypy)
-- [ ] All demos run without errors (manual verification pending)
-- [ ] Manual verification of demo outputs (pending)
-- [ ] Documentation updated (pending)
-- [ ] Git commit created (pending)
-- [ ] Changes pushed to remote (pending)
-
----
-
-## Rollout Plan
-
-1. Complete Story 1.1.1 (cost config) first - affects all other stories
-2. Complete Story 1.1.3 (indentation) second - visual bug
-3. Complete Stories 1.1.2, 1.1.4, 1.1.5, 1.1.6 (demo fixes) in parallel
-4. Complete Story 1.1.7 (tests) last
-5. Run full test suite
-6. Manual demo verification
-7. Git commit and push
-
----
-
-## Estimated Timeline
-
-- Story 1.1.1: 1 hour
-- Story 1.1.2: 30 min
-- Story 1.1.3: 1 hour
-- Story 1.1.4: 30 min
-- Story 1.1.5: 30 min
-- Story 1.1.6: 30 min
-- Story 1.1.7: 30 min
-- Testing & QA: 30 min
-- Documentation: 30 min
-
-**Total: ~5.5 hours**
+- [ ] All 4 stories completed
+- [ ] All 347+ tests passing
+- [ ] Code formatted with ruff
+- [ ] Type checking passes (mypy)
+- [ ] Demo 2 shows three distinct render levels
+- [ ] No system reminders in any demo output
+- [ ] Line numbers properly aligned in all demos
+- [ ] Indentation preserved in all tool results
+- [ ] Git commit created
+- [ ] Changes pushed to remote
 
 ---
 
 ## Success Criteria
 
-1. ✅ Cost display hidden by default (matches Claude CLI)
-2. ✅ Demo 2 clearly shows MINIMAL vs STANDARD vs DETAILED
-3. ✅ Demo 3 tool output properly indented
-4. ✅ Demo 4 shows truncation with indicator
-5. ✅ Demo 6 showcases all UTF-8 characters
-6. ✅ Demo 7 shows side-by-side comparison
-7. ✅ All tests pass with new configuration
-8. ✅ Zero regressions in existing functionality
+1. ✅ Demo 2 MINIMAL level shows only text (no tool blocks)
+2. ✅ Demo 2 STANDARD level shows tool names without full details
+3. ✅ Demo 2 DETAILED level shows everything
+4. ✅ Zero `<system-reminder>` tags in demo output
+5. ✅ Line numbers aligned: `⎿  1→` not `⎿       1→`
+6. ✅ Indentation preserved: `     **Version**` not `**Version**`
+7. ✅ All tests pass with new functionality
+8. ✅ Zero regressions in existing features
+
+---
+
+## Progress Log
+
+### 2025-11-06 01:19 - Sprint 1.2 Created
+- Initialized sprint structure
+- Archived Sprint 1.1 to `.claude/implementation/archive/2025-11-06-0119/`
+- Defined 4 critical bug fix stories based on demo testing feedback
+- Root cause: Render level filtering not implemented in formatter
+- Root cause: System reminders not filtered from subprocess output
+- Root cause: Extra whitespace in CLI output or formatter
+- Root cause: Indentation being stripped from tool result content
+
+---
+
+## Notes
+
+**Sprint 1.1 Completion**:
+Sprint 1.1 was completed with all 7 stories finished and 347 tests passing. However, manual demo testing revealed that several features were not working as expected in real usage despite passing tests. This sprint addresses those gaps.
+
+**Lessons Learned**:
+- Tests passing != features working in practice
+- Manual demo testing is critical
+- Need tests that actually verify end-to-end rendering behavior
+- Render levels were configured but not implemented
+
+**Dependencies**:
+- Sprint 1.1 must be completed (all infrastructure in place)
+- No external dependencies

@@ -74,7 +74,9 @@ class TestEndToEndRendering:
     def test_tool_use_workflow(self):
         """Test rendering a workflow with tool use."""
         renderer = MessageRenderer()
-        formatter = ClaudeCodeFormatter()
+        # Use DETAILED level to show tool results
+        config = RendererConfig(render_level=RenderLevel.DETAILED)
+        formatter = ClaudeCodeFormatter(config)
         stream = StringIO()
         handler = StreamHandler(formatter, stream=stream)
         renderer.add_handler(handler)
@@ -215,7 +217,8 @@ class TestEndToEndRendering:
     def test_error_handling_in_tool_results(self):
         """Test that error tool results are properly formatted."""
         renderer = MessageRenderer()
-        formatter = ClaudeCodeFormatter()
+        config = RendererConfig(render_level=RenderLevel.DETAILED)
+        formatter = ClaudeCodeFormatter(config)
         stream = StringIO()
         handler = StreamHandler(formatter, stream=stream)
         renderer.add_handler(handler)
@@ -235,7 +238,9 @@ class TestEndToEndRendering:
 
     def test_long_content_truncation(self):
         """Test that long content is properly truncated."""
-        config = RendererConfig(max_tool_output_length=50)
+        config = RendererConfig(
+            max_tool_output_length=50, render_level=RenderLevel.DETAILED
+        )
         formatter = ClaudeCodeFormatter(config)
         stream = StringIO()
         handler = StreamHandler(formatter, stream=stream)
@@ -269,7 +274,8 @@ class TestEndToEndRendering:
 
     def test_empty_content_handling(self):
         """Test handling of empty or None content."""
-        formatter = ClaudeCodeFormatter()
+        config = RendererConfig(render_level=RenderLevel.DETAILED)
+        formatter = ClaudeCodeFormatter(config)
         stream = StringIO()
         handler = StreamHandler(formatter, stream=stream)
 
@@ -330,7 +336,9 @@ class TestCodeCoverage:
 
     def test_all_message_types_formatted(self):
         """Test that all message types can be formatted."""
-        formatter = ClaudeCodeFormatter()
+        # Use DETAILED level to show all block types including tool results
+        config = RendererConfig(render_level=RenderLevel.DETAILED)
+        formatter = ClaudeCodeFormatter(config)
 
         # UserMessage
         user_msg = UserMessage(content="Test")

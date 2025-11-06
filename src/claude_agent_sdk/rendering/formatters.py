@@ -17,7 +17,7 @@ from ..types import (
     UserMessage,
 )
 from .base import Formatter
-from .config import RendererConfig
+from .config import RendererConfig, RenderLevel
 
 
 class ClaudeCodeFormatter(Formatter):
@@ -93,12 +93,18 @@ class ClaudeCodeFormatter(Formatter):
         return "\n".join(lines)
 
     def format_assistant_message(self, message: AssistantMessage) -> str:
-        """Format an assistant message.
+        """Format an assistant message respecting render_level.
 
         Formats:
-        - Text blocks: "● <text>"
-        - Tool use blocks: "● <tool>(<params>)"
-        - Thinking blocks: "● <thinking text>"
+        - Text blocks: "● <text>" (all levels)
+        - Thinking blocks: "● <thinking text>" (all levels)
+        - Tool use blocks: "● <tool>(<params>)" (STANDARD+)
+        - Tool result blocks: "  ⎿ <output>" (DETAILED+)
+
+        Render level behavior:
+        - MINIMAL: Only text and thinking blocks
+        - STANDARD: + tool use blocks (no outputs)
+        - DETAILED: + tool result blocks
 
         Args:
             message: AssistantMessage to format
@@ -110,22 +116,30 @@ class ClaudeCodeFormatter(Formatter):
 
         for block in message.content:
             if isinstance(block, TextBlock):
-                # Simple text with bullet
+                # Always show text (all levels)
                 lines.append(f"{self.config.bullet} {block.text}")
 
             elif isinstance(block, ThinkingBlock):
-                # Thinking block - render the thinking text
+                # Always show thinking (all levels)
                 lines.append(f"{self.config.bullet} {block.thinking}")
 
-            elif isinstance(block, ToolUseBlock):
-                # Format: ● <tool>(<params>)
+            elif (
+                isinstance(block, ToolUseBlock)
+                and self.config.render_level >= RenderLevel.STANDARD
+            ):
+                # Show tool use at STANDARD level and above
                 formatted_tool = self._format_tool_use(block)
                 lines.append(formatted_tool)
+                # MINIMAL level: skip tool use blocks
 
-            elif isinstance(block, ToolResultBlock):
-                # Format tool result
+            elif (
+                isinstance(block, ToolResultBlock)
+                and self.config.render_level >= RenderLevel.DETAILED
+            ):
+                # Show tool results at DETAILED level and above
                 formatted_result = self._format_tool_result_content(block)
                 lines.append(formatted_result)
+                # MINIMAL/STANDARD: skip tool results
 
         return "\n".join(lines)
 
