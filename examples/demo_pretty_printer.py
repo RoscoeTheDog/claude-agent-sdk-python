@@ -16,7 +16,7 @@ from pathlib import Path
 
 import anyio
 
-from claude_agent_sdk import ClaudeAgentOptions, query
+from claude_agent_sdk import AssistantMessage, ClaudeAgentOptions, query
 from claude_agent_sdk.rendering import (
     ClaudeCodeFormatter,
     FileHandler,
@@ -206,7 +206,7 @@ async def demo_7_comparison():
     print("WITHOUT pretty printer (raw message):")
     print("-" * 70)
 
-    # Collect all messages first
+    # Collect all messages
     messages = []
     async for message in query(
         prompt="What is Python? Answer in one sentence.",
@@ -214,15 +214,22 @@ async def demo_7_comparison():
     ):
         messages.append(message)
 
-    # Show first message raw
-    if messages:
-        print(messages[0])
+    # Find first assistant message (has actual content)
+    assistant_msg = next(
+        (m for m in messages if isinstance(m, AssistantMessage)),
+        None,
+    )
+
+    if assistant_msg:
+        print(assistant_msg)
         print()
 
         print("-" * 70)
         print("\nWITH pretty printer (formatted):")
         print("-" * 70)
-        display_message(messages[0])
+        display_message(assistant_msg)
+    else:
+        print("No assistant message found in response")
 
 
 async def main():

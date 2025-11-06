@@ -250,18 +250,37 @@ Demo just shows "Hello from the pretty printer!" - doesn't demonstrate UTF-8 for
 ### Story 1.1.6: Fix Demo 7 - Display Formatted Output
 **Priority**: CRITICAL
 **Effort**: 30 minutes
-**Status**: unassigned
+**Status**: completed
+**Claimed**: 2025-11-06
+**Completed**: 2025-11-06
 
 **Problem**:
 Formatted section is blank because first message is SystemMessage (filtered out).
 
 **Acceptance Criteria**:
-- [ ] Raw message displays correctly
-- [ ] Formatted message displays correctly
-- [ ] Side-by-side comparison is clear
-- [ ] Shows actual content difference
+- [x] Raw message displays correctly
+- [x] Formatted message displays correctly
+- [x] Side-by-side comparison is clear
+- [x] Shows actual content difference
 
 **Implementation**:
+✅ COMPLETED - Updated demo_pretty_printer.py (examples/demo_pretty_printer.py:202-232)
+
+**Changes Made**:
+1. Modified demo_7_comparison to find first AssistantMessage instead of using first message (which could be SystemMessage)
+2. Added `AssistantMessage` import to demo_pretty_printer.py imports
+3. Added proper error handling if no assistant message found
+4. Ensured both raw and formatted output display the same message with actual content
+
+**Testing**:
+- ✅ All 347 tests pass
+- ✅ Ruff format: All files properly formatted
+- ✅ Ruff check: No linting errors
+- ✅ Demo now correctly displays both raw and formatted message content
+
+**File Changed**: examples/demo_pretty_printer.py:19, 202-232
+
+**Old Implementation**:
 ```python
 async def demo_7_comparison():
     """Demo 7: Before vs After comparison."""
