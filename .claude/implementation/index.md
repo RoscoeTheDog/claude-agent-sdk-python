@@ -92,18 +92,23 @@ class RenderLevel(IntEnum):
 ---
 
 ### Story 2: Abstract Base Classes
-**Status**: unassigned
+**Status**: completed
+**Claimed**: 2025-11-05 15:10
+**Completed**: 2025-11-05 15:25
 **Description**: Implement Formatter and Handler ABCs with filtering logic
 **Acceptance Criteria**:
-- [ ] `Formatter` ABC defined with abstract methods for each message type
-- [ ] Helper methods for text truncation and indentation
-- [ ] `Handler` ABC defined with emit() and should_render()
-- [ ] `MessageRenderer` class with handler management and thread safety
-- [ ] Cannot instantiate ABCs directly (raises TypeError)
-- [ ] All base classes have comprehensive docstrings
+- [x] `Formatter` ABC defined with abstract methods for each message type
+- [x] Helper methods for text truncation and indentation
+- [x] `Handler` ABC defined with emit() and should_render()
+- [x] `MessageRenderer` class with handler management and thread safety
+- [x] Cannot instantiate ABCs directly (raises TypeError)
+- [x] All base classes have comprehensive docstrings
+**Notes**: Implemented in `base.py` with comprehensive docstrings and type hints. All 260 existing tests pass. Mypy type checking passes. Ruff linting passes.
 
 ### Story 2.1: Implement Formatter ABC
-**Status**: unassigned
+**Status**: completed
+**Claimed**: 2025-11-05 15:10
+**Completed**: 2025-11-05 15:25
 **Parent**: Story 2
 **Description**: Abstract base class for message formatters
 **Methods**:
@@ -113,7 +118,9 @@ class RenderLevel(IntEnum):
 - `_indent_lines()` - Indentation helper
 
 ### Story 2.2: Implement Handler ABC
-**Status**: unassigned
+**Status**: completed
+**Claimed**: 2025-11-05 15:10
+**Completed**: 2025-11-05 15:25
 **Parent**: Story 2
 **Description**: Abstract base class for output handlers
 **Methods**:
@@ -122,7 +129,9 @@ class RenderLevel(IntEnum):
 - `handle(message: Message)` - Orchestration (filter + format + emit)
 
 ### Story 2.3: Implement MessageRenderer
-**Status**: unassigned
+**Status**: completed
+**Claimed**: 2025-11-05 15:10
+**Completed**: 2025-11-05 15:25
 **Parent**: Story 2
 **Description**: Main rendering coordinator with handler management
 **Features**:

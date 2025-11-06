@@ -14,10 +14,13 @@ Public API:
     - display_message: Convenience function for quick usage
 """
 
+from .base import Formatter, Handler, MessageRenderer
 from .config import RendererConfig, RenderLevel
 
 # Placeholder exports - will be populated as components are implemented
 __all__ = [
+    "Formatter",
+    "Handler",
     "MessageRenderer",
     "RenderLevel",
     "RendererConfig",
