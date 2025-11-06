@@ -37,14 +37,15 @@ MessageRenderer
 ## Stories
 
 ### Story 1: Core Abstractions & Configuration
-**Status**: unassigned
+**Status**: completed
+**Completed**: 2025-11-05 15:05
 **Description**: Create foundational module structure, enums, and configuration classes
 **Acceptance Criteria**:
-- [ ] Module `claude_agent_sdk.rendering` exists and imports cleanly
-- [ ] `RenderLevel` enum defined with 5 levels (MINIMAL, STANDARD, DETAILED, DEBUG, ALL)
-- [ ] `RendererConfig` dataclass with all configuration fields
-- [ ] UTF-8 character defaults match Claude Code CLI (`●`, `⎿`, `→`, `…`, `·`)
-- [ ] Can create config with defaults: `config = RendererConfig()`
+- [x] Module `claude_agent_sdk.rendering` exists and imports cleanly
+- [x] `RenderLevel` enum defined with 5 levels (MINIMAL, STANDARD, DETAILED, DEBUG, ALL)
+- [x] `RendererConfig` dataclass with all configuration fields
+- [x] UTF-8 character defaults match Claude Code CLI (`●`, `⎿`, `→`, `…`, `·`)
+- [x] Can create config with defaults: `config = RendererConfig()`
 
 ### Story 1.1: Create Module Structure
 **Status**: completed
@@ -76,7 +77,9 @@ class RenderLevel(IntEnum):
 **Notes**: Implemented in `config.py` with comprehensive docstrings. Exported from `__init__.py`. All 260 existing tests pass.
 
 ### Story 1.3: Implement RendererConfig
-**Status**: unassigned
+**Status**: completed
+**Claimed**: 2025-11-05 15:02
+**Completed**: 2025-11-05 15:05
 **Parent**: Story 1
 **Description**: Configuration dataclass with UTF-8 defaults
 **Key Fields**:
@@ -84,6 +87,7 @@ class RenderLevel(IntEnum):
 - Content limits (max_text_length, max_tool_output_length)
 - UTF-8 characters (bullet=`●`, tree_connector=`⎿`, arrow=`→`, ellipsis=`…`)
 - Filtering (render_level, include/exclude message types)
+**Notes**: Implemented in `config.py` with comprehensive field coverage including validation in `__post_init__`. All 260 existing tests pass. Verified all Story 1 parent acceptance criteria are met.
 
 ---
 
