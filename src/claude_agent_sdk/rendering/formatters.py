@@ -3,6 +3,7 @@
 This module provides formatters that convert messages to specific output formats.
 """
 
+import re
 from typing import Any
 
 from ..types import (
@@ -260,6 +261,7 @@ class ClaudeCodeFormatter(Formatter):
         Returns:
             Formatted tool result string
         """
+
         # Handle different content types
         if block.content is None:
             content_str = ""
@@ -298,11 +300,15 @@ class ClaudeCodeFormatter(Formatter):
         indent = " " * (2 + len(self.config.tree_connector) + 2)
 
         for i, line in enumerate(lines):
+            # Strip leading whitespace from lines with line numbers
+            # Pattern: "     1→..." -> "1→..."
+            cleaned_line = re.sub(r"^\s+(\d+→)", r"\1", line)
+
             if i == 0:
                 # First line uses tree connector
-                formatted_lines.append(f"  {self.config.tree_connector}  {line}")
+                formatted_lines.append(f"  {self.config.tree_connector}  {cleaned_line}")
             else:
                 # Continuation lines align with first line content
-                formatted_lines.append(f"{indent}{line}")
+                formatted_lines.append(f"{indent}{cleaned_line}")
 
         return "\n".join(formatted_lines)

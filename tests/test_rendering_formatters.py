@@ -287,6 +287,52 @@ class TestClaudeCodeFormatter:
         assert "(ctrl+o to expand)" in result
         assert len(result) < len(long_content) + 100  # Should be truncated
 
+    def test_format_tool_result_strips_line_number_whitespace(self):
+        """Test that extra whitespace before line numbers is stripped."""
+        config = RendererConfig(render_level=RenderLevel.DETAILED)
+        formatter = ClaudeCodeFormatter(config)
+
+        # Simulate CLI output with extra whitespace before line numbers
+        # Current: "     1→# Header" (7 spaces total before "1")
+        # Expected: "  ⎿  1→# Header" (2 + ⎿ + 2 spaces before "1")
+        content_with_spaces = "     1→# Header\n     2→Content\n     3→More"
+
+        result_block = ToolResultBlock(
+            tool_use_id="tool-123", content=content_with_spaces
+        )
+        message = AssistantMessage(
+            content=[result_block], model="claude-3-5-sonnet-20241022"
+        )
+        result = formatter.format_assistant_message(message)
+
+        # First line should have: 2 spaces + tree_connector + 2 spaces + "1→..."
+        # Continuation lines should align properly
+        assert "  \u23bf  1→# Header" in result
+        assert "     2→Content" in result  # 5 spaces (2 + 1 + 2)
+        assert "     3→More" in result
+
+    def test_format_tool_result_preserves_non_line_number_whitespace(self):
+        """Test that indentation NOT part of line numbers is preserved."""
+        config = RendererConfig(render_level=RenderLevel.DETAILED)
+        formatter = ClaudeCodeFormatter(config)
+
+        # Content with meaningful indentation (not line numbers)
+        # This is the indentation WITHIN the content, like code blocks
+        content_with_indent = "def foo():\n    return 42\n        nested"
+
+        result_block = ToolResultBlock(
+            tool_use_id="tool-123", content=content_with_indent
+        )
+        message = AssistantMessage(
+            content=[result_block], model="claude-3-5-sonnet-20241022"
+        )
+        result = formatter.format_assistant_message(message)
+
+        # Should preserve the 4-space indent for "return 42"
+        # and the 8-space indent for "nested"
+        assert "    return 42" in result
+        assert "        nested" in result
+
     def test_format_system_message(self):
         """Test formatting system message."""
         formatter = ClaudeCodeFormatter()

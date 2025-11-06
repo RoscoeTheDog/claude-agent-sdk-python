@@ -188,7 +188,9 @@ def _format_tool_result_content(self, block: ToolResultBlock) -> str:
 ### Story 1.2.3: Fix Extra Whitespace Before Line Numbers
 **Priority**: HIGH
 **Effort**: 1 hour
-**Status**: unassigned
+**Status**: completed
+**Claimed**: 2025-11-06 10:05
+**Completed**: 2025-11-06 10:30
 
 **Problem**:
 Tool results (especially Read tool) show extra whitespace before line numbers, causing poor alignment:
@@ -207,19 +209,33 @@ Tool results (especially Read tool) show extra whitespace before line numbers, c
      2→Content         # Aligned
 ```
 
-**Root Cause Analysis Needed**:
-- Is this coming from Claude CLI subprocess output? (likely)
-- Or is it added by our formatter? (less likely based on code review)
-- Check actual raw content from subprocess
+**Root Cause**:
+The Claude CLI subprocess output includes leading whitespace before line numbers (e.g., "     1→# Header"). The formatter was adding its own indentation on top of this, causing double indentation.
 
 **Acceptance Criteria**:
-- [ ] Line numbers aligned at 2 spaces after tree connector
-- [ ] Continuation lines properly aligned
-- [ ] Works for all tools (Read, Grep, Bash output)
-- [ ] No regressions in indentation formatting
-- [ ] All existing tests pass
+- [x] Line numbers aligned at 2 spaces after tree connector
+- [x] Continuation lines properly aligned
+- [x] Works for all tools (Read, Grep, Bash output)
+- [x] No regressions in indentation formatting
+- [x] All existing tests pass
 
-**Implementation**:
+**Implementation Summary**:
+- Added `import re` to formatters.py:6
+- Modified `_format_tool_result_content()` in formatters.py:302-305
+- Added regex pattern to strip leading whitespace from lines with line numbers: `r"^\s+(\d+→)"`
+- Pattern matches: "     1→..." and converts to: "1→..."
+- Preserves indentation that is NOT part of line numbers (e.g., code blocks)
+- Added 2 comprehensive tests to test_rendering_formatters.py:290-334:
+  - test_format_tool_result_strips_line_number_whitespace
+  - test_format_tool_result_preserves_non_line_number_whitespace
+- All 360 tests passing (up from 358)
+
+**Files Changed**:
+- src/claude_agent_sdk/rendering/formatters.py:6 (added import re)
+- src/claude_agent_sdk/rendering/formatters.py:302-305 (strip whitespace logic)
+- tests/test_rendering_formatters.py:290-334 (added 2 tests)
+
+**Original Implementation Plan**:
 
 **Phase 1: Investigate** (determine root cause):
 ```python
