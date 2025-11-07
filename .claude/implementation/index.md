@@ -26,7 +26,9 @@ Sprint 1.3 adds comprehensive color and styling support to the Claude Agent SDK,
 ## Stories
 
 ### Story 1.3.1: Theme System Foundation
-**Status**: unassigned
+**Status**: completed
+**Claimed**: 2025-11-07 07:35
+**Completed**: 2025-11-07 07:40
 **Effort**: 2 hours
 **Priority**: CRITICAL (foundation for all color work)
 
@@ -34,19 +36,25 @@ Sprint 1.3 adds comprehensive color and styling support to the Claude Agent SDK,
 Create the core theme system with `Theme`, `StyleRule`, and `ColorDepth` classes. This establishes the CSS-like architecture for all styling work.
 
 **Acceptance Criteria**:
-- [ ] `ColorDepth` enum defined (NONE, BASIC_16, EXTENDED_256, TRUECOLOR)
-- [ ] `StyleRule` dataclass with fg_color, bg_color, bold, dim, italic, underline
-- [ ] `Theme` dataclass with all semantic categories defined
-- [ ] `Theme.claude_code_default()` preset implemented
-- [ ] `Theme.from_preset()` class method for loading named presets
-- [ ] `Theme.from_dict()` for JSON deserialization
-- [ ] `Theme.to_dict()` for JSON serialization
-- [ ] All classes have comprehensive docstrings
-- [ ] Unit tests for Theme serialization/deserialization
+- [x] `ColorDepth` enum defined (NONE, BASIC_16, EXTENDED_256, TRUECOLOR)
+- [x] `StyleRule` dataclass with fg_color, bg_color, bold, dim, italic, underline
+- [x] `Theme` dataclass with all semantic categories defined
+- [x] `Theme.claude_code_default()` preset implemented
+- [x] `Theme.from_preset()` class method for loading named presets
+- [x] `Theme.from_dict()` for JSON deserialization
+- [x] `Theme.to_dict()` for JSON serialization
+- [x] All classes have comprehensive docstrings
+- [x] Unit tests for Theme serialization/deserialization (21 tests, all passing)
 
 **Implementation Files**:
-- Create: `src/claude_agent_sdk/rendering/theme.py`
-- Create: `tests/test_rendering_theme.py`
+- Created: `src/claude_agent_sdk/rendering/theme.py` (241 lines)
+- Created: `tests/test_rendering_theme.py` (253 lines, 21 tests)
+
+**Implementation Notes**:
+- Used `field(default_factory=StyleRule)` for Theme dataclass fields to avoid mutable default error
+- All tests pass (382 total tests including 21 new theme tests)
+- Code formatted with ruff, no style violations
+- Zero regressions in existing functionality
 
 **Semantic Categories to Define**:
 ```python
