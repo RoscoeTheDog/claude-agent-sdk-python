@@ -93,7 +93,9 @@ cost_display: StyleRule
 ---
 
 ### Story 1.3.2: ANSI Encoder with Terminal Detection
-**Status**: unassigned
+**Status**: completed
+**Claimed**: 2025-11-07 08:00
+**Completed**: 2025-11-07 08:05
 **Effort**: 2.5 hours
 **Priority**: CRITICAL (core rendering logic)
 
@@ -101,22 +103,29 @@ cost_display: StyleRule
 Implement the ANSI encoder that converts `StyleRule` objects into ANSI escape sequences, with automatic terminal capability detection and graceful degradation.
 
 **Acceptance Criteria**:
-- [ ] `AnsiEncoder` class implemented in `ansi.py`
-- [ ] Terminal color capability detection via `tput colors`
-- [ ] Truecolor detection via TERM/TERM_PROGRAM inspection
-- [ ] `encode()` method converts StyleRule to ANSI escape sequences
-- [ ] Graceful degradation: truecolor → 256 → 16 → none
-- [ ] Named color support ("red", "bright_cyan", etc.)
-- [ ] RGB tuple support for truecolor: (255, 0, 0)
-- [ ] 256-color approximation from RGB when needed
-- [ ] Font style codes (bold, dim, italic, underline)
-- [ ] Proper ANSI reset codes (\033[0m)
-- [ ] Unit tests for all color depth levels
-- [ ] Unit tests for color conversion functions
+- [x] `AnsiEncoder` class implemented in `ansi.py`
+- [x] Terminal color capability detection via `tput colors`
+- [x] Truecolor detection via TERM/TERM_PROGRAM inspection
+- [x] `encode()` method converts StyleRule to ANSI escape sequences
+- [x] Graceful degradation: truecolor → 256 → 16 → none
+- [x] Named color support ("red", "bright_cyan", etc.)
+- [x] RGB tuple support for truecolor: (255, 0, 0)
+- [x] 256-color approximation from RGB when needed
+- [x] Font style codes (bold, dim, italic, underline)
+- [x] Proper ANSI reset codes (\033[0m)
+- [x] Unit tests for all color depth levels (44 tests, all passing)
+- [x] Unit tests for color conversion functions
 
 **Implementation Files**:
-- Create: `src/claude_agent_sdk/rendering/ansi.py`
-- Create: `tests/test_rendering_ansi.py`
+- Created: `src/claude_agent_sdk/rendering/ansi.py` (418 lines)
+- Created: `tests/test_rendering_ansi.py` (461 lines, 44 tests)
+
+**Implementation Notes**:
+- Fixed RGB-to-16-color conversion to use max component for brightness detection (chromatic colors)
+- All 426 tests pass (382 existing + 44 new ANSI tests)
+- Ruff linting passes (fixed SIM103 simplification)
+- Mypy shows 2 "unreachable" warnings (defensive returns, non-blocking)
+- Zero regressions in existing functionality
 
 **Technical Details**:
 ```python
