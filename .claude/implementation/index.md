@@ -1,494 +1,455 @@
-# Sprint 1.2: Critical Demo and Rendering Fixes
+# Implementation Sprint 1.3: Color and Theme System
 
-**Created**: 2025-11-06 01:19
-**Completed**: 2025-11-06 11:00
-**Status**: completed
-**Sprint Goal**: Fix critical rendering bugs discovered during Sprint 1.1 demo testing
+**Created**: 2025-11-07 07:27
+**Status**: active
+**Sprint Goal**: Implement ANSI color support with CSS-like theming system for enhanced terminal output
 
 ---
 
 ## Sprint Overview
 
-Sprint 1.2 addresses critical bugs discovered during demo_pretty_printer.py testing:
-- Render levels (MINIMAL/STANDARD/DETAILED) not working - all show same output
-- System reminders appearing in user-facing output
-- Extra whitespace before line numbers in tool results
-- Indentation whitespace being stripped from tool results
-- Implement proper render level filtering in formatters
+Sprint 1.3 adds comprehensive color and styling support to the Claude Agent SDK, transforming plain text output into a rich, themed terminal experience that matches Claude Code CLI conventions.
 
-**Estimated Duration**: 4-5 hours
-**Priority**: CRITICAL (blocks production use)
+**Key Features**:
+- ANSI color support with automatic terminal capability detection
+- CSS-like theme system with semantic categories
+- Config-based theme management (no environment variable pollution)
+- Graceful degradation (truecolor → 256-color → 16-color → none)
+- Multiple built-in theme presets
+- Custom theme support via JSON configuration
+
+**Estimated Duration**: 8-10 hours
+**Priority**: HIGH (major UX enhancement)
 
 ---
 
 ## Stories
 
-### Story 1.2.1: Implement Render Level Filtering in Formatter
-**Priority**: CRITICAL
+### Story 1.3.1: Theme System Foundation
+**Status**: unassigned
 **Effort**: 2 hours
-**Status**: completed
-**Claimed**: 2025-11-06 09:34
-**Completed**: 2025-11-06 09:45
+**Priority**: CRITICAL (foundation for all color work)
 
-**Problem**:
-The `ClaudeCodeFormatter.format_assistant_message()` method doesn't check `config.render_level` to control what content is displayed. All three render levels (MINIMAL, STANDARD, DETAILED) show identical output.
-
-**Current Behavior**:
-- MINIMAL: Shows tool use blocks (should hide them)
-- STANDARD: Shows tool use blocks (correct)
-- DETAILED: Shows tool use blocks (correct)
-
-**Expected Behavior**:
-- MINIMAL: Only text blocks, hide ToolUseBlock
-- STANDARD: Text + tool names (ToolUseBlock without full params), hide tool outputs
-- DETAILED: Everything including full tool params and outputs
+**Description**:
+Create the core theme system with `Theme`, `StyleRule`, and `ColorDepth` classes. This establishes the CSS-like architecture for all styling work.
 
 **Acceptance Criteria**:
-- [ ] MINIMAL level hides ToolUseBlock completely
-- [ ] STANDARD level shows ToolUseBlock with tool name and summary params
-- [ ] DETAILED level shows full ToolUseBlock with all parameters
-- [ ] Config options `show_tool_inputs` and `show_tool_outputs` are used correctly
-- [ ] Demo 2 shows visually different output for each level
-- [ ] All existing tests pass
-- [ ] Add tests for each render level behavior
+- [ ] `ColorDepth` enum defined (NONE, BASIC_16, EXTENDED_256, TRUECOLOR)
+- [ ] `StyleRule` dataclass with fg_color, bg_color, bold, dim, italic, underline
+- [ ] `Theme` dataclass with all semantic categories defined
+- [ ] `Theme.claude_code_default()` preset implemented
+- [ ] `Theme.from_preset()` class method for loading named presets
+- [ ] `Theme.from_dict()` for JSON deserialization
+- [ ] `Theme.to_dict()` for JSON serialization
+- [ ] All classes have comprehensive docstrings
+- [ ] Unit tests for Theme serialization/deserialization
 
-**Implementation**:
-Update `format_assistant_message()` in formatters.py (src/claude_agent_sdk/rendering/formatters.py:95-130):
+**Implementation Files**:
+- Create: `src/claude_agent_sdk/rendering/theme.py`
+- Create: `tests/test_rendering_theme.py`
 
+**Semantic Categories to Define**:
 ```python
-def format_assistant_message(self, message: AssistantMessage) -> str:
-    """Format an assistant message respecting render_level."""
-    lines = []
+# Message types
+user_message: StyleRule
+assistant_message: StyleRule
+system_message: StyleRule
 
-    for block in message.content:
-        if isinstance(block, TextBlock):
-            # Always show text (all levels)
-            lines.append(f"{self.config.bullet} {block.text}")
+# Tool-related
+tool_use: StyleRule
+tool_result: StyleRule
+tool_error: StyleRule
 
-        elif isinstance(block, ThinkingBlock):
-            # Always show thinking (all levels)
-            lines.append(f"{self.config.bullet} {block.thinking}")
+# Semantic categories
+error: StyleRule
+warning: StyleRule
+success: StyleRule
+info: StyleRule
+debug: StyleRule
 
-        elif isinstance(block, ToolUseBlock):
-            # Respect render_level for tool use
-            if self.config.render_level >= RenderLevel.STANDARD:
-                formatted_tool = self._format_tool_use(block)
-                lines.append(formatted_tool)
-            # MINIMAL level: skip tool use blocks
+# UI elements
+bullet: StyleRule
+tree_connector: StyleRule
+metadata: StyleRule
+truncation: StyleRule
 
-        elif isinstance(block, ToolResultBlock):
-            # Respect render_level for tool results
-            if self.config.render_level >= RenderLevel.DETAILED:
-                formatted_result = self._format_tool_result_content(block)
-                lines.append(formatted_result)
-            # MINIMAL/STANDARD: skip tool results
+# Code elements
+code_block: StyleRule
+inline_code: StyleRule
 
-    return "\n".join(lines)
+# Special
+thinking: StyleRule
+cost_display: StyleRule
 ```
-
-**Files to Change**:
-- src/claude_agent_sdk/rendering/formatters.py (format_assistant_message method)
-- tests/test_rendering_formatters.py (add render level tests)
 
 ---
 
-### Story 1.2.2: Filter System Reminders from Tool Results
-**Priority**: CRITICAL
-**Effort**: 1 hour
-**Status**: completed
-**Claimed**: 2025-11-06 09:51
-**Completed**: 2025-11-06 09:56
+### Story 1.3.2: ANSI Encoder with Terminal Detection
+**Status**: unassigned
+**Effort**: 2.5 hours
+**Priority**: CRITICAL (core rendering logic)
 
-**Problem**:
-Claude Code CLI subprocess output includes `<system-reminder>` tags that are being captured in tool results and displayed to end users. These are internal Claude Code messages that should never be visible in SDK output.
-
-**Current Output**:
-```
-● User:
-  ⎿       1→# Claude Agent SDK Examples
-          2→
-
-     <system-reminder>
-     Whenever you read a file, you should consider whether it would be considered malware...
-     </system-reminder>
-```
-
-**Expected Output**:
-```
-● User:
-  ⎿  1→# Claude Agent SDK Examples
-     2→
-```
+**Description**:
+Implement the ANSI encoder that converts `StyleRule` objects into ANSI escape sequences, with automatic terminal capability detection and graceful degradation.
 
 **Acceptance Criteria**:
-- [ ] All `<system-reminder>...</system-reminder>` blocks removed from tool results
-- [ ] Removal happens before formatting (in message parser or formatter)
-- [ ] No extra blank lines left after removal
-- [ ] Works for all tool result types (Read, Glob, Grep, etc.)
-- [ ] All existing tests pass
-- [ ] Add test for system reminder filtering
+- [ ] `AnsiEncoder` class implemented in `ansi.py`
+- [ ] Terminal color capability detection via `tput colors`
+- [ ] Truecolor detection via TERM/TERM_PROGRAM inspection
+- [ ] `encode()` method converts StyleRule to ANSI escape sequences
+- [ ] Graceful degradation: truecolor → 256 → 16 → none
+- [ ] Named color support ("red", "bright_cyan", etc.)
+- [ ] RGB tuple support for truecolor: (255, 0, 0)
+- [ ] 256-color approximation from RGB when needed
+- [ ] Font style codes (bold, dim, italic, underline)
+- [ ] Proper ANSI reset codes (\033[0m)
+- [ ] Unit tests for all color depth levels
+- [ ] Unit tests for color conversion functions
 
-**Implementation Options**:
+**Implementation Files**:
+- Create: `src/claude_agent_sdk/rendering/ansi.py`
+- Create: `tests/test_rendering_ansi.py`
 
-**Option 1: Filter in Message Parser** (recommended - catches at source):
-Update `_internal/message_parser.py` to strip system reminders from content before creating ToolResultBlock:
-
+**Technical Details**:
 ```python
-import re
+# ANSI escape sequence format: \033[{codes}m{text}\033[0m
+# Codes are semicolon-separated: \033[1;31m = bold + red
 
-def _strip_system_reminders(content: str) -> str:
-    """Remove <system-reminder> blocks from content."""
-    pattern = r'\s*<system-reminder>.*?</system-reminder>\s*'
-    return re.sub(pattern, '', content, flags=re.DOTALL)
+# Font styles
+1 = bold
+2 = dim
+3 = italic
+4 = underline
 
-# In parse_tool_result or similar:
-content = _strip_system_reminders(raw_content)
+# 16 basic colors (foreground)
+30-37 = black, red, green, yellow, blue, magenta, cyan, white
+90-97 = bright variants
+
+# 256-color mode
+38;5;{N} = foreground color N (0-255)
+48;5;{N} = background color N (0-255)
+
+# Truecolor mode
+38;2;{R};{G};{B} = foreground RGB
+48;2;{R};{G};{B} = background RGB
 ```
-
-**Option 2: Filter in Formatter**:
-Update `_format_tool_result_content()` to strip before formatting:
-
-```python
-def _format_tool_result_content(self, block: ToolResultBlock) -> str:
-    # ... existing code ...
-    content_str = self._strip_system_reminders(content_str)
-    # ... rest of formatting ...
-```
-
-**Files to Change**:
-- src/claude_agent_sdk/_internal/message_parser.py (Option 1, recommended)
-  OR
-- src/claude_agent_sdk/rendering/formatters.py (Option 2, fallback)
-- tests/test_message_parser.py or tests/test_rendering_formatters.py (add filtering test)
-
-**Implementation Summary**:
-- Chose Option 1: Filter in message parser (catches at source)
-- Added `_strip_system_reminders()` helper function to message_parser.py:95-131
-- Applied filtering in two locations where ToolResultBlock is created:
-  - User messages: message_parser.py:104-106
-  - Assistant messages: message_parser.py:149
-- Added 7 comprehensive tests to test_message_parser.py:286-431:
-  - User message tool results
-  - Assistant message tool results
-  - Multiple system reminders
-  - Multiline content
-  - None content handling
-  - Content without reminders (no change)
-- All 358 tests passing
-
-**Acceptance Criteria Status**:
-- [x] All `<system-reminder>...</system-reminder>` blocks removed from tool results
-- [x] Removal happens before formatting (in message parser)
-- [x] No extra blank lines left after removal (regex strips surrounding whitespace)
-- [x] Works for all tool result types (filters all ToolResultBlock content)
-- [x] All existing tests pass (358 tests passing)
-- [x] Add test for system reminder filtering (7 new tests added)
 
 ---
 
-### Story 1.2.3: Fix Extra Whitespace Before Line Numbers
+### Story 1.3.3: Enhanced RendererConfig with Theme Support
+**Status**: unassigned
+**Effort**: 2 hours
 **Priority**: HIGH
-**Effort**: 1 hour
-**Status**: completed
-**Claimed**: 2025-11-06 10:05
-**Completed**: 2025-11-06 10:30
 
-**Problem**:
-Tool results (especially Read tool) show extra whitespace before line numbers, causing poor alignment:
-
-**Current**:
-```
-● User:
-  ⎿       1→# Header    # 7 spaces before "1→"
-          2→Content     # Misaligned
-```
-
-**Expected**:
-```
-● User:
-  ⎿  1→# Header        # 2 spaces before "1→"
-     2→Content         # Aligned
-```
-
-**Root Cause**:
-The Claude CLI subprocess output includes leading whitespace before line numbers (e.g., "     1→# Header"). The formatter was adding its own indentation on top of this, causing double indentation.
+**Description**:
+Extend the existing `RendererConfig` class to support theme configuration, color settings, and config file loading with hierarchical overrides.
 
 **Acceptance Criteria**:
-- [x] Line numbers aligned at 2 spaces after tree connector
-- [x] Continuation lines properly aligned
-- [x] Works for all tools (Read, Grep, Bash output)
-- [x] No regressions in indentation formatting
-- [x] All existing tests pass
+- [ ] Add `theme: Theme` field with `claude_code_default()` factory
+- [ ] Add `color_enabled: bool = True` field
+- [ ] Add `color_depth: ColorDepth | None = None` field (auto-detect)
+- [ ] Add `screen_reader_mode: bool = False` field (for future use)
+- [ ] Implement `from_file(path)` class method for JSON loading
+- [ ] Implement `load_defaults()` with cascading config priority
+- [ ] Implement `to_file(path)` for config export
+- [ ] Implement `_detect_color_depth()` private method
+- [ ] Implement `_supports_truecolor()` private method
+- [ ] Implement `_merge_configs()` for hierarchical overrides
+- [ ] Handle TTY detection (disable colors if not TTY)
+- [ ] Unit tests for config loading/saving
+- [ ] Unit tests for config merging logic
+- [ ] Unit tests for color depth detection
 
-**Implementation Summary**:
-- Added `import re` to formatters.py:6
-- Modified `_format_tool_result_content()` in formatters.py:302-305
-- Added regex pattern to strip leading whitespace from lines with line numbers: `r"^\s+(\d+→)"`
-- Pattern matches: "     1→..." and converts to: "1→..."
-- Preserves indentation that is NOT part of line numbers (e.g., code blocks)
-- Added 2 comprehensive tests to test_rendering_formatters.py:290-334:
-  - test_format_tool_result_strips_line_number_whitespace
-  - test_format_tool_result_preserves_non_line_number_whitespace
-- All 360 tests passing (up from 358)
+**Config Priority** (highest to lowest):
+1. Explicit `RendererConfig()` passed to constructor
+2. Project-level: `./.claude-sdk/config.json`
+3. User-level: `~/.claude-sdk/config.json`
+4. Built-in defaults
 
-**Files Changed**:
-- src/claude_agent_sdk/rendering/formatters.py:6 (added import re)
-- src/claude_agent_sdk/rendering/formatters.py:302-305 (strip whitespace logic)
-- tests/test_rendering_formatters.py:290-334 (added 2 tests)
-
-**Original Implementation Plan**:
-
-**Phase 1: Investigate** (determine root cause):
-```python
-# Add debug logging to see raw content
-import logging
-logger.debug(f"Raw tool result content: {repr(content_str)}")
-```
-
-**Phase 2: Fix** (based on findings):
-
-If CLI output has extra spaces:
-```python
-def _format_tool_result_content(self, block: ToolResultBlock) -> str:
-    # ... existing code ...
-
-    # Strip leading whitespace from numbered lines
-    lines = content_str.split("\n")
-    cleaned_lines = []
-    for line in lines:
-        # Match pattern: "   1→content" and strip leading spaces before number
-        cleaned = re.sub(r'^\s+(\d+→)', r'\1', line)
-        cleaned_lines.append(cleaned)
-    content_str = "\n".join(cleaned_lines)
-
-    # ... continue with existing formatting ...
-```
-
-If formatter adds spaces:
-- Review `_format_tool_result_content()` indentation logic
-- Ensure indent calculation is correct
-
-**Files to Change**:
-- src/claude_agent_sdk/rendering/formatters.py (_format_tool_result_content)
-- tests/test_rendering_formatters.py (add line number alignment test)
+**Implementation Files**:
+- Modify: `src/claude_agent_sdk/rendering/config.py`
+- Create: `tests/test_rendering_config_loading.py`
 
 ---
 
-### Story 1.2.4: Preserve Indentation in Tool Results
-**Priority**: CRITICAL
-**Effort**: 1 hour
-**Status**: completed
-**Claimed**: 2025-11-06 10:35
-**Completed**: 2025-11-06 11:00
+### Story 1.3.4: Semantic Block Classifier
+**Status**: unassigned
+**Effort**: 1.5 hours
+**Priority**: HIGH
 
-**Problem**:
-Tool results are having their indentation whitespace stripped, making code blocks and structured content unreadable. This affects readability of code examples, diffs, and any content with meaningful indentation.
-
-**Current Output** (Demo 3):
-```
-● User:
-  ⎿       1→# Claude Agent SDK Examples
-          2→
-          3→This folder contains examples demonstrating various features of the Claude Agent SDK.
-          4→
-          5→## 📚 Available Examples
-          6→
-          7→- **[Pretty Printer Demos](#pretty-printer-demos)** - Message rendering and formatting (NEW!)
-```
-
-**Expected Output** (preserving markdown list indentation):
-```
-● User:
-  ⎿  1→# Claude Agent SDK Examples
-     2→
-     3→This folder contains examples demonstrating various features of the Claude Agent SDK.
-     4→
-     5→## 📚 Available Examples
-     6→
-     7→   - **[Pretty Printer Demos](#pretty-printer-demos)** - Message rendering and formatting (NEW!)
-```
-
-**Example with code indentation**:
-```
-Current (broken):
-  ⎿  100 +  **Version**: 1.0-experimental (2025-11-06)
-     101 +  **Deployment Target**: `~/.claude/commands/git/`
-
-Expected (preserving indentation):
-  ⎿  100 +     **Version**: 1.0-experimental (2025-11-06)
-     101 +     **Deployment Target**: `~/.claude/commands/git/`
-```
-
-**Root Cause Analysis Needed**:
-- Is content being `.strip()` or `.lstrip()` somewhere?
-- Check message parser content extraction
-- Check formatter line processing
-- Likely in `_format_tool_result_content()` line processing
+**Description**:
+Create the `BlockClassifier` that maps content blocks to semantic categories for theming. Uses type-based classification (authoritative) and content heuristics (fallback).
 
 **Acceptance Criteria**:
-- [x] Leading whitespace preserved within each line of tool results
-- [x] Code indentation remains intact
-- [x] List item indentation preserved
-- [x] Diff format indentation preserved (git diff output)
-- [x] Only remove truly empty lines at start/end of content
-- [x] All existing tests pass (361 tests passing)
-- [x] Add test for indentation preservation
+- [ ] `BlockClassifier` class implemented in `classifier.py`
+- [ ] `classify(block)` returns semantic category name
+- [ ] Tier 1: Type-based classification for ToolResultBlock, ToolUseBlock
+- [ ] Tier 2: Tool name classification (Bash, Read, Write, etc.)
+- [ ] Tier 3: Content heuristics for TextBlock (error/warning/success patterns)
+- [ ] `_matches_error()`, `_matches_warning()`, `_matches_success()` helpers
+- [ ] Regex patterns for common error/warning/success text
+- [ ] Unit tests for all classification tiers
+- [ ] Unit tests for edge cases (empty text, multi-line, etc.)
 
-**Implementation**:
+**Implementation Files**:
+- Create: `src/claude_agent_sdk/rendering/classifier.py`
+- Create: `tests/test_rendering_classifier.py`
 
-**Phase 1: Investigate** (find where indentation is stripped):
+**Classification Logic**:
 ```python
-# Check message_parser.py
-# Check formatters.py _format_tool_result_content()
-# Look for .strip(), .lstrip(), or line.strip() calls
+# Tier 1: Authoritative (type-based)
+ToolResultBlock.is_error → "tool_error"
+ToolResultBlock (success) → "tool_result"
+ToolUseBlock → classify by tool name
+
+# Tier 2: Tool categories
+["Bash", "KillShell"] → "command"
+["Read", "Write", "Edit"] → "file_operation"
+["Grep", "Glob", "WebSearch"] → "search"
+
+# Tier 3: Content heuristics (TextBlock)
+Starts with "error:", "❌", "failed" → "error"
+Starts with "warning:", "⚠️" → "warning"
+Starts with "success:", "✅", "completed" → "success"
 ```
 
-**Phase 2: Fix** (based on findings):
+---
 
-If in formatter:
+### Story 1.3.5: Update ClaudeCodeFormatter with Color Support
+**Status**: unassigned
+**Effort**: 2 hours
+**Priority**: HIGH
+
+**Description**:
+Integrate the theme system into the existing `ClaudeCodeFormatter` by adding the `_style()` method and updating all formatting methods to apply colors.
+
+**Acceptance Criteria**:
+- [ ] Add `BlockClassifier` instance to formatter
+- [ ] Add `AnsiEncoder` instance to formatter
+- [ ] Implement `_style(text, category)` helper method
+- [ ] Update `format_user_message()` to apply styles
+- [ ] Update `format_assistant_message()` to apply styles
+- [ ] Update `format_system_message()` to apply styles
+- [ ] Update `format_result_message()` to apply styles
+- [ ] Update `_format_tool_use()` to apply styles
+- [ ] Update `_format_tool_result_content()` to apply styles
+- [ ] Respect `color_enabled` flag (skip styling if false)
+- [ ] Preserve existing formatting logic (line numbers, indentation, etc.)
+- [ ] Unit tests for styled output
+- [ ] Unit tests for color-disabled mode
+- [ ] Integration tests with full messages
+
+**Implementation Files**:
+- Modify: `src/claude_agent_sdk/rendering/formatters.py`
+- Modify: `tests/test_rendering_formatters.py`
+
+**Example Integration**:
 ```python
-def _format_tool_result_content(self, block: ToolResultBlock) -> str:
-    # ... existing code ...
-
-    lines = content_str.split("\n")
-    formatted_lines = []
-
-    for i, line in enumerate(lines):
-        if i == 0:
-            # First line uses tree connector
-            # DON'T strip leading whitespace from line content
-            formatted_lines.append(f"  {self.config.tree_connector}  {line}")
-        else:
-            # Continuation lines align with first line content
-            # PRESERVE indentation within the line
-            formatted_lines.append(f"{indent}{line}")
-
-    return "\n".join(formatted_lines)
+def format_user_message(self, message: UserMessage) -> str:
+    if isinstance(message.content, str):
+        bullet = self._style(self.config.bullet, "bullet")
+        label = self._style("User:", "user_message")
+        return f"{bullet} {label} {message.content}"
+    # ... rest of implementation
 ```
 
-Key principle: Only add our formatting indentation (tree connector, continuation indent), but preserve ALL whitespace within the actual content.
+---
 
-If in message parser:
-```python
-# Don't use content.strip() globally
-# Only strip trailing newlines at very end if needed
-# Preserve all internal whitespace
+### Story 1.3.6: Built-in Theme Presets
+**Status**: unassigned
+**Effort**: 1.5 hours
+**Priority**: MEDIUM
+
+**Description**:
+Create a collection of built-in theme presets that users can choose from. Start with Claude Code default, then add popular terminal color schemes.
+
+**Acceptance Criteria**:
+- [ ] `Theme.claude_code_default()` - Official Claude Code CLI colors
+- [ ] `Theme.solarized_dark()` - Popular Solarized Dark theme
+- [ ] `Theme.solarized_light()` - Solarized Light variant
+- [ ] `Theme.gruvbox()` - Gruvbox color scheme
+- [ ] `Theme.nord()` - Nord color scheme
+- [ ] `Theme.monochrome()` - Bold/dim only, no colors
+- [ ] `Theme.high_contrast()` - Accessibility-focused theme
+- [ ] Update `from_preset()` to support all themes
+- [ ] Documentation for each theme (when to use)
+- [ ] Unit tests for each preset
+- [ ] Visual verification examples in `examples/`
+
+**Implementation Files**:
+- Modify: `src/claude_agent_sdk/rendering/theme.py`
+- Create: `examples/demo_themes.py`
+
+**Theme Requirements**:
+- **claude_code_default**: Reverse-engineer from actual Claude Code CLI
+- **solarized_dark/light**: Use official Solarized palette
+- **gruvbox**: Use official Gruvbox palette
+- **nord**: Use official Nord palette
+- **monochrome**: No colors, bold for emphasis, dim for metadata
+- **high_contrast**: Maximum contrast for accessibility
+
+---
+
+### Story 1.3.7: Reverse-Engineer Claude Code CLI Colors
+**Status**: unassigned
+**Effort**: 1 hour
+**Priority**: MEDIUM
+
+**Description**:
+Run the actual Claude Code CLI in various scenarios to capture and document the exact colors used for each element type. This ensures our `claude_code_default()` theme is accurate.
+
+**Acceptance Criteria**:
+- [ ] Capture CLI output for user messages
+- [ ] Capture CLI output for assistant messages
+- [ ] Capture CLI output for tool calls (Read, Write, Bash, etc.)
+- [ ] Capture CLI output for tool results (success and error)
+- [ ] Capture CLI output for system messages
+- [ ] Capture CLI output for metadata (cost, timing)
+- [ ] Document RGB values or closest ANSI color codes
+- [ ] Create visual comparison: SDK output vs actual CLI
+- [ ] Update `Theme.claude_code_default()` with findings
+- [ ] Add screenshots or color samples to documentation
+
+**Implementation Files**:
+- Modify: `src/claude_agent_sdk/rendering/theme.py`
+- Create: `.claude/implementation/stories/1.3.7-color-analysis.md`
+
+**Methodology**:
+1. Run Claude Code CLI with various prompts
+2. Capture screenshots with true colors visible
+3. Use color picker tool to extract RGB values
+4. Map to ANSI 256-color palette approximations
+5. Test in 16-color mode to verify fallback colors
+
+---
+
+### Story 1.3.8: Config File Examples and Documentation
+**Status**: unassigned
+**Effort**: 1 hour
+**Priority**: MEDIUM
+
+**Description**:
+Create example configuration files and documentation explaining how to customize themes and colors.
+
+**Acceptance Criteria**:
+- [ ] Example user-level config: `examples/config/user-config.json`
+- [ ] Example project-level config: `examples/config/project-config.json`
+- [ ] Example custom theme: `examples/config/custom-theme.json`
+- [ ] README section documenting theme system
+- [ ] README section documenting config file locations
+- [ ] README section documenting color depth detection
+- [ ] README section documenting how to disable colors
+- [ ] Code comments in example files explaining each option
+- [ ] Migration guide from Sprint 1.2 to 1.3
+
+**Implementation Files**:
+- Create: `examples/config/user-config.json`
+- Create: `examples/config/project-config.json`
+- Create: `examples/config/custom-theme.json`
+- Modify: `README.md` (add Theme System section)
+
+**Example Config**:
+```json
+{
+  "theme": "claude_code",
+  "color_enabled": true,
+  "color_depth": null,
+  "render_level": 1,
+  "show_cost": false
+}
 ```
 
-**Files to Change**:
-- src/claude_agent_sdk/rendering/formatters.py (_format_tool_result_content)
-- src/claude_agent_sdk/_internal/message_parser.py (if stripping there)
-- tests/test_rendering_formatters.py (add indentation preservation test)
+---
 
-**Test Case**:
-```python
-def test_preserve_indentation_in_tool_results():
-    """Test that indentation within tool result content is preserved."""
-    formatter = ClaudeCodeFormatter()
+### Story 1.3.9: Integration with ClaudeSDKClient
+**Status**: unassigned
+**Effort**: 1 hour
+**Priority**: HIGH
 
-    # Content with meaningful indentation
-    indented_content = "line1\n    indented line 2\n        more indented line 3"
-    block = ToolResultBlock(
-        tool_use_id="test",
-        content=indented_content,
-        is_error=False
-    )
+**Description**:
+Update the `ClaudeSDKClient` to automatically load config with theme support, ensuring the entire system uses the new theme system by default.
 
-    result = formatter._format_tool_result_content(block)
+**Acceptance Criteria**:
+- [ ] Update `__init__()` to accept optional `renderer_config`
+- [ ] If no config provided, call `RendererConfig.load_defaults()`
+- [ ] Pass config to formatter initialization
+- [ ] Update docstrings to mention theme support
+- [ ] Update type hints
+- [ ] Integration test with custom theme
+- [ ] Integration test with config file loading
+- [ ] Verify no regressions in existing functionality
 
-    # Should preserve the 4 and 8 space indents
-    assert "    indented line 2" in result
-    assert "        more indented line 3" in result
-```
+**Implementation Files**:
+- Modify: `src/claude_agent_sdk/client.py`
+- Modify: `tests/test_client.py`
 
-**Implementation Summary**:
-This story was **already completed** by Story 1.2.3! Investigation revealed:
+---
 
-1. **Root Cause**: Story 1.2.3 added regex `re.sub(r"^\s+(\d+→)", r"\1", line)` to formatters.py:305
-2. **How it works**:
-   - Strips whitespace BEFORE line numbers (e.g., `"     7→"` becomes `"7→"`)
-   - Preserves whitespace AFTER the arrow (e.g., `"7→   - item"` keeps the 3 spaces)
-3. **Testing**: Added `test_format_tool_result_preserves_indentation_after_line_numbers()` to verify
-4. **Result**: All 361 tests pass, indentation is correctly preserved
+### Story 1.3.10: Demo Application with Theme Showcase
+**Status**: unassigned
+**Effort**: 1.5 hours
+**Priority**: LOW
 
-**Files Changed**:
-- tests/test_rendering_formatters.py:336-365 (added comprehensive test)
-- .claude/implementation/index.md (marked story completed)
+**Description**:
+Create a comprehensive demo application that showcases all themes and color features, serving as both a visual test and user documentation.
 
-**Key Findings**:
-- No `.strip()` or `.lstrip()` calls found in formatters.py that affect content
-- The subprocess transport's `.strip()` calls only affect JSON parsing, not content
-- The regex in Story 1.2.3 already handles both requirements:
-  - Remove CLI formatting whitespace (before →)
-  - Preserve meaningful indentation (after →)
+**Acceptance Criteria**:
+- [ ] Demo shows all built-in themes side-by-side
+- [ ] Demo shows different message types (user, assistant, system)
+- [ ] Demo shows tool calls and results (success and error)
+- [ ] Demo shows all semantic categories (error, warning, success, info)
+- [ ] Demo shows color depth degradation (truecolor → 256 → 16)
+- [ ] Demo includes interactive theme switcher
+- [ ] Demo works in both color and no-color modes
+- [ ] Clean, well-commented code
+- [ ] Instructions for running in README
 
-**Superseded By**: Story 1.2.3 (which implemented both whitespace fixing AND indentation preservation)
-
-**ADDENDUM - Post-Demo Testing (2025-11-06 11:30)**:
-
-Manual testing with demo_pretty_printer.py revealed the initial fix was INCOMPLETE:
-
-**New Problem Discovered**:
-- Story 1.2.3's regex kept line numbers: `"     7→   - item"` → `"7→   - item"`
-- But Claude Code CLI shows clean format WITHOUT line numbers: `"   - item"`
-- This caused the SDK output to still show line numbers in tool results
-
-**Root Cause**:
-- The CLI provides TWO rendering modes: clean (default) vs. with line numbers (explicit)
-- Our SDK was always showing the line-numbered format
-- Need to completely REMOVE line numbers, not just strip whitespace before them
-
-**Final Fix** (commit 277025c):
-- Changed regex from `r"^\s+(\d+→)"` to `r"^\s*\d+→"`
-- Now completely removes line numbers: `"     7→   - item"` → `"   - item"`
-- Preserves indentation after the arrow
-- Matches Claude Code CLI's default clean display behavior
-
-**Testing**:
-- All 361 tests passing
-- Manual test confirms: No line numbers, indentation preserved
-- SDK output now matches CLI's clean format
-
-**Files Changed** (additional):
-- src/claude_agent_sdk/rendering/formatters.py:303-306 (updated regex again)
-- tests/test_rendering_formatters.py:290-373 (updated tests to verify line number removal)
+**Implementation Files**:
+- Create: `examples/demo_themes.py`
+- Modify: `examples/README.md`
 
 ---
 
 ## Testing Plan
 
+### Unit Tests (per story)
+Each story includes unit tests for its components:
+- Story 1.3.1: Theme serialization/deserialization
+- Story 1.3.2: ANSI encoding, color conversion, terminal detection
+- Story 1.3.3: Config loading, merging, file I/O
+- Story 1.3.4: Block classification logic
+- Story 1.3.5: Styled output, color-disabled mode
+- Story 1.3.6: Theme presets
+- Story 1.3.9: Client integration
+
+### Integration Tests
+- Full message rendering with colors
+- Config file loading → theme application → output
+- Theme switching without restart
+- Color depth degradation
+
 ### Manual Testing
-Run `demo_pretty_printer.py` and verify:
-1. **Demo 2**: Three visually distinct render levels
-   - MINIMAL: Only text responses
-   - STANDARD: Text + tool names
-   - DETAILED: Text + tool names + full params + outputs
-2. **All demos**: No `<system-reminder>` tags visible
-3. **All demos**: Line numbers properly aligned (2 spaces after tree connector)
-4. **Demo 3**: Indentation preserved in tool results (code blocks, lists, diffs)
-
-### Automated Testing
 ```bash
-# Run all tests
-python -m pytest tests/ -v
+# Test with different color depths
+TERM=xterm python examples/demo_themes.py           # 16 colors
+TERM=xterm-256color python examples/demo_themes.py  # 256 colors
+# Default terminal                                    # Truecolor
 
-# Specific test files
-python -m pytest tests/test_rendering_formatters.py -v
-python -m pytest tests/test_message_parser.py -v
+# Test with colors disabled
+python examples/demo_themes.py --no-color
 
-# Check code quality
-python -m ruff check src/ tests/ --fix
-python -m ruff format src/ tests/
-python -m mypy src/
+# Test config loading
+mkdir -p ~/.claude-sdk
+cp examples/config/user-config.json ~/.claude-sdk/config.json
+python examples/demo_themes.py
 ```
 
-### Demo Verification Commands
+### Regression Testing
 ```bash
-# Test render levels
-PYTHONPATH=src python examples/demo_pretty_printer.py
+# Ensure all existing tests still pass
+python -m pytest tests/ -v
 
-# Or with installed package
-pip install -e .
+# Verify Sprint 1.1 and 1.2 fixes remain intact
 python examples/demo_pretty_printer.py
 ```
 
@@ -496,68 +457,84 @@ python examples/demo_pretty_printer.py
 
 ## Definition of Done
 
-- [x] All 4 stories completed
-- [x] All 361 tests passing (up from 347)
-- [x] Code formatted with ruff
-- [x] Type checking passes (mypy) - pre-existing errors only
-- [x] Demo 2 shows three distinct render levels (verified in Story 1.2.1)
-- [x] No system reminders in any demo output (verified in Story 1.2.2)
-- [x] Line numbers properly aligned in all demos (verified in Story 1.2.3)
-- [x] Indentation preserved in all tool results (verified in Story 1.2.4)
-- [x] Git commits created for all 4 stories
-- [x] Changes pushed to remote
+- [ ] All 10 stories completed
+- [ ] All unit tests passing (target: 450+ tests total, up from 361)
+- [ ] All integration tests passing
+- [ ] Code formatted with ruff
+- [ ] Type checking passes (mypy)
+- [ ] Manual testing confirms color output in terminal
+- [ ] Theme presets visually verified
+- [ ] Config file loading works from both user and project levels
+- [ ] Documentation updated (README, docstrings)
+- [ ] Example configs and demos created
+- [ ] Git commits created for each story
+- [ ] Sprint 1.3 marked completed in index.md
 
 ---
 
 ## Success Criteria
 
-1. ✅ Demo 2 MINIMAL level shows only text (no tool blocks)
-2. ✅ Demo 2 STANDARD level shows tool names without full details
-3. ✅ Demo 2 DETAILED level shows everything
-4. ✅ Zero `<system-reminder>` tags in demo output
-5. ✅ Line numbers aligned: `⎿  1→` not `⎿       1→`
-6. ✅ Indentation preserved: `     **Version**` not `**Version**`
-7. ✅ All tests pass with new functionality
-8. ✅ Zero regressions in existing features
+1. ✅ Colors display correctly in modern terminals (PowerShell, etc.)
+2. ✅ Theme system works like CSS (semantic categories → style rules)
+3. ✅ Config-based customization (no env var pollution)
+4. ✅ Graceful degradation across color depths
+5. ✅ Claude Code default theme matches actual CLI
+6. ✅ Multiple theme presets available
+7. ✅ Zero regressions from Sprint 1.1 and 1.2
+8. ✅ All tests pass with new functionality
 
 ---
 
 ## Progress Log
 
-### 2025-11-06 01:19 - Sprint 1.2 Created
+### 2025-11-07 07:27 - Sprint 1.3 Created
 - Initialized sprint structure
-- Archived Sprint 1.1 to `.claude/implementation/archive/2025-11-06-0119/`
-- Defined 4 critical bug fix stories based on demo testing feedback
-- Root cause: Render level filtering not implemented in formatter
-- Root cause: System reminders not filtered from subprocess output
-- Root cause: Extra whitespace in CLI output or formatter
-- Root cause: Indentation being stripped from tool result content
-
-### 2025-11-06 11:00 - Sprint 1.2 Completed ✅
-- All 4 stories completed successfully
-- Story 1.2.1: Implemented render level filtering (MINIMAL/STANDARD/DETAILED)
-- Story 1.2.2: Filtered system reminders from tool results
-- Story 1.2.3: Fixed extra whitespace before line numbers
-- Story 1.2.4: Verified indentation preservation (superseded by 1.2.3)
-- Added 14 new tests (347 → 361 total)
-- All commits pushed to dev/oauth-private branch
-- Ready for manual demo verification
-
-**Key Insight**: Story 1.2.3's regex solution elegantly solved both whitespace AND indentation issues by stripping only the CLI-added spacing before line numbers while preserving all meaningful content indentation after the arrow.
+- Archived Sprint 1.2 to `.claude/implementation/archive/2025-11-07-0727/`
+- Defined 10 stories for color and theme system
+- Estimated duration: 8-10 hours
+- Scope: ANSI colors, CSS-like themes, config system, terminal detection
+- Deferred: Screen reader mode (future sprint)
 
 ---
 
-## Notes
+## Technical Notes
 
-**Sprint 1.1 Completion**:
-Sprint 1.1 was completed with all 7 stories finished and 347 tests passing. However, manual demo testing revealed that several features were not working as expected in real usage despite passing tests. This sprint addresses those gaps.
+### Color Depth Detection Strategy
+1. Check if stdout is a TTY (disable if not)
+2. Run `tput colors` to get capability (16/256/none)
+3. Check TERM and TERM_PROGRAM for truecolor support
+4. Fall back to 16-color mode if uncertain
 
-**Lessons Learned**:
-- Tests passing != features working in practice
-- Manual demo testing is critical
-- Need tests that actually verify end-to-end rendering behavior
-- Render levels were configured but not implemented
+### Theme Architecture
+- **Theme**: Collection of StyleRule objects for semantic categories
+- **StyleRule**: fg_color, bg_color, bold, dim, italic, underline
+- **Semantic Categories**: Map message/block types to visual styles
+- **AnsiEncoder**: Converts StyleRule → ANSI escape sequences
 
-**Dependencies**:
-- Sprint 1.1 must be completed (all infrastructure in place)
-- No external dependencies
+### Config Hierarchy
+```
+Code: RendererConfig(theme="gruvbox")  # Highest priority
+  ↓
+File: ./.claude-sdk/config.json        # Project overrides
+  ↓
+File: ~/.claude-sdk/config.json        # User defaults
+  ↓
+Code: Theme.claude_code_default()      # Built-in defaults
+```
+
+---
+
+## Dependencies
+
+**Requires**:
+- Sprint 1.1 completed (cost display, formatter infrastructure)
+- Sprint 1.2 completed (render levels, system reminders, line numbers)
+
+**Blocks**:
+- Future syntax highlighting features (needs theme foundation)
+- Future screen reader mode (deferred to Sprint 1.4+)
+
+---
+
+## Sprint Summary
+**To be filled upon completion**
