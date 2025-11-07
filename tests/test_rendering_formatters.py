@@ -287,29 +287,33 @@ class TestClaudeCodeFormatter:
         assert "(ctrl+o to expand)" in result
         assert len(result) < len(long_content) + 100  # Should be truncated
 
-    def test_format_tool_result_strips_line_number_whitespace(self):
-        """Test that extra whitespace before line numbers is stripped."""
+    def test_format_tool_result_strips_line_numbers(self):
+        """Test that line numbers are stripped for clean display (matching Claude Code CLI)."""
         config = RendererConfig(render_level=RenderLevel.DETAILED)
         formatter = ClaudeCodeFormatter(config)
 
-        # Simulate CLI output with extra whitespace before line numbers
-        # Current: "     1→# Header" (7 spaces total before "1")
-        # Expected: "  ⎿  1→# Header" (2 + ⎿ + 2 spaces before "1")
-        content_with_spaces = "     1→# Header\n     2→Content\n     3→More"
+        # Simulate CLI output with line numbers
+        # Input: "     1→# Header" (whitespace + line number + content)
+        # Expected: "  ⎿  # Header" (clean display, no line numbers)
+        content_with_line_numbers = "     1→# Header\n     2→Content\n     3→More"
 
         result_block = ToolResultBlock(
-            tool_use_id="tool-123", content=content_with_spaces
+            tool_use_id="tool-123", content=content_with_line_numbers
         )
         message = AssistantMessage(
             content=[result_block], model="claude-3-5-sonnet-20241022"
         )
         result = formatter.format_assistant_message(message)
 
-        # First line should have: 2 spaces + tree_connector + 2 spaces + "1→..."
-        # Continuation lines should align properly
-        assert "  \u23bf  1→# Header" in result
-        assert "     2→Content" in result  # 5 spaces (2 + 1 + 2)
-        assert "     3→More" in result
+        # Line numbers should be completely removed for clean display
+        assert "  \u23bf  # Header" in result
+        assert "     Content" in result
+        assert "     More" in result
+
+        # Should NOT contain line numbers
+        assert "1→" not in result
+        assert "2→" not in result
+        assert "3→" not in result
 
     def test_format_tool_result_preserves_non_line_number_whitespace(self):
         """Test that indentation NOT part of line numbers is preserved."""
@@ -334,12 +338,13 @@ class TestClaudeCodeFormatter:
         assert "        nested" in result
 
     def test_format_tool_result_preserves_indentation_after_line_numbers(self):
-        """Test that indentation after line numbers (→) is preserved."""
+        """Test that indentation after line numbers (→) is preserved when line numbers are stripped."""
         config = RendererConfig(render_level=RenderLevel.DETAILED)
         formatter = ClaudeCodeFormatter(config)
 
         # CLI output format: "     1→# Header" and "     7→   - List item"
         # The spaces AFTER → are meaningful indentation that must be preserved
+        # After stripping line numbers: "# Header" and "   - List item"
         content_with_line_numbers = (
             "     1→# Claude Agent SDK Examples\n"
             "     2→\n"
@@ -359,10 +364,13 @@ class TestClaudeCodeFormatter:
         )
         result = formatter.format_assistant_message(message)
 
-        # Should strip the leading whitespace before line numbers
-        # but preserve indentation AFTER the arrow
-        assert "7→   - **[Pretty Printer Demos]**" in result  # 3 spaces after →
-        assert "8→      - More indented item" in result  # 6 spaces after →
+        # Line numbers should be stripped, but indentation preserved
+        assert "   - **[Pretty Printer Demos]**" in result  # 3 spaces preserved
+        assert "      - More indented item" in result  # 6 spaces preserved
+
+        # Should NOT contain line numbers
+        assert "7→" not in result
+        assert "8→" not in result
 
     def test_format_system_message(self):
         """Test formatting system message."""

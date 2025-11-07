@@ -300,9 +300,10 @@ class ClaudeCodeFormatter(Formatter):
         indent = " " * (2 + len(self.config.tree_connector) + 2)
 
         for i, line in enumerate(lines):
-            # Strip leading whitespace from lines with line numbers
-            # Pattern: "     1→..." -> "1→..."
-            cleaned_line = re.sub(r"^\s+(\d+→)", r"\1", line)
+            # Strip line numbers for clean display (matching Claude Code CLI behavior)
+            # Pattern: "     20→    print()" -> "    print()"
+            # Removes CLI-added whitespace + line number, preserves content indentation
+            cleaned_line = re.sub(r"^\s*\d+→", "", line)
 
             if i == 0:
                 # First line uses tree connector
