@@ -424,6 +424,35 @@ This story was **already completed** by Story 1.2.3! Investigation revealed:
 
 **Superseded By**: Story 1.2.3 (which implemented both whitespace fixing AND indentation preservation)
 
+**ADDENDUM - Post-Demo Testing (2025-11-06 11:30)**:
+
+Manual testing with demo_pretty_printer.py revealed the initial fix was INCOMPLETE:
+
+**New Problem Discovered**:
+- Story 1.2.3's regex kept line numbers: `"     7→   - item"` → `"7→   - item"`
+- But Claude Code CLI shows clean format WITHOUT line numbers: `"   - item"`
+- This caused the SDK output to still show line numbers in tool results
+
+**Root Cause**:
+- The CLI provides TWO rendering modes: clean (default) vs. with line numbers (explicit)
+- Our SDK was always showing the line-numbered format
+- Need to completely REMOVE line numbers, not just strip whitespace before them
+
+**Final Fix** (commit 277025c):
+- Changed regex from `r"^\s+(\d+→)"` to `r"^\s*\d+→"`
+- Now completely removes line numbers: `"     7→   - item"` → `"   - item"`
+- Preserves indentation after the arrow
+- Matches Claude Code CLI's default clean display behavior
+
+**Testing**:
+- All 361 tests passing
+- Manual test confirms: No line numbers, indentation preserved
+- SDK output now matches CLI's clean format
+
+**Files Changed** (additional):
+- src/claude_agent_sdk/rendering/formatters.py:303-306 (updated regex again)
+- tests/test_rendering_formatters.py:290-373 (updated tests to verify line number removal)
+
 ---
 
 ## Testing Plan
