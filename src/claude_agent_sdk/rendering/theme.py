@@ -129,11 +129,41 @@ class Theme:
     def claude_code_default(cls) -> Theme:
         """Create the default Claude Code CLI theme.
 
-        This theme replicates the visual style of the official Claude Code CLI,
-        providing a familiar experience for users transitioning to the SDK.
+        This theme replicates the visual style of CLI tools following
+        industry-standard color conventions. It provides a familiar,
+        accessible experience that works well across different terminals.
+
+        **Design Principles**:
+        - Semantic color usage (red=error, green=success, blue=action)
+        - Graceful degradation (truecolor → 256 → 16 → none)
+        - Accessibility (color + style cues like bold/dim)
+        - Subtle UI chrome (non-distracting structure)
+
+        **Color Choices**:
+        - User messages: Bright white + bold (high visibility)
+        - Assistant messages: White (clear default)
+        - Tool actions: Blue family (commands and operations)
+        - Errors: Red + bold (critical attention)
+        - Success: Green + bold (positive confirmation)
+        - Metadata: Dim gray (visible but subordinate)
+
+        **Compatibility**:
+        - Works in 16-color, 256-color, and truecolor terminals
+        - Follows conventions from Git, npm, Docker CLIs
+        - Accessible for colorblind users (style cues included)
 
         Returns:
-            Theme configured with Claude Code default colors
+            Theme configured with industry-standard CLI colors
+
+        Examples:
+            >>> config = RendererConfig(theme=Theme.claude_code_default())
+            >>> # Theme is also the default, so this is equivalent:
+            >>> config = RendererConfig()
+
+        See Also:
+            - `Theme.solarized_dark()`: Solarized Dark color scheme
+            - `Theme.gruvbox()`: Gruvbox color scheme
+            - `Theme.high_contrast()`: Maximum contrast for accessibility
         """
         return cls(
             # Message types - neutral with subtle differentiation
