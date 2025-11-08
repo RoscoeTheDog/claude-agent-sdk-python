@@ -133,7 +133,9 @@ class TestTerminalDetection:
     @patch("sys.stdout.isatty")
     @patch("subprocess.run")
     @patch.dict(os.environ, {}, clear=True)
-    def test_detect_256_via_tput(self, mock_run: MagicMock, mock_isatty: MagicMock) -> None:
+    def test_detect_256_via_tput(
+        self, mock_run: MagicMock, mock_isatty: MagicMock
+    ) -> None:
         """Test 256-color detection via tput."""
         mock_isatty.return_value = True
         mock_run.return_value = MagicMock(returncode=0, stdout="256\n")
@@ -142,7 +144,9 @@ class TestTerminalDetection:
     @patch("sys.stdout.isatty")
     @patch("subprocess.run")
     @patch.dict(os.environ, {}, clear=True)
-    def test_detect_16_via_tput(self, mock_run: MagicMock, mock_isatty: MagicMock) -> None:
+    def test_detect_16_via_tput(
+        self, mock_run: MagicMock, mock_isatty: MagicMock
+    ) -> None:
         """Test 16-color detection via tput."""
         mock_isatty.return_value = True
         mock_run.return_value = MagicMock(returncode=0, stdout="16\n")
@@ -151,7 +155,9 @@ class TestTerminalDetection:
     @patch("sys.stdout.isatty")
     @patch("subprocess.run")
     @patch.dict(os.environ, {}, clear=True)
-    def test_detect_8_colors_treated_as_16(self, mock_run: MagicMock, mock_isatty: MagicMock) -> None:
+    def test_detect_8_colors_treated_as_16(
+        self, mock_run: MagicMock, mock_isatty: MagicMock
+    ) -> None:
         """Test 8-color terminals are treated as 16-color."""
         mock_isatty.return_value = True
         mock_run.return_value = MagicMock(returncode=0, stdout="8\n")
@@ -160,7 +166,9 @@ class TestTerminalDetection:
     @patch("sys.stdout.isatty")
     @patch("subprocess.run")
     @patch.dict(os.environ, {"TERM": "xterm"}, clear=True)
-    def test_detect_fallback_with_term(self, mock_run: MagicMock, mock_isatty: MagicMock) -> None:
+    def test_detect_fallback_with_term(
+        self, mock_run: MagicMock, mock_isatty: MagicMock
+    ) -> None:
         """Test fallback to BASIC_16 when TERM is set but tput fails."""
         mock_isatty.return_value = True
         mock_run.side_effect = FileNotFoundError("tput not found")
@@ -169,7 +177,9 @@ class TestTerminalDetection:
     @patch("sys.stdout.isatty")
     @patch("subprocess.run")
     @patch.dict(os.environ, {}, clear=True)
-    def test_detect_none_when_no_term(self, mock_run: MagicMock, mock_isatty: MagicMock) -> None:
+    def test_detect_none_when_no_term(
+        self, mock_run: MagicMock, mock_isatty: MagicMock
+    ) -> None:
         """Test NONE detection when TERM not set and tput unavailable."""
         mock_isatty.return_value = True
         mock_run.side_effect = FileNotFoundError("tput not found")

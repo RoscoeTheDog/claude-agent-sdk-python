@@ -81,7 +81,12 @@ def detect_color_depth() -> ColorDepth:
                 return ColorDepth.BASIC_16  # Treat 8-color as 16-color
             else:
                 return ColorDepth.NONE
-    except (subprocess.TimeoutExpired, subprocess.SubprocessError, ValueError, FileNotFoundError):
+    except (
+        subprocess.TimeoutExpired,
+        subprocess.SubprocessError,
+        ValueError,
+        FileNotFoundError,
+    ):
         # tput not available or failed, continue to fallback logic
         pass
 
@@ -183,7 +188,9 @@ def rgb_to_16(r: int, g: int, b: int) -> int:
     if max_component - min_component < 30:
         # Grayscale - use average brightness
         brightness = (r + g + b) // 3
-        return BASIC_COLORS["bright_white"] if brightness > 128 else BASIC_COLORS["white"]
+        return (
+            BASIC_COLORS["bright_white"] if brightness > 128 else BASIC_COLORS["white"]
+        )
 
     # For chromatic colors, use max component to determine brightness
     use_bright = max_component > 128
@@ -291,7 +298,9 @@ class AnsiEncoder:
         reset = "\033[0m"
         return f"{escape}{text}{reset}"
 
-    def _encode_color(self, color: str | tuple[int, int, int] | int, foreground: bool) -> str:
+    def _encode_color(
+        self, color: str | tuple[int, int, int] | int, foreground: bool
+    ) -> str:
         """Encode a color value to ANSI color code.
 
         Args:
