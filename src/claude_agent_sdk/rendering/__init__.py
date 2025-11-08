@@ -12,6 +12,9 @@ Public API:
     - FileHandler: File output handler
     - NullHandler: No-op handler
     - display_message: Convenience function for quick usage
+    - Theme: Theme configuration with semantic style categories
+    - StyleRule: Style definition for a semantic category
+    - ColorDepth: Terminal color capability levels
 """
 
 from typing import TextIO
@@ -21,6 +24,7 @@ from .base import Formatter, Handler, MessageRenderer
 from .config import RendererConfig, RenderLevel
 from .formatters import ClaudeCodeFormatter
 from .handlers import FileHandler, NullHandler, StreamHandler
+from .theme import ColorDepth, StyleRule, Theme
 
 # Singleton renderer for convenience function
 _default_renderer: MessageRenderer | None = None
@@ -72,4 +76,7 @@ __all__ = [
     "FileHandler",
     "NullHandler",
     "display_message",
+    "Theme",
+    "StyleRule",
+    "ColorDepth",
 ]

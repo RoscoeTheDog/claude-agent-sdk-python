@@ -313,22 +313,19 @@ class AnsiEncoder:
 
         # Handle RGB tuple
         if isinstance(color, tuple):
-            if len(color) != 3:
-                return ""
-            r, g, b = color
-            return self._encode_rgb(r, g, b, foreground)
-
+            if len(color) == 3:
+                r, g, b = color
+                return self._encode_rgb(r, g, b, foreground)
+            # Invalid tuple length - defensive check for runtime safety
+            return ""  # type: ignore[unreachable]
         # Handle 256-color index
         if isinstance(color, int):
             if 0 <= color <= 255:
                 return self._encode_256(color, foreground)
+            # Invalid color index, return empty string
             return ""
-
-        # Handle named color
-        if isinstance(color, str):
-            return self._encode_named(color, foreground)
-
-        return ""
+        # Handle named color - color must be str at this point
+        return self._encode_named(color, foreground)
 
     def _encode_rgb(self, r: int, g: int, b: int, foreground: bool) -> str:
         """Encode RGB color with appropriate degradation.
