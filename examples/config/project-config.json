@@ -1,0 +1,19 @@
+{
+  "_comment": "Project-level configuration for Claude Agent SDK",
+  "_location": "Place this file at: {project_root}/.claude-sdk/config.json",
+  "_description": "This config overrides user-level settings for this specific project",
+
+  "theme": "gruvbox",
+  "_theme_note": "Using Gruvbox theme for this project to match team preferences",
+
+  "color_enabled": true,
+
+  "render_level": 2,
+  "_render_level_note": "Detailed mode to see all tool calls during development",
+
+  "show_cost": true,
+  "_show_cost_note": "Track API costs during development",
+
+  "truncate_threshold": 50,
+  "_truncate_threshold_note": "Shorter threshold for cleaner output during rapid iteration"
+}

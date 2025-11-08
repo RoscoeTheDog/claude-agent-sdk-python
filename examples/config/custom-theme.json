@@ -1,0 +1,149 @@
+{
+  "_comment": "Example custom theme for Claude Agent SDK",
+  "_usage": "Reference this in config.json or load programmatically: Theme.from_dict(json.load(...))",
+  "_description": "This demonstrates how to create a fully custom theme from scratch",
+
+  "name": "custom_corporate",
+  "_name_note": "Give your theme a descriptive name",
+
+  "user_message": {
+    "fg_color": "blue",
+    "bold": true,
+    "_note": "Make user messages stand out with bold blue"
+  },
+
+  "assistant_message": {
+    "fg_color": "green",
+    "_note": "Assistant responses in green for easy scanning"
+  },
+
+  "system_message": {
+    "fg_color": "yellow",
+    "dim": true,
+    "_note": "System messages are informational, so dimmed yellow"
+  },
+
+  "tool_use": {
+    "fg_color": "cyan",
+    "italic": true,
+    "_note": "Tool calls in italic cyan to show they're actions"
+  },
+
+  "tool_result": {
+    "fg_color": "white",
+    "_note": "Tool results in plain white for readability"
+  },
+
+  "tool_error": {
+    "fg_color": "red",
+    "bold": true,
+    "underline": true,
+    "_note": "Errors need maximum visibility: bold + underline + red"
+  },
+
+  "error": {
+    "fg_color": "bright_red",
+    "bold": true
+  },
+
+  "warning": {
+    "fg_color": "bright_yellow"
+  },
+
+  "success": {
+    "fg_color": "bright_green"
+  },
+
+  "info": {
+    "fg_color": "bright_blue"
+  },
+
+  "debug": {
+    "fg_color": "magenta",
+    "dim": true
+  },
+
+  "bullet": {
+    "fg_color": "cyan",
+    "_note": "Bullets match tool_use color for visual consistency"
+  },
+
+  "tree_connector": {
+    "fg_color": "white",
+    "dim": true,
+    "_note": "Tree lines are subtle, dimmed to not distract"
+  },
+
+  "metadata": {
+    "fg_color": "white",
+    "dim": true,
+    "_note": "Metadata (timestamps, line numbers) is dimmed"
+  },
+
+  "truncation": {
+    "fg_color": "yellow",
+    "italic": true,
+    "_note": "Truncation notices in italic yellow to draw attention"
+  },
+
+  "code_block": {
+    "fg_color": "cyan",
+    "_note": "Code blocks in cyan (future syntax highlighting will override this)"
+  },
+
+  "inline_code": {
+    "fg_color": "cyan",
+    "_note": "Inline code matches code blocks"
+  },
+
+  "thinking": {
+    "fg_color": "magenta",
+    "italic": true,
+    "_note": "Thinking blocks in italic magenta to show internal reasoning"
+  },
+
+  "cost_display": {
+    "fg_color": "yellow",
+    "_note": "Cost info in yellow as it's important but not critical"
+  },
+
+  "_color_formats": {
+    "_note": "Colors can be specified in multiple formats:",
+    "named_colors": [
+      "black", "red", "green", "yellow", "blue", "magenta", "cyan", "white",
+      "bright_black", "bright_red", "bright_green", "bright_yellow",
+      "bright_blue", "bright_magenta", "bright_cyan", "bright_white"
+    ],
+    "rgb_tuples": [255, 128, 0],
+    "_rgb_note": "RGB tuples work in truecolor terminals: [255, 128, 0] = orange",
+    "ansi_256": 214,
+    "_ansi_256_note": "Direct ANSI 256-color codes: 214 = orange"
+  },
+
+  "_style_options": {
+    "bold": "true/false - makes text bold/bright",
+    "dim": "true/false - makes text dimmed/faint",
+    "italic": "true/false - italicizes text (not all terminals support)",
+    "underline": "true/false - underlines text",
+    "fg_color": "foreground (text) color",
+    "bg_color": "background color (rarely needed, can reduce readability)"
+  },
+
+  "_best_practices": {
+    "semantic_meaning": "Use colors consistently - red=error, green=success, blue=info",
+    "accessibility": "Combine color with style (bold/underline) so info isn't lost without color",
+    "contrast": "Ensure fg_color contrasts with terminal background (test light & dark terminals)",
+    "consistency": "Match your color scheme - don't mix warm and cool colors randomly",
+    "restraint": "Don't use bg_color unless necessary - can clash with user's terminal theme"
+  },
+
+  "_testing": {
+    "command": "python examples/demo_themes.py --custom examples/config/custom-theme.json",
+    "verify": [
+      "Check output in your terminal",
+      "Test with TERM=xterm-256color for 256-color mode",
+      "Test with TERM=xterm for 16-color fallback",
+      "Test with --no-color flag to ensure graceful degradation"
+    ]
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "_comment": "User-level configuration for Claude Agent SDK",
+  "_location": "Place this file at: ~/.claude-sdk/config.json",
+  "_description": "This config applies to all projects unless overridden by project-level config",
+
+  "theme": "claude_code",
+  "_theme_options": [
+    "claude_code (default - official Claude Code CLI colors)",
+    "solarized_dark (popular dark theme with muted colors)",
+    "solarized_light (light variant of Solarized)",
+    "gruvbox (retro, warm color scheme)",
+    "nord (cool, arctic-inspired palette)",
+    "monochrome (no colors, bold/dim only - accessibility)",
+    "high_contrast (maximum contrast - accessibility)"
+  ],
+
+  "color_enabled": true,
+  "_color_enabled_note": "Set to false to disable all colors (useful for CI/CD, logging to files)",
+
+  "color_depth": null,
+  "_color_depth_options": [
+    "null (auto-detect based on terminal capabilities - recommended)",
+    "0 (no colors)",
+    "1 (16 basic colors)",
+    "2 (256 colors)",
+    "3 (truecolor - 16 million colors)"
+  ],
+
+  "render_level": 1,
+  "_render_level_options": [
+    "0 (minimal - only assistant messages)",
+    "1 (standard - user + assistant + tool results)",
+    "2 (detailed - everything including tool calls)",
+    "3 (debug - all messages + system reminders)"
+  ],
+
+  "show_cost": false,
+  "_show_cost_note": "Set to true to display token usage and API costs at end of each response",
+
+  "truncate_threshold": 100,
+  "_truncate_threshold_note": "Maximum lines for tool results before truncation. Set to -1 to disable truncation",
+
+  "screen_reader_mode": false,
+  "_screen_reader_mode_note": "Future feature - will add screen reader optimizations"
+}

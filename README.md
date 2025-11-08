@@ -312,6 +312,199 @@ Create custom formatters by extending `Formatter` or custom output destinations 
 - Error handling
 - Performance considerations
 
+### Theme System
+
+The SDK includes a powerful theme system with ANSI color support for enhanced terminal output.
+
+#### Built-in Themes
+
+Choose from multiple pre-configured themes:
+
+```python
+from claude_agent_sdk.rendering import RendererConfig, Theme
+
+# Claude Code default theme (official CLI colors)
+config = RendererConfig(theme=Theme.claude_code_default())
+
+# Popular color schemes
+config = RendererConfig(theme=Theme.solarized_dark())
+config = RendererConfig(theme=Theme.solarized_light())
+config = RendererConfig(theme=Theme.gruvbox())
+config = RendererConfig(theme=Theme.nord())
+
+# Accessibility themes
+config = RendererConfig(theme=Theme.monochrome())  # No colors, only bold/dim
+config = RendererConfig(theme=Theme.high_contrast())  # Maximum contrast
+```
+
+#### Color Configuration
+
+Control color behavior with `RendererConfig`:
+
+```python
+from claude_agent_sdk.rendering import RendererConfig, ColorDepth
+
+# Auto-detect terminal capabilities (default)
+config = RendererConfig(
+    color_enabled=True,
+    color_depth=None  # Auto-detect
+)
+
+# Explicitly set color depth
+config = RendererConfig(
+    color_depth=ColorDepth.TRUECOLOR  # 16 million colors
+)
+config = RendererConfig(
+    color_depth=ColorDepth.EXTENDED_256  # 256 colors
+)
+config = RendererConfig(
+    color_depth=ColorDepth.BASIC_16  # 16 basic colors
+)
+
+# Disable colors entirely
+config = RendererConfig(color_enabled=False)
+```
+
+The SDK automatically detects terminal capabilities and gracefully degrades:
+- **Truecolor** (16M colors) → **256-color** → **16-color** → **No color**
+
+#### Configuration Files
+
+Use JSON configuration files for persistent theme settings:
+
+**User-level config** (`~/.claude-sdk/config.json`):
+```json
+{
+  "theme": "claude_code",
+  "color_enabled": true,
+  "color_depth": null,
+  "render_level": 1
+}
+```
+
+**Project-level config** (`./.claude-sdk/config.json`):
+```json
+{
+  "theme": "gruvbox",
+  "render_level": 2,
+  "show_cost": true
+}
+```
+
+Load configs automatically:
+```python
+from claude_agent_sdk.rendering import RendererConfig
+
+# Auto-loads from config files with cascading priority:
+# 1. Explicit args (highest)
+# 2. Project config (./.claude-sdk/config.json)
+# 3. User config (~/.claude-sdk/config.json)
+# 4. Built-in defaults (lowest)
+config = RendererConfig.load_defaults()
+```
+
+See [examples/config/](examples/config/) for complete examples.
+
+#### Custom Themes
+
+Create your own custom themes:
+
+```python
+from claude_agent_sdk.rendering import Theme, StyleRule
+
+custom = Theme(
+    user_message=StyleRule(fg_color="blue", bold=True),
+    assistant_message=StyleRule(fg_color="green"),
+    error=StyleRule(fg_color="bright_red", bold=True, underline=True),
+    success=StyleRule(fg_color="bright_green"),
+    tool_use=StyleRule(fg_color="cyan", italic=True),
+    # ... define all semantic categories
+)
+
+config = RendererConfig(theme=custom)
+```
+
+Or load from JSON:
+```python
+import json
+from claude_agent_sdk.rendering import Theme
+
+with open("my-theme.json") as f:
+    theme_dict = json.load(f)
+    theme = Theme.from_dict(theme_dict)
+```
+
+#### Color Formats
+
+Colors can be specified in multiple formats:
+
+```python
+# Named colors
+StyleRule(fg_color="red")
+StyleRule(fg_color="bright_cyan")
+
+# RGB tuples (truecolor terminals)
+StyleRule(fg_color=(255, 128, 0))  # Orange
+
+# ANSI 256-color codes
+StyleRule(fg_color=214)  # Orange
+```
+
+#### Semantic Categories
+
+Themes use semantic categories for consistent styling:
+
+- **Message types**: `user_message`, `assistant_message`, `system_message`
+- **Tool operations**: `tool_use`, `tool_result`, `tool_error`
+- **Status indicators**: `error`, `warning`, `success`, `info`, `debug`
+- **UI elements**: `bullet`, `tree_connector`, `metadata`, `truncation`
+- **Code**: `code_block`, `inline_code`
+- **Special**: `thinking`, `cost_display`
+
+#### Terminal Detection
+
+The SDK automatically detects terminal capabilities:
+
+```python
+from claude_agent_sdk.rendering.ansi import detect_color_depth
+
+depth = detect_color_depth()
+# Returns: ColorDepth.TRUECOLOR, EXTENDED_256, BASIC_16, or NONE
+```
+
+Detection logic:
+1. Check if stdout is a TTY (disable colors if not)
+2. Run `tput colors` to get terminal color capability
+3. Check `TERM` and `TERM_PROGRAM` environment variables for truecolor support
+4. Gracefully fall back to lower color depths
+
+#### Disabling Colors
+
+For CI/CD, logging, or accessibility:
+
+```python
+# Via config
+config = RendererConfig(color_enabled=False)
+
+# Via config file
+{
+  "color_enabled": false
+}
+```
+
+Colors are also automatically disabled when:
+- Output is not a TTY (piped to file, etc.)
+- Terminal doesn't support colors (`tput colors` returns 0)
+- `NO_COLOR` environment variable is set
+
+#### Best Practices
+
+1. **Use semantic colors**: Red for errors, green for success, blue for info
+2. **Combine color with style**: Use bold/underline so info isn't lost without color
+3. **Test multiple terminals**: Verify output in both light and dark terminal backgrounds
+4. **Respect user preferences**: Use config files for customization
+5. **Graceful degradation**: Ensure output is readable even without colors
+
 ## ClaudeSDKClient
 
 `ClaudeSDKClient` supports bidirectional, interactive conversations with Claude
