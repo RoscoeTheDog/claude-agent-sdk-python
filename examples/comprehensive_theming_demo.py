@@ -142,7 +142,7 @@ if __name__ == "__main__":
                 content=[
                     ToolResultBlock(
                         tool_use_id="toolu_01A",
-                        content=[TextBlock(text="File written successfully to /tmp/fibonacci.py")],
+                        content="File written successfully to /tmp/fibonacci.py",
                         is_error=False,
                     )
                 ],
@@ -203,7 +203,7 @@ if __name__ == "__main__":
                 content=[
                     ToolResultBlock(
                         tool_use_id="toolu_01B",
-                        content=[TextBlock(text="Error: File not found: /nonexistent/file.txt")],
+                        content="Error: File not found: /nonexistent/file.txt",
                         is_error=True,
                     )
                 ],
@@ -375,7 +375,6 @@ def validate_custom_theme() -> None:
 
     # Create a vibrant custom theme
     custom_theme = Theme(
-        name="vibrant_custom",
         # Message types
         user_message=StyleRule(fg_color=(138, 255, 128), bold=True),  # Bright green
         assistant_message=StyleRule(fg_color=(128, 200, 255), bold=False),  # Light blue
