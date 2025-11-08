@@ -12,7 +12,7 @@ This folder contains examples demonstrating various features of the Claude Agent
 
 # Pretty Printer Demos
 
-Interactive demonstrations of the message rendering system added in Sprint 1.
+Interactive demonstrations of the message rendering and theme system.
 
 ## Quick Start
 
@@ -36,8 +36,36 @@ bash run_demo.sh
 ```
 Interactive menu to choose which demo to run.
 
+### Theme Showcase (NEW!)
+```bash
+# Windows (Git Bash/MSYS) with PYTHONPATH:
+export PYTHONPATH=../src && python demo_themes.py
+
+# Show all themes
+python demo_themes.py
+
+# Show specific theme
+python demo_themes.py --theme gruvbox
+
+# Interactive theme switcher
+python demo_themes.py --interactive
+
+# Color depth degradation demo
+python demo_themes.py --theme nord --degradation
+
+# Realistic message formatting
+python demo_themes.py --theme solarized_dark --realistic
+
+# Test no-color mode
+python demo_themes.py --no-color
+
+# Force specific color depth
+python demo_themes.py --depth 256
+```
+
 ## What's Included
 
+- **demo_themes.py** - Theme showcase with all 7 built-in themes (NEW!)
 - **quick_demo.py** - Minimal 30-second demo
 - **demo_pretty_printer.py** - Full feature showcase with 7 demos
 - **pretty_printer_basic.py** - Code examples and usage patterns
@@ -46,6 +74,16 @@ Interactive menu to choose which demo to run.
 
 ## Features Demonstrated
 
+### Theme System (demo_themes.py)
+1. All 7 built-in theme presets (claude_code, solarized, gruvbox, nord, monochrome, high_contrast)
+2. Different message types (user, assistant, system, tool use, results)
+3. Semantic categories (error, warning, success, info, thinking)
+4. Color depth degradation (truecolor → 256 → 16 → none)
+5. Interactive theme switcher
+6. Realistic message formatting with actual SDK types
+7. No-color mode for CI/CD
+
+### Rendering Features (other demos)
 1. Simple `display_message()` usage
 2. Render levels (MINIMAL, STANDARD, DETAILED)
 3. Multiple destinations (console + file)

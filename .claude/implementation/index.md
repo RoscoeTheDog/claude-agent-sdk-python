@@ -527,27 +527,41 @@ Update the `ClaudeSDKClient` to automatically load config with theme support, en
 ---
 
 ### Story 1.3.10: Demo Application with Theme Showcase
-**Status**: unassigned
-**Effort**: 1.5 hours
+**Status**: completed
+**Claimed**: 2025-11-07 (current session)
+**Completed**: 2025-11-07 (current session)
+**Actual Effort**: 45 minutes
 **Priority**: LOW
 
 **Description**:
 Create a comprehensive demo application that showcases all themes and color features, serving as both a visual test and user documentation.
 
 **Acceptance Criteria**:
-- [ ] Demo shows all built-in themes side-by-side
-- [ ] Demo shows different message types (user, assistant, system)
-- [ ] Demo shows tool calls and results (success and error)
-- [ ] Demo shows all semantic categories (error, warning, success, info)
-- [ ] Demo shows color depth degradation (truecolor → 256 → 16)
-- [ ] Demo includes interactive theme switcher
-- [ ] Demo works in both color and no-color modes
-- [ ] Clean, well-commented code
-- [ ] Instructions for running in README
+- [x] Demo shows all built-in themes side-by-side
+- [x] Demo shows different message types (user, assistant, system)
+- [x] Demo shows tool calls and results (success and error)
+- [x] Demo shows all semantic categories (error, warning, success, info)
+- [x] Demo shows color depth degradation (truecolor → 256 → 16)
+- [x] Demo includes interactive theme switcher
+- [x] Demo works in both color and no-color modes
+- [x] Clean, well-commented code
+- [x] Instructions for running in README
 
 **Implementation Files**:
-- Create: `examples/demo_themes.py`
-- Modify: `examples/README.md`
+- Modified: `examples/demo_themes.py` (347 lines - enhanced from 141 lines)
+- Modified: `examples/README.md` (+30 lines - comprehensive theme demo documentation)
+
+**Implementation Notes**:
+- Enhanced existing demo_themes.py with comprehensive features
+- Added three demo modes: basic, realistic, degradation
+- Implemented interactive theme switcher with menu system
+- Added UTF-8 encoding support for Windows compatibility
+- Fixed type signature issues with SDK types (removed `type` field from TextBlock, ToolUseBlock, ToolResultBlock)
+- Added proper ResultMessage usage instead of raw ToolResultBlock list
+- All themes tested and working across different color depths
+- Demo supports command-line arguments for all modes
+- Documented all usage patterns in examples/README.md
+- Zero regressions in existing functionality
 
 ---
 
