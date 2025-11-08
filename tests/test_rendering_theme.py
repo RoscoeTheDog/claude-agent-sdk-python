@@ -309,3 +309,234 @@ class TestTheme:
         assert theme.error.fg_color == "red"
         assert theme.success.fg_color == 46
         assert theme.info.fg_color == (0, 149, 255)
+
+
+class TestThemePresets:
+    """Tests for all built-in theme presets."""
+
+    def test_solarized_dark_preset(self):
+        """Test Solarized Dark theme preset."""
+        theme = Theme.solarized_dark()
+
+        # Check it returns a Theme instance
+        assert isinstance(theme, Theme)
+
+        # Check a few key colors (256-color codes)
+        assert theme.error.fg_color == 160  # Solarized red
+        assert theme.success.fg_color == 100  # Solarized green
+        assert theme.info.fg_color == 37  # Solarized cyan
+
+        # Check bold attributes
+        assert theme.user_message.bold is True
+        assert theme.error.bold is True
+
+    def test_solarized_light_preset(self):
+        """Test Solarized Light theme preset."""
+        theme = Theme.solarized_light()
+
+        # Check it returns a Theme instance
+        assert isinstance(theme, Theme)
+
+        # Check same color codes as dark (but different base colors)
+        assert theme.error.fg_color == 160  # Solarized red
+        assert theme.success.fg_color == 100  # Solarized green
+        assert theme.warning.fg_color == 136  # Solarized yellow
+
+        # Check bold attributes
+        assert theme.user_message.bold is True
+        assert theme.warning.bold is True
+
+    def test_gruvbox_preset(self):
+        """Test Gruvbox theme preset."""
+        theme = Theme.gruvbox()
+
+        # Check it returns a Theme instance
+        assert isinstance(theme, Theme)
+
+        # Check Gruvbox-specific colors
+        assert theme.error.fg_color == 167  # Gruvbox bright red
+        assert theme.success.fg_color == 142  # Gruvbox bright green
+        assert theme.warning.fg_color == 214  # Gruvbox bright yellow
+
+        # Check styling
+        assert theme.user_message.bold is True
+        assert theme.thinking.italic is True
+
+    def test_nord_preset(self):
+        """Test Nord theme preset."""
+        theme = Theme.nord()
+
+        # Check it returns a Theme instance
+        assert isinstance(theme, Theme)
+
+        # Check Nord-specific colors
+        assert theme.error.fg_color == 167  # Nord11 (red)
+        assert theme.success.fg_color == 150  # Nord14 (green)
+        assert theme.info.fg_color == 116  # Nord8 (cyan)
+
+        # Check styling
+        assert theme.tool_use.bold is True
+        assert theme.thinking.italic is True
+
+    def test_monochrome_preset(self):
+        """Test monochrome theme preset."""
+        theme = Theme.monochrome()
+
+        # Check it returns a Theme instance
+        assert isinstance(theme, Theme)
+
+        # Monochrome should have NO colors, only styles
+        assert theme.error.fg_color is None
+        assert theme.success.fg_color is None
+        assert theme.warning.fg_color is None
+        assert theme.user_message.fg_color is None
+
+        # But should have bold/dim/underline
+        assert theme.user_message.bold is True
+        assert theme.error.bold is True
+        assert theme.error.underline is True
+        assert theme.system_message.dim is True
+        assert theme.thinking.italic is True
+
+    def test_high_contrast_preset(self):
+        """Test high contrast theme preset."""
+        theme = Theme.high_contrast()
+
+        # Check it returns a Theme instance
+        assert isinstance(theme, Theme)
+
+        # High contrast uses named bright colors
+        assert theme.error.fg_color == "bright_red"
+        assert theme.success.fg_color == "bright_green"
+        assert theme.warning.fg_color == "bright_yellow"
+
+        # Should have both bold AND underline for emphasis
+        assert theme.error.bold is True
+        assert theme.error.underline is True
+        assert theme.warning.bold is True
+        assert theme.warning.underline is True
+
+    def test_all_presets_have_all_categories(self):
+        """Test that all presets define all required categories."""
+        presets = [
+            Theme.claude_code_default(),
+            Theme.solarized_dark(),
+            Theme.solarized_light(),
+            Theme.gruvbox(),
+            Theme.nord(),
+            Theme.monochrome(),
+            Theme.high_contrast(),
+        ]
+
+        required_categories = [
+            "user_message",
+            "assistant_message",
+            "system_message",
+            "tool_use",
+            "tool_result",
+            "tool_error",
+            "error",
+            "warning",
+            "success",
+            "info",
+            "debug",
+            "bullet",
+            "tree_connector",
+            "metadata",
+            "truncation",
+            "code_block",
+            "inline_code",
+            "thinking",
+            "cost_display",
+        ]
+
+        for theme in presets:
+            for category in required_categories:
+                assert hasattr(theme, category)
+                assert isinstance(getattr(theme, category), StyleRule)
+
+    def test_from_preset_solarized_dark(self):
+        """Test loading Solarized Dark via from_preset."""
+        theme = Theme.from_preset("solarized_dark")
+        expected = Theme.solarized_dark()
+
+        assert theme.error.fg_color == expected.error.fg_color
+        assert theme.success.fg_color == expected.success.fg_color
+
+    def test_from_preset_solarized_light(self):
+        """Test loading Solarized Light via from_preset."""
+        theme = Theme.from_preset("solarized_light")
+        expected = Theme.solarized_light()
+
+        assert theme.error.fg_color == expected.error.fg_color
+        assert theme.success.fg_color == expected.success.fg_color
+
+    def test_from_preset_gruvbox(self):
+        """Test loading Gruvbox via from_preset."""
+        theme = Theme.from_preset("gruvbox")
+        expected = Theme.gruvbox()
+
+        assert theme.error.fg_color == expected.error.fg_color
+        assert theme.warning.fg_color == expected.warning.fg_color
+
+    def test_from_preset_nord(self):
+        """Test loading Nord via from_preset."""
+        theme = Theme.from_preset("nord")
+        expected = Theme.nord()
+
+        assert theme.info.fg_color == expected.info.fg_color
+        assert theme.success.fg_color == expected.success.fg_color
+
+    def test_from_preset_monochrome(self):
+        """Test loading monochrome via from_preset."""
+        theme = Theme.from_preset("monochrome")
+        expected = Theme.monochrome()
+
+        # Check no colors
+        assert theme.error.fg_color == expected.error.fg_color  # None
+        assert theme.error.bold == expected.error.bold  # True
+
+    def test_from_preset_high_contrast(self):
+        """Test loading high contrast via from_preset."""
+        theme = Theme.from_preset("high_contrast")
+        expected = Theme.high_contrast()
+
+        assert theme.error.fg_color == expected.error.fg_color
+        assert theme.error.underline == expected.error.underline
+
+    def test_from_preset_case_insensitive(self):
+        """Test that preset names are case-insensitive."""
+        theme1 = Theme.from_preset("GRUVBOX")
+        theme2 = Theme.from_preset("gruvbox")
+        theme3 = Theme.from_preset("GruvBox")
+
+        assert theme1.error.fg_color == theme2.error.fg_color == theme3.error.fg_color
+
+    def test_from_preset_unknown_raises_error(self):
+        """Test that unknown preset name raises ValueError with helpful message."""
+        with pytest.raises(ValueError) as exc_info:
+            Theme.from_preset("unknown_theme")
+
+        error_msg = str(exc_info.value)
+        assert "Unknown theme preset: 'unknown_theme'" in error_msg
+        assert "Available:" in error_msg
+        assert "claude_code" in error_msg
+        assert "solarized_dark" in error_msg
+        assert "gruvbox" in error_msg
+
+    def test_all_presets_accessible_via_from_preset(self):
+        """Test that all preset methods are accessible via from_preset."""
+        preset_names = [
+            "claude_code",
+            "claude_code_default",
+            "solarized_dark",
+            "solarized_light",
+            "gruvbox",
+            "nord",
+            "monochrome",
+            "high_contrast",
+        ]
+
+        for name in preset_names:
+            theme = Theme.from_preset(name)
+            assert isinstance(theme, Theme)

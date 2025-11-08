@@ -324,29 +324,43 @@ def format_user_message(self, message: UserMessage) -> str:
 ---
 
 ### Story 1.3.6: Built-in Theme Presets
-**Status**: unassigned
-**Effort**: 1.5 hours
+**Status**: completed
+**Claimed**: 2025-11-08 05:06
+**Completed**: 2025-11-08 05:25
+**Actual Effort**: 19 minutes
 **Priority**: MEDIUM
 
 **Description**:
 Create a collection of built-in theme presets that users can choose from. Start with Claude Code default, then add popular terminal color schemes.
 
 **Acceptance Criteria**:
-- [ ] `Theme.claude_code_default()` - Official Claude Code CLI colors
-- [ ] `Theme.solarized_dark()` - Popular Solarized Dark theme
-- [ ] `Theme.solarized_light()` - Solarized Light variant
-- [ ] `Theme.gruvbox()` - Gruvbox color scheme
-- [ ] `Theme.nord()` - Nord color scheme
-- [ ] `Theme.monochrome()` - Bold/dim only, no colors
-- [ ] `Theme.high_contrast()` - Accessibility-focused theme
-- [ ] Update `from_preset()` to support all themes
-- [ ] Documentation for each theme (when to use)
-- [ ] Unit tests for each preset
-- [ ] Visual verification examples in `examples/`
+- [x] `Theme.claude_code_default()` - Official Claude Code CLI colors (already implemented)
+- [x] `Theme.solarized_dark()` - Popular Solarized Dark theme
+- [x] `Theme.solarized_light()` - Solarized Light variant
+- [x] `Theme.gruvbox()` - Gruvbox color scheme
+- [x] `Theme.nord()` - Nord color scheme
+- [x] `Theme.monochrome()` - Bold/dim only, no colors
+- [x] `Theme.high_contrast()` - Accessibility-focused theme
+- [x] Update `from_preset()` to support all themes
+- [x] Documentation for each theme (when to use)
+- [x] Unit tests for each preset (16 new tests)
+- [x] Visual verification examples in `examples/`
 
 **Implementation Files**:
-- Modify: `src/claude_agent_sdk/rendering/theme.py`
-- Create: `examples/demo_themes.py`
+- Modified: `src/claude_agent_sdk/rendering/theme.py` (+336 lines, 6 new theme methods)
+- Modified: `tests/test_rendering_theme.py` (+231 lines, 16 new tests)
+- Created: `examples/demo_themes.py` (141 lines)
+
+**Implementation Notes**:
+- Added 6 new theme presets: solarized_dark, solarized_light, gruvbox, nord, monochrome, high_contrast
+- All themes use official color palettes with 256-color approximations
+- Each theme has comprehensive docstrings documenting color codes and use cases
+- Monochrome theme uses NO colors, only bold/dim/italic/underline for emphasis
+- High contrast theme designed for accessibility (bright colors + bold + underline)
+- Updated `from_preset()` to support all 8 themes (including aliases)
+- All 551 tests pass (was 426, +125 new tests including 16 for theme presets)
+- Code formatted with ruff, all checks pass
+- Zero regressions in existing functionality
 
 **Theme Requirements**:
 - **claude_code_default**: Reverse-engineer from actual Claude Code CLI
