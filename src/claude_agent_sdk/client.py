@@ -4,11 +4,14 @@ import json
 import os
 from collections.abc import AsyncIterable, AsyncIterator
 from dataclasses import replace
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from . import Transport
 from ._errors import CLIConnectionError
 from .types import ClaudeAgentOptions, HookEvent, HookMatcher, Message, ResultMessage
+
+if TYPE_CHECKING:
+    from .rendering.config import RendererConfig
 
 
 class ClaudeSDKClient:
@@ -24,6 +27,7 @@ class ClaudeSDKClient:
     - **Stateful**: Maintains conversation context across messages
     - **Interactive**: Send follow-ups based on responses
     - **Control flow**: Support for interrupts and session management
+    - **Theming**: Rich color and styling support with multiple themes
 
     When to use ClaudeSDKClient:
     - Building chat interfaces or conversational UIs
@@ -56,14 +60,50 @@ class ClaudeSDKClient:
         self,
         options: ClaudeAgentOptions | None = None,
         transport: Transport | None = None,
+        renderer_config: "RendererConfig | None" = None,
     ):
-        """Initialize Claude SDK client."""
+        """
+        Initialize Claude SDK client.
+
+        Args:
+            options: Client configuration options (permissions, hooks, model, etc.)
+            transport: Custom transport implementation (defaults to subprocess CLI)
+            renderer_config: Configuration for message rendering including themes, colors,
+                           and display settings. If not provided, loads defaults from config
+                           files (~/.claude-sdk/config.json, ./.claude-sdk/config.json) or
+                           uses built-in defaults with the claude_code theme.
+
+        Example:
+            ```python
+            # Use default configuration (loads from config files)
+            client = ClaudeSDKClient()
+
+            # Use custom theme
+            from claude_agent_sdk.rendering.config import RendererConfig
+            from claude_agent_sdk.rendering.theme import Theme
+            config = RendererConfig(theme=Theme.gruvbox())
+            client = ClaudeSDKClient(renderer_config=config)
+
+            # Disable colors for CI/CD
+            config = RendererConfig(color_enabled=False)
+            client = ClaudeSDKClient(renderer_config=config)
+            ```
+        """
         if options is None:
             options = ClaudeAgentOptions()
         self.options = options
         self._custom_transport = transport
         self._transport: Transport | None = None
         self._query: Any | None = None
+
+        # Load or use provided renderer config (import at runtime to avoid circular imports)
+        if renderer_config is not None:
+            self.renderer_config = renderer_config
+        else:
+            from .rendering.config import RendererConfig
+
+            self.renderer_config = RendererConfig.load_defaults()
+
         os.environ["CLAUDE_CODE_ENTRYPOINT"] = "sdk-py-client"
 
     def _convert_hooks_to_internal_format(
