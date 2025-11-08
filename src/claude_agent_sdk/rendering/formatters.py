@@ -17,7 +17,9 @@ from ..types import (
     ToolUseBlock,
     UserMessage,
 )
+from .ansi import AnsiEncoder
 from .base import Formatter
+from .classifier import BlockClassifier
 from .config import RendererConfig, RenderLevel
 
 
@@ -53,6 +55,30 @@ class ClaudeCodeFormatter(Formatter):
                    with Claude Code CLI UTF-8 characters.
         """
         super().__init__(config)
+        self.classifier = BlockClassifier()
+        self.encoder = AnsiEncoder(color_depth=self.config.color_depth)
+
+    def _style(self, text: str, category: str) -> str:
+        """Apply color styling to text based on semantic category.
+
+        Args:
+            text: The text to style
+            category: Semantic category name (e.g., "user_message", "error", "tool_use")
+
+        Returns:
+            Styled text with ANSI escape codes if colors enabled, otherwise unchanged text.
+        """
+        if not self.config.color_enabled:
+            return text
+
+        # Get the StyleRule for this category from the theme
+        style_rule = getattr(self.config.theme, category, None)
+        if style_rule is None:
+            # Category not found in theme, return unstyled text
+            return text
+
+        # Encode the text with the style rule
+        return self.encoder.encode(text, style_rule)
 
     def format_user_message(self, message: UserMessage) -> str:
         """Format a user message.
@@ -67,18 +93,23 @@ class ClaudeCodeFormatter(Formatter):
         Returns:
             Formatted string
         """
+        bullet = self._style(self.config.bullet, "bullet")
+
         # Simple string content
         if isinstance(message.content, str):
-            return f"{self.config.bullet} User: {message.content}"
+            label = self._style("User:", "user_message")
+            return f"{bullet} {label} {message.content}"
 
         # Structured content (list of blocks)
         lines = []
 
         # Check if this is an answer to questions (tool result response)
         if message.parent_tool_use_id:
-            lines.append(f"{self.config.bullet} User answered Claude's questions:")
+            label = self._style("User answered Claude's questions:", "user_message")
+            lines.append(f"{bullet} {label}")
         else:
-            lines.append(f"{self.config.bullet} User:")
+            label = self._style("User:", "user_message")
+            lines.append(f"{bullet} {label}")
 
         # Format each content block
         for block in message.content:
@@ -114,15 +145,18 @@ class ClaudeCodeFormatter(Formatter):
             Formatted string
         """
         lines = []
+        bullet = self._style(self.config.bullet, "bullet")
 
         for block in message.content:
             if isinstance(block, TextBlock):
                 # Always show text (all levels)
-                lines.append(f"{self.config.bullet} {block.text}")
+                styled_text = self._style(block.text, "assistant_message")
+                lines.append(f"{bullet} {styled_text}")
 
             elif isinstance(block, ThinkingBlock):
                 # Always show thinking (all levels)
-                lines.append(f"{self.config.bullet} {block.thinking}")
+                styled_thinking = self._style(block.thinking, "thinking")
+                lines.append(f"{bullet} {styled_thinking}")
 
             elif (
                 isinstance(block, ToolUseBlock)
@@ -156,7 +190,9 @@ class ClaudeCodeFormatter(Formatter):
             Formatted string
         """
         # Format: ● System: <subtype>
-        return f"{self.config.bullet} System: {message.subtype}"
+        bullet = self._style(self.config.bullet, "bullet")
+        label = self._style(f"System: {message.subtype}", "system_message")
+        return f"{bullet} {label}"
 
     def format_result_message(self, message: ResultMessage) -> str:
         """Format a result message.
@@ -171,11 +207,16 @@ class ClaudeCodeFormatter(Formatter):
         Returns:
             Formatted string
         """
-        lines = [f"{self.config.bullet} Result ended"]
+        bullet = self._style(self.config.bullet, "bullet")
+        result_text = self._style("Result ended", "info")
+        lines = [f"{bullet} {result_text}"]
 
         # Only show cost if enabled and available
         if self.config.show_cost and message.total_cost_usd is not None:
-            lines.append(f"  Cost: ${message.total_cost_usd:.4f}")
+            cost_text = self._style(
+                f"Cost: ${message.total_cost_usd:.4f}", "cost_display"
+            )
+            lines.append(f"  {cost_text}")
 
         return "\n".join(lines)
 
@@ -218,7 +259,9 @@ class ClaudeCodeFormatter(Formatter):
         params = ", ".join(param_strs)
 
         # Format: ● <tool>(<params>)
-        return f"{self.config.bullet} {block.name}({params})"
+        bullet = self._style(self.config.bullet, "bullet")
+        tool_text = self._style(f"{block.name}({params})", "tool_use")
+        return f"{bullet} {tool_text}"
 
     def _format_parameter_value(self, value: Any) -> str:
         """Format a parameter value with appropriate quoting.
@@ -273,6 +316,9 @@ class ClaudeCodeFormatter(Formatter):
 
             content_str = json.dumps(block.content, ensure_ascii=False, indent=2)
 
+        # Determine semantic category based on error status
+        category = "tool_error" if block.is_error else "tool_result"
+
         # Add error prefix if needed
         if block.is_error:
             content_str = f"ERROR: {content_str}"
@@ -289,8 +335,10 @@ class ClaudeCodeFormatter(Formatter):
             )
 
         # Format with tree connector and indentation
+        tree_connector = self._style(self.config.tree_connector, "tree_connector")
         if not content_str:
-            return f"  {self.config.tree_connector}  (empty)"
+            empty_text = self._style("(empty)", category)
+            return f"  {tree_connector}  {empty_text}"
 
         lines = content_str.split("\n")
         formatted_lines = []
@@ -306,12 +354,12 @@ class ClaudeCodeFormatter(Formatter):
             cleaned_line = re.sub(r"^\s*\d+→", "", line)
 
             if i == 0:
-                # First line uses tree connector
-                formatted_lines.append(
-                    f"  {self.config.tree_connector}  {cleaned_line}"
-                )
+                # First line uses tree connector with styled content
+                styled_line = self._style(cleaned_line, category)
+                formatted_lines.append(f"  {tree_connector}  {styled_line}")
             else:
-                # Continuation lines align with first line content
-                formatted_lines.append(f"{indent}{cleaned_line}")
+                # Continuation lines align with first line content with styled content
+                styled_line = self._style(cleaned_line, category)
+                formatted_lines.append(f"{indent}{styled_line}")
 
         return "\n".join(formatted_lines)

@@ -267,8 +267,10 @@ Starts with "success:", "✅", "completed" → "success"
 ---
 
 ### Story 1.3.5: Update ClaudeCodeFormatter with Color Support
-**Status**: unassigned
-**Effort**: 2 hours
+**Status**: completed
+**Claimed**: 2025-11-08 04:54
+**Completed**: 2025-11-08 05:15
+**Effort**: 21 minutes
 **Priority**: HIGH
 
 **Description**:
@@ -291,14 +293,29 @@ Integrate the theme system into the existing `ClaudeCodeFormatter` by adding the
 - [ ] Integration tests with full messages
 
 **Implementation Files**:
-- Modify: `src/claude_agent_sdk/rendering/formatters.py`
-- Modify: `tests/test_rendering_formatters.py`
+- Modified: `src/claude_agent_sdk/rendering/formatters.py` (365 lines, +68 lines)
+- Created: `tests/test_rendering_formatters_color.py` (156 lines, 8 tests)
+
+**Implementation Notes**:
+- Added `BlockClassifier` and `AnsiEncoder` instances to formatter initialization
+- Implemented `_style(text, category)` helper method that applies theme-based colors
+- Updated all formatting methods to use `_style()` for color application:
+  - `format_user_message()`: Styles bullet and "User:" label
+  - `format_assistant_message()`: Styles bullet, text content, and thinking blocks
+  - `format_system_message()`: Styles bullet and system message label
+  - `format_result_message()`: Styles "Result ended" and cost display
+  - `_format_tool_use()`: Styles bullet and tool call text
+  - `_format_tool_result_content()`: Styles tree connector and result content, with different categories for success vs error
+- All 535 tests pass (527 existing + 8 new color integration tests)
+- Code formatted with ruff, all checks pass
+- Zero regressions in existing functionality
+- Color system gracefully handles `color_enabled=False` and returns plain text
 
 **Example Integration**:
 ```python
 def format_user_message(self, message: UserMessage) -> str:
+    bullet = self._style(self.config.bullet, "bullet")
     if isinstance(message.content, str):
-        bullet = self._style(self.config.bullet, "bullet")
         label = self._style("User:", "user_message")
         return f"{bullet} {label} {message.content}"
     # ... rest of implementation
