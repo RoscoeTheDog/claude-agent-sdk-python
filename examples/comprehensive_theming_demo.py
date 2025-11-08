@@ -92,7 +92,8 @@ def get_sample_messages() -> list[dict[str, Any]]:
                 content=[
                     ThinkingBlock(
                         thinking="I need to create a clean, efficient implementation. "
-                        "I'll use iteration instead of recursion for better performance."
+                        "I'll use iteration instead of recursion for better performance.",
+                        signature="thinking"
                     ),
                     TextBlock(text="I'll create an iterative Fibonacci function that's efficient and easy to understand:"),
                 ],
