@@ -1,0 +1,4 @@
+# Agent-generated files
+*.tmp
+*.log
+.DS_Store

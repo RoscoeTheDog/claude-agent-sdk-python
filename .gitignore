@@ -90,11 +90,11 @@ test_secrets.py
 *.old
 *_backup.*
 .serena/
-.claude/
+# .claude/ is TRACKED per CLAUDE.md R8 - removed from gitignore
 .venv/
 node_modules/
 __pycache__/
 *.pyc
-.claude/
+# .claude/ is TRACKED per CLAUDE.md R8 - removed from gitignore
 .serena/cache
 .claude-context/
