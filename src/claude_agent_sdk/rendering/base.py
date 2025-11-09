@@ -21,8 +21,38 @@ from ..types import (
 from .config import RendererConfig
 
 if TYPE_CHECKING:
-    pass
+    from .config import SystemMessageLevel
 
+
+
+def _detect_system_message_severity(message: SystemMessage) -> "SystemMessageLevel":
+    """Detect the severity level of a system message.
+
+    Parses the message subtype to determine severity. Falls back to INFO
+    if the severity cannot be determined.
+
+    Args:
+        message: SystemMessage to analyze
+
+    Returns:
+        SystemMessageLevel indicating the severity
+    """
+    from .config import SystemMessageLevel
+
+    # Parse subtype to detect severity
+    subtype_lower = message.subtype.lower()
+
+    if "critical" in subtype_lower:
+        return SystemMessageLevel.CRITICAL
+    elif "error" in subtype_lower or "fail" in subtype_lower:
+        return SystemMessageLevel.ERROR
+    elif "warning" in subtype_lower or "warn" in subtype_lower:
+        return SystemMessageLevel.WARNING
+    elif "debug" in subtype_lower:
+        return SystemMessageLevel.DEBUG
+    else:
+        # Default to INFO for "info" and unknown types
+        return SystemMessageLevel.INFO
 
 class Formatter(ABC):
     """Abstract base class for message formatters.
@@ -220,6 +250,7 @@ class Handler(ABC):
         This implements the filtering logic based on:
         - Message type include/exclude lists
         - Render level
+        - System message severity levels
         - Message-specific metadata
 
         Args:
@@ -243,13 +274,33 @@ class Handler(ABC):
             return False
 
         # Apply render level filtering
-        from .config import RenderLevel
+        from .config import RenderLevel, SystemMessageLevel
 
         level = self.config.render_level
 
-        # SystemMessage only at DEBUG+
-        if isinstance(message, SystemMessage) and level < RenderLevel.DEBUG:
-            return False
+        # SystemMessage filtering with render-level-based severity control
+        if isinstance(message, SystemMessage):
+            # Map render levels to minimum severity thresholds
+            # MINIMAL: only critical
+            # STANDARD: error and above
+            # DETAILED: all messages (debug and above)
+            # DEBUG: all messages (debug and above)
+            # ALL: all messages (debug and above)
+            if level >= RenderLevel.DETAILED:
+                # At DETAILED/DEBUG/ALL, show all system messages (DEBUG and above)
+                min_severity = SystemMessageLevel.DEBUG
+            elif level == RenderLevel.STANDARD:
+                # At STANDARD, show ERROR and above (use configured default)
+                min_severity = self.config.min_system_message_level
+            elif level == RenderLevel.MINIMAL:
+                # At MINIMAL, show only CRITICAL
+                min_severity = SystemMessageLevel.CRITICAL
+            else:
+                # Below MINIMAL, hide all system messages
+                return False
+
+            severity = _detect_system_message_severity(message)
+            return severity >= min_severity
 
         # StreamEvent only at ALL
         # All other message types pass

@@ -33,6 +33,24 @@ class RenderLevel(IntEnum):
     ALL = 4
 
 
+class SystemMessageLevel(IntEnum):
+    """System message severity levels for filtering.
+
+    Levels control which system messages are displayed based on severity:
+    - DEBUG: Internal debugging messages
+    - INFO: Informational messages (e.g., "System: info")
+    - WARNING: Warning messages (e.g., "System: warning")
+    - ERROR: Error messages
+    - CRITICAL: Critical system errors
+    """
+
+    DEBUG = 0
+    INFO = 1
+    WARNING = 2
+    ERROR = 3
+    CRITICAL = 4
+
+
 @dataclass
 class RendererConfig:
     """Configuration for message rendering.
@@ -45,6 +63,7 @@ class RendererConfig:
     render_level: RenderLevel = RenderLevel.STANDARD
     include_message_types: list[str] = field(default_factory=list)
     exclude_message_types: list[str] = field(default_factory=list)
+    min_system_message_level: SystemMessageLevel = SystemMessageLevel.ERROR
 
     # Display settings
     show_metadata: bool = False
@@ -194,6 +213,13 @@ class RendererConfig:
             elif isinstance(data["render_level"], int):
                 data["render_level"] = RenderLevel(data["render_level"])
 
+        # Handle min_system_message_level deserialization
+        if "min_system_message_level" in data:
+            if isinstance(data["min_system_message_level"], str):
+                data["min_system_message_level"] = SystemMessageLevel[data["min_system_message_level"]]
+            elif isinstance(data["min_system_message_level"], int):
+                data["min_system_message_level"] = SystemMessageLevel(data["min_system_message_level"])
+
         return cls(**data)
 
     def _to_dict(self) -> dict[str, Any]:
@@ -215,6 +241,10 @@ class RendererConfig:
         # Convert render_level to string name
         if "render_level" in data:
             data["render_level"] = self.render_level.name
+
+        # Convert min_system_message_level to string name
+        if "min_system_message_level" in data:
+            data["min_system_message_level"] = self.min_system_message_level.name
 
         return data
 

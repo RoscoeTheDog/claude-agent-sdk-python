@@ -21,7 +21,7 @@ from typing import TextIO
 
 from ..types import Message
 from .base import Formatter, Handler, MessageRenderer
-from .config import RendererConfig, RenderLevel
+from .config import RendererConfig, RenderLevel, SystemMessageLevel
 from .formatters import ClaudeCodeFormatter
 from .handlers import FileHandler, NullHandler, StreamHandler
 from .theme import ColorDepth, StyleRule, Theme
@@ -70,6 +70,7 @@ __all__ = [
     "Handler",
     "MessageRenderer",
     "RenderLevel",
+    "SystemMessageLevel",
     "RendererConfig",
     "ClaudeCodeFormatter",
     "StreamHandler",

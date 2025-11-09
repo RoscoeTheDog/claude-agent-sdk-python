@@ -148,16 +148,20 @@ Implement modular syntax highlighting architecture supporting 500+ languages.
 
 ---
 
-### Story 5: Control System Message Visibility
-**Status**: unassigned | **Time**: 1 hr | **File**: [stories/5-system-message-visibility.md](./stories/5-system-message-visibility.md)
+### ✅ Story 5: Control System Message Visibility
+**Status**: completed | **Time**: 50 min (est. 1 hr) | **File**: [stories/5-system-message-visibility.md](./stories/5-system-message-visibility.md) | **Completed**: 2025-11-09 17:05
 
 Render level controls for system messages (hide info/warning by default).
 
 **Dependencies**: Story 2 ✅
 
-**Deliverables**:
-- Visibility controls implementation
-- Document as LAST STEP
+**Deliverables**: ✅
+- Added `SystemMessageLevel` enum (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+- Added `min_system_message_level` field to RendererConfig (default: ERROR)
+- Implemented severity detection from SystemMessage.subtype
+- Updated Handler.should_render() with render-level-based severity filtering
+- 17 comprehensive unit tests covering all severity levels and render levels
+- All 592 tests passing (575 + 17 new)
 
 ---
 
