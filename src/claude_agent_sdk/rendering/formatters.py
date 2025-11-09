@@ -236,32 +236,75 @@ class ClaudeCodeFormatter(Formatter):
         event_type = message.event.get("type", "unknown")
         return f"{self.config.bullet} Stream: {event_type}"
 
-    def _format_tool_use(self, block: ToolUseBlock) -> str:
-        """Format a tool use block.
+    def _format_tool_use(self, block: ToolUseBlock, state: str = "active") -> str:
+        """Format a tool use block with component-level styling.
 
-        Format: ● <name>(<key>: "value", <key>: value)
-        - String parameters are quoted
-        - Other parameters are not quoted
-        - MCP tools can optionally be labeled (future enhancement)
+        This method implements component-level styling where each part
+        of the tool call (bullet, name, parameters) is styled independently.
+        State-based bullet coloring provides visual feedback about tool execution.
+
+        Format: <bullet> <name>(<key>: <value>, ...)
 
         Args:
             block: ToolUseBlock to format
+            state: Tool state for bullet coloring:
+                   - "active": Green bullet (tool succeeded)
+                   - "pending": White bullet (tool not yet executed)
+                   - "failed": Red bullet (tool execution failed)
 
         Returns:
-            Formatted tool use string
+            Formatted tool use string with component-level styling
+
+        Example:
+            >>> # Active tool (green bullet):
+            >>> "● read_file(path: "/src/main.py", lines: 100)"
+            >>> # Where ● is green, parameters are styled by type
         """
-        # Format parameters
-        param_strs = []
+        # State-based bullet coloring
+        bullet_map = {
+            "active": self._style(self.config.bullet, "success"),  # Green
+            "pending": self._style(self.config.bullet, "assistant_message"),  # White
+            "failed": self._style(self.config.bullet, "error"),  # Red
+        }
+        bullet = bullet_map.get(state, bullet_map["pending"])
+
+        # Tool name (white, like assistant message)
+        tool_name = self._style(block.name, "assistant_message")
+
+        # Format parameters with component-level styling
+        param_parts = []
         for key, value in block.input.items():
+            # Parameter key (white)
+            key_styled = self._style(f"{key}: ", "assistant_message")
+
+            # Parameter value (type-based coloring)
             formatted_value = self._format_parameter_value(value)
-            param_strs.append(f"{key}: {formatted_value}")
+            if isinstance(value, str):
+                # String values in green for visibility
+                value_styled = self._style(formatted_value, "success")
+            elif isinstance(value, bool):
+                # Boolean in cyan
+                value_styled = self._style(formatted_value, "info")
+            elif isinstance(value, (int, float)):
+                # Numbers in green
+                value_styled = self._style(formatted_value, "success")
+            elif value is None:
+                # Null in cyan
+                value_styled = self._style(formatted_value, "info")
+            else:
+                # Complex types (list, dict) as JSON in success color
+                value_styled = self._style(formatted_value, "success")
 
-        params = ", ".join(param_strs)
+            param_parts.append(key_styled + value_styled)
 
-        # Format: ● <tool>(<params>)
-        bullet = self._style(self.config.bullet, "bullet")
-        tool_text = self._style(f"{block.name}({params})", "tool_use")
-        return f"{bullet} {tool_text}"
+        # Join parameters
+        params_str = ", ".join(param_parts) if param_parts else ""
+
+        # Parentheses (white, like assistant message)
+        open_paren = self._style("(", "assistant_message")
+        close_paren = self._style(")", "assistant_message")
+
+        return f"{bullet} {tool_name}{open_paren}{params_str}{close_paren}"
 
     def _format_parameter_value(self, value: Any) -> str:
         """Format a parameter value with appropriate quoting.
@@ -290,10 +333,56 @@ class ClaudeCodeFormatter(Formatter):
             # Numbers and other types
             return str(value)
 
+    def _estimate_token_count(self, content: Any) -> int:
+        """Estimate token count for tool result content.
+
+        Uses a rough estimation of 1 token ≈ 4 characters.
+        This is sufficient for warning detection without requiring
+        a full tokenizer dependency.
+
+        Args:
+            content: Tool result content (str, dict, list, or None)
+
+        Returns:
+            Estimated token count
+        """
+        if content is None:
+            return 0
+        elif isinstance(content, str):
+            return len(content) // 4
+        else:
+            # For complex types, convert to JSON first
+            import json
+            content_str = json.dumps(content, ensure_ascii=False)
+            return len(content_str) // 4
+
+    def _format_tool_result_warning(self, content_size: int) -> str:
+        """Generate warning for large tool results.
+
+        Displays a warning when tool results exceed 10,000 tokens (~40KB text),
+        as large MCP responses can quickly fill up context windows.
+
+        Args:
+            content_size: Size of result content in tokens (approximate)
+
+        Returns:
+            Formatted warning string or empty string if no warning needed
+        """
+        if content_size > 10000:
+            warning_icon = self._style("⚠️", "warning")
+            warning_text = self._style(
+                f" Large MCP response (~{content_size/1000:.1f}k tokens), "
+                f"this can fill up context quickly",
+                "warning"
+            )
+            return f"  {warning_icon}{warning_text}\n"
+        return ""
+
     def _format_tool_result_content(self, block: ToolResultBlock) -> str:
         """Format tool result content with tree connector and indentation.
 
         Format:
+          ⚠️ Large MCP response (...)  [if > 10k tokens]
           ⎿  <first line>
              <second line>
              ... +N lines (ctrl+o to expand)
@@ -315,6 +404,10 @@ class ClaudeCodeFormatter(Formatter):
             import json
 
             content_str = json.dumps(block.content, ensure_ascii=False, indent=2)
+
+        # Check if we need a warning for large responses
+        token_count = self._estimate_token_count(block.content)
+        warning = self._format_tool_result_warning(token_count)
 
         # Determine semantic category based on error status
         category = "tool_error" if block.is_error else "tool_result"
@@ -362,4 +455,10 @@ class ClaudeCodeFormatter(Formatter):
                 styled_line = self._style(cleaned_line, category)
                 formatted_lines.append(f"{indent}{styled_line}")
 
-        return "\n".join(formatted_lines)
+        result = "\n".join(formatted_lines)
+
+        # Prepend warning if needed
+        if warning:
+            result = warning + result
+
+        return result

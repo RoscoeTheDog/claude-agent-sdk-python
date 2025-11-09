@@ -632,3 +632,289 @@ class TestRenderLevelFiltering:
         # Should NOT show any tool results
         assert "content A" not in result
         assert "success" not in result
+
+
+class TestComponentLevelToolStyling:
+    """Test component-level styling for tool calls (Story 3)."""
+
+    def test_format_tool_use_with_active_state(self):
+        """Test tool use formatting with active (green bullet) state."""
+        formatter = ClaudeCodeFormatter()
+        tool_block = ToolUseBlock(
+            id="tool_1",
+            name="read_file",
+            input={"path": "/path/to/file.py", "lines": 100}
+        )
+
+        result = formatter._format_tool_use(tool_block, state="active")
+
+        # Should contain tool name and parameters
+        assert "read_file" in result
+        assert "path:" in result
+        assert "/path/to/file.py" in result
+        assert "lines:" in result
+        assert "100" in result
+        # Bullet should be present
+        assert "●" in result
+
+    def test_format_tool_use_with_pending_state(self):
+        """Test tool use formatting with pending (white bullet) state."""
+        formatter = ClaudeCodeFormatter()
+        tool_block = ToolUseBlock(
+            id="tool_1",
+            name="search_files",
+            input={"query": "test"}
+        )
+
+        result = formatter._format_tool_use(tool_block, state="pending")
+
+        # Should contain tool name and parameters
+        assert "search_files" in result
+        assert "query:" in result
+        assert "test" in result
+
+    def test_format_tool_use_with_failed_state(self):
+        """Test tool use formatting with failed (red bullet) state."""
+        formatter = ClaudeCodeFormatter()
+        tool_block = ToolUseBlock(
+            id="tool_1",
+            name="delete_file",
+            input={"path": "/nonexistent.txt"}
+        )
+
+        result = formatter._format_tool_use(tool_block, state="failed")
+
+        # Should contain tool name and parameters
+        assert "delete_file" in result
+        assert "path:" in result
+
+    def test_format_tool_use_default_state(self):
+        """Test tool use formatting defaults to 'active' state."""
+        formatter = ClaudeCodeFormatter()
+        tool_block = ToolUseBlock(
+            id="tool_1",
+            name="test_tool",
+            input={}
+        )
+
+        # Should default to active when no state provided
+        result = formatter._format_tool_use(tool_block)
+
+        assert "test_tool" in result
+
+    def test_format_tool_use_with_string_parameter(self):
+        """Test string parameters are styled (green) and quoted."""
+        formatter = ClaudeCodeFormatter()
+        tool_block = ToolUseBlock(
+            id="tool_1",
+            name="echo",
+            input={"message": "Hello World"}
+        )
+
+        result = formatter._format_tool_use(tool_block)
+
+        # String should be quoted
+        assert '"Hello World"' in result
+
+    def test_format_tool_use_with_boolean_parameter(self):
+        """Test boolean parameters are styled (cyan)."""
+        formatter = ClaudeCodeFormatter()
+        tool_block = ToolUseBlock(
+            id="tool_1",
+            name="configure",
+            input={"enabled": True, "debug": False}
+        )
+
+        result = formatter._format_tool_use(tool_block)
+
+        # Booleans should be lowercase
+        assert "true" in result
+        assert "false" in result
+
+    def test_format_tool_use_with_numeric_parameter(self):
+        """Test numeric parameters are styled (green)."""
+        formatter = ClaudeCodeFormatter()
+        tool_block = ToolUseBlock(
+            id="tool_1",
+            name="calculate",
+            input={"count": 42, "rate": 3.14}
+        )
+
+        result = formatter._format_tool_use(tool_block)
+
+        assert "42" in result
+        assert "3.14" in result
+
+    def test_format_tool_use_with_null_parameter(self):
+        """Test null parameters are styled (cyan)."""
+        formatter = ClaudeCodeFormatter()
+        tool_block = ToolUseBlock(
+            id="tool_1",
+            name="test",
+            input={"value": None}
+        )
+
+        result = formatter._format_tool_use(tool_block)
+
+        assert "null" in result
+
+    def test_format_tool_use_with_complex_parameter(self):
+        """Test complex types (list, dict) are JSON-formatted."""
+        formatter = ClaudeCodeFormatter()
+        tool_block = ToolUseBlock(
+            id="tool_1",
+            name="configure",
+            input={
+                "settings": {"key": "value"},
+                "items": [1, 2, 3]
+            }
+        )
+
+        result = formatter._format_tool_use(tool_block)
+
+        # Complex types should be JSON-encoded
+        assert "settings:" in result
+        assert "items:" in result
+
+    def test_format_tool_use_with_mixed_parameters(self):
+        """Test tool with multiple parameter types."""
+        formatter = ClaudeCodeFormatter()
+        tool_block = ToolUseBlock(
+            id="tool_1",
+            name="multi_param",
+            input={
+                "text": "hello",
+                "count": 5,
+                "enabled": True,
+                "value": None
+            }
+        )
+
+        result = formatter._format_tool_use(tool_block)
+
+        assert "text:" in result
+        assert '"hello"' in result
+        assert "count:" in result
+        assert "5" in result
+        assert "enabled:" in result
+        assert "true" in result
+        assert "value:" in result
+        assert "null" in result
+
+    def test_format_tool_use_with_no_parameters(self):
+        """Test tool with empty parameter dict."""
+        formatter = ClaudeCodeFormatter()
+        tool_block = ToolUseBlock(
+            id="tool_1",
+            name="list_files",
+            input={}
+        )
+
+        result = formatter._format_tool_use(tool_block)
+
+        # Should show tool with empty parentheses
+        assert "list_files" in result
+        assert "()" in result
+
+
+class TestLargeResponseWarning:
+    """Test warning indicators for large MCP responses (Story 3)."""
+
+    def test_estimate_token_count_empty_content(self):
+        """Test token estimation for empty/None content."""
+        formatter = ClaudeCodeFormatter()
+
+        assert formatter._estimate_token_count(None) == 0
+        assert formatter._estimate_token_count("") == 0
+
+    def test_estimate_token_count_string_content(self):
+        """Test token estimation for string content."""
+        formatter = ClaudeCodeFormatter()
+
+        # "hello" = 5 chars / 4 = 1 token (rough estimate)
+        assert formatter._estimate_token_count("hello") == 1
+
+        # 400 chars = 100 tokens
+        content = "x" * 400
+        assert formatter._estimate_token_count(content) == 100
+
+    def test_estimate_token_count_complex_content(self):
+        """Test token estimation for dict/list content."""
+        formatter = ClaudeCodeFormatter()
+
+        content = {"key": "value", "items": [1, 2, 3]}
+        # JSON representation will be estimated
+        tokens = formatter._estimate_token_count(content)
+        assert tokens > 0
+
+    def test_format_tool_result_warning_small_response(self):
+        """Test no warning for small responses (<10k tokens)."""
+        formatter = ClaudeCodeFormatter()
+
+        # 5000 tokens - should not trigger warning
+        warning = formatter._format_tool_result_warning(5000)
+        assert warning == ""
+
+        # 9999 tokens - should not trigger warning
+        warning = formatter._format_tool_result_warning(9999)
+        assert warning == ""
+
+    def test_format_tool_result_warning_large_response(self):
+        """Test warning generated for large responses (>10k tokens)."""
+        formatter = ClaudeCodeFormatter()
+
+        # 10001 tokens - should trigger warning
+        warning = formatter._format_tool_result_warning(10001)
+        assert warning != ""
+        assert "⚠️" in warning
+        assert "Large MCP response" in warning
+        assert "10.0k tokens" in warning
+
+        # 15000 tokens
+        warning = formatter._format_tool_result_warning(15000)
+        assert "15.0k tokens" in warning
+
+    def test_format_tool_result_warning_very_large_response(self):
+        """Test warning formatting for very large responses."""
+        formatter = ClaudeCodeFormatter()
+
+        # 100k tokens
+        warning = formatter._format_tool_result_warning(100000)
+        assert "100.0k tokens" in warning
+        assert "context quickly" in warning
+
+    def test_format_tool_result_content_with_warning(self):
+        """Test tool result formatting includes warning for large content."""
+        formatter = ClaudeCodeFormatter()
+
+        # Create large content (>10k tokens = >40k chars)
+        large_content = "x" * 50000  # 12.5k tokens
+        tool_block = ToolResultBlock(
+            tool_use_id="tool_1",
+            content=large_content,
+            is_error=False
+        )
+
+        result = formatter._format_tool_result_content(tool_block)
+
+        # Should include warning
+        assert "⚠️" in result
+        assert "Large MCP response" in result
+
+    def test_format_tool_result_content_without_warning(self):
+        """Test tool result formatting has no warning for small content."""
+        formatter = ClaudeCodeFormatter()
+
+        # Create small content
+        small_content = "Success"
+        tool_block = ToolResultBlock(
+            tool_use_id="tool_1",
+            content=small_content,
+            is_error=False
+        )
+
+        result = formatter._format_tool_result_content(tool_block)
+
+        # Should NOT include warning
+        assert "⚠️" not in result
+        assert "Large MCP response" not in result
