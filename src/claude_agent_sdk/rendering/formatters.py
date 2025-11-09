@@ -91,6 +91,64 @@ class ClaudeCodeFormatter(Formatter):
         # Encode the text with the style rule
         return self.encoder.encode(text, style_rule)
 
+    def _format_text_with_indentation(self, text: str, initial_prefix: str = "") -> str:
+        """Format text with proper indentation for nested lists and multi-line content.
+
+        Handles:
+        - Top-level bullets (-, *, 1., etc.) indented from initial prefix
+        - Multi-line text with hanging indent
+        - Nested list items with progressive indentation
+
+        Args:
+            text: The text content to format
+            initial_prefix: The prefix for the first line (e.g., "● ")
+
+        Returns:
+            Formatted text with proper indentation
+        """
+        import re
+
+        lines = text.split("\n")
+        if not lines:
+            return ""
+
+        formatted_lines = []
+        # Base indent is 2 spaces after the bullet character position
+        base_indent = " " * (len(initial_prefix))
+
+        for i, line in enumerate(lines):
+            if i == 0:
+                # First line uses the initial prefix
+                formatted_lines.append(line)
+            else:
+                # Detect list items: -, *, +, or numbered (1., 2., etc.)
+                list_item_match = re.match(r'^(\s*)([*\-+]|\d+\.)\s+', line)
+
+                if list_item_match:
+                    # This is a list item - preserve its indentation relative to base
+                    indent_spaces = list_item_match.group(1)
+                    marker = list_item_match.group(2)
+                    content_after_marker = line[len(indent_spaces) + len(marker):].lstrip()
+
+                    # Calculate total indent: base + original indent
+                    total_indent = base_indent + indent_spaces
+                    formatted_lines.append(f"{total_indent}{marker} {content_after_marker}")
+                else:
+                    # Regular continuation line - apply hanging indent
+                    # If the line has leading spaces, preserve them relative to base
+                    stripped = line.lstrip()
+                    if stripped:
+                        # Count original leading spaces
+                        original_spaces = len(line) - len(stripped)
+                        # Add base indent plus original spacing
+                        total_indent = base_indent + (" " * original_spaces)
+                        formatted_lines.append(f"{total_indent}{stripped}")
+                    else:
+                        # Empty line - preserve it
+                        formatted_lines.append("")
+
+        return "\n".join(formatted_lines)
+
     def format_user_message(self, message: UserMessage) -> str:
         """Format a user message.
 
@@ -149,6 +207,11 @@ class ClaudeCodeFormatter(Formatter):
         - STANDARD: + tool use blocks (no outputs)
         - DETAILED: + tool result blocks
 
+        Text formatting:
+        - Top-level bullets indented from ● position
+        - Multi-line content with hanging indent
+        - Nested lists properly indented
+
         Args:
             message: AssistantMessage to format
 
@@ -161,13 +224,20 @@ class ClaudeCodeFormatter(Formatter):
         for block in message.content:
             if isinstance(block, TextBlock):
                 # Always show text (all levels)
+                # Apply indentation for lists and multi-line content
                 styled_text = self._style(block.text, "assistant_message")
-                lines.append(f"{bullet} {styled_text}")
+                formatted_text = self._format_text_with_indentation(
+                    styled_text, initial_prefix=f"{bullet} "
+                )
+                lines.append(f"{bullet} {formatted_text}")
 
             elif isinstance(block, ThinkingBlock):
                 # Always show thinking (all levels)
                 styled_thinking = self._style(block.thinking, "thinking")
-                lines.append(f"{bullet} {styled_thinking}")
+                formatted_thinking = self._format_text_with_indentation(
+                    styled_thinking, initial_prefix=f"{bullet} "
+                )
+                lines.append(f"{bullet} {formatted_thinking}")
 
             elif (
                 isinstance(block, ToolUseBlock)

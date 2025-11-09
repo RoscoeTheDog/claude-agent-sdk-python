@@ -918,3 +918,175 @@ class TestLargeResponseWarning:
         # Should NOT include warning
         assert "⚠️" not in result
         assert "Large MCP response" not in result
+
+
+class TestBulletListIndentation:
+    """Test bullet list indentation fixes (Story 6)."""
+
+    def test_simple_bullet_list_indentation(self):
+        """Test that bullet lists are indented from the initial bullet position."""
+        formatter = ClaudeCodeFormatter()
+        text = "I've created a function with:\n- Input validation\n- Efficient algorithm"
+        message = AssistantMessage(
+            content=[TextBlock(text=text)],
+            model="claude-3-5-sonnet-20241022"
+        )
+
+        result = formatter.format_assistant_message(message)
+
+        # First line should have bullet
+        assert result.startswith("● I've created a function with:")
+        # Subsequent lines should be indented with 2 spaces (bullet position)
+        assert "\n  - Input validation" in result
+        assert "\n  - Efficient algorithm" in result
+
+    def test_nested_bullet_list_indentation(self):
+        """Test that nested bullet lists preserve their indentation."""
+        formatter = ClaudeCodeFormatter()
+        text = "Features:\n- Authentication\n  - OAuth support\n  - API key auth\n- Database\n  - PostgreSQL\n  - SQLite"
+        message = AssistantMessage(
+            content=[TextBlock(text=text)],
+            model="claude-3-5-sonnet-20241022"
+        )
+
+        result = formatter.format_assistant_message(message)
+
+        # Top-level items indented from bullet
+        assert "\n  - Authentication" in result
+        assert "\n  - Database" in result
+        # Nested items should preserve their extra indentation
+        assert "\n    - OAuth support" in result
+        assert "\n    - API key auth" in result
+        assert "\n    - PostgreSQL" in result
+        assert "\n    - SQLite" in result
+
+    def test_numbered_list_indentation(self):
+        """Test that numbered lists are properly indented."""
+        formatter = ClaudeCodeFormatter()
+        text = "Steps to follow:\n1. Clone the repository\n2. Install dependencies\n3. Run tests"
+        message = AssistantMessage(
+            content=[TextBlock(text=text)],
+            model="claude-3-5-sonnet-20241022"
+        )
+
+        result = formatter.format_assistant_message(message)
+
+        assert "\n  1. Clone the repository" in result
+        assert "\n  2. Install dependencies" in result
+        assert "\n  3. Run tests" in result
+
+    def test_multiline_list_item_hanging_indent(self):
+        """Test that multi-line list items have hanging indent."""
+        formatter = ClaudeCodeFormatter()
+        text = "Changes made:\n- Updated the authentication module\n  to support OAuth2 flow\n- Fixed validation logic"
+        message = AssistantMessage(
+            content=[TextBlock(text=text)],
+            model="claude-3-5-sonnet-20241022"
+        )
+
+        result = formatter.format_assistant_message(message)
+
+        # First list item
+        assert "\n  - Updated the authentication module" in result
+        # Continuation of first item should be indented further
+        assert "\n    to support OAuth2 flow" in result
+        # Second list item
+        assert "\n  - Fixed validation logic" in result
+
+    def test_mixed_list_types(self):
+        """Test handling of mixed list marker types."""
+        formatter = ClaudeCodeFormatter()
+        text = "Tasks:\n- First task\n* Second task\n+ Third task\n1. Numbered task"
+        message = AssistantMessage(
+            content=[TextBlock(text=text)],
+            model="claude-3-5-sonnet-20241022"
+        )
+
+        result = formatter.format_assistant_message(message)
+
+        # All should be indented
+        assert "\n  - First task" in result
+        assert "\n  * Second task" in result
+        assert "\n  + Third task" in result
+        assert "\n  1. Numbered task" in result
+
+    def test_plain_multiline_text_hanging_indent(self):
+        """Test that plain multi-line text (no bullets) has hanging indent."""
+        formatter = ClaudeCodeFormatter()
+        text = "This is a long message that spans\nmultiple lines without\nany bullet points"
+        message = AssistantMessage(
+            content=[TextBlock(text=text)],
+            model="claude-3-5-sonnet-20241022"
+        )
+
+        result = formatter.format_assistant_message(message)
+
+        # First line has bullet
+        assert result.startswith("● This is a long message that spans")
+        # Continuation lines should be indented
+        assert "\n  multiple lines without" in result
+        assert "\n  any bullet points" in result
+
+    def test_empty_lines_preserved(self):
+        """Test that empty lines within text are preserved."""
+        formatter = ClaudeCodeFormatter()
+        text = "First paragraph\n\nSecond paragraph\n- List item"
+        message = AssistantMessage(
+            content=[TextBlock(text=text)],
+            model="claude-3-5-sonnet-20241022"
+        )
+
+        result = formatter.format_assistant_message(message)
+
+        # Should have empty line between paragraphs
+        assert "First paragraph\n\n" in result
+        assert "\n  Second paragraph" in result
+        assert "\n  - List item" in result
+
+    def test_thinking_block_indentation(self):
+        """Test that thinking blocks also get proper indentation."""
+        formatter = ClaudeCodeFormatter()
+        thinking = "I need to:\n- Analyze the code\n- Find the bug\n- Fix it"
+        message = AssistantMessage(
+            content=[ThinkingBlock(thinking=thinking, signature="sig-123")],
+            model="claude-3-5-sonnet-20241022"
+        )
+
+        result = formatter.format_assistant_message(message)
+
+        # Thinking blocks should also have indented lists
+        assert result.startswith("● I need to:")
+        assert "\n  - Analyze the code" in result
+        assert "\n  - Find the bug" in result
+        assert "\n  - Fix it" in result
+
+    def test_single_line_text_unchanged(self):
+        """Test that single-line text works as before."""
+        formatter = ClaudeCodeFormatter()
+        text = "Hello, how can I help you?"
+        message = AssistantMessage(
+            content=[TextBlock(text=text)],
+            model="claude-3-5-sonnet-20241022"
+        )
+
+        result = formatter.format_assistant_message(message)
+
+        # Should just be bullet + text (no indentation needed)
+        assert result == "● Hello, how can I help you?"
+
+    def test_code_block_preservation(self):
+        """Test that code-like content is handled correctly."""
+        formatter = ClaudeCodeFormatter()
+        text = "Here's the code:\n    def hello():\n        print('hi')"
+        message = AssistantMessage(
+            content=[TextBlock(text=text)],
+            model="claude-3-5-sonnet-20241022"
+        )
+
+        result = formatter.format_assistant_message(message)
+
+        # First line
+        assert result.startswith("● Here's the code:")
+        # Indented code lines should preserve their indentation relative to base
+        assert "\n      def hello():" in result
+        assert "\n          print('hi')" in result

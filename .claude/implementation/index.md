@@ -166,15 +166,19 @@ Render level controls for system messages (hide info/warning by default).
 ---
 
 ### Story 6: Fix Bullet List Indentation
-**Status**: unassigned | **Time**: 1.5 hr | **File**: [stories/6-bullet-indentation.md](./stories/6-bullet-indentation.md)
+**Status**: completed | **Time**: 40 min (est. 1.5 hr) | **File**: [stories/6-bullet-indentation.md](./stories/6-bullet-indentation.md) | **Claimed**: 2025-11-09 17:35 | **Completed**: 2025-11-09 17:45
 
 Fix nested list indentation and multi-line wrapping.
 
 **Dependencies**: Story 2 ✅
 
-**Deliverables**:
-- Indentation algorithm implementation
-- Document as LAST STEP
+**Deliverables**: ✅
+- Added `_format_text_with_indentation()` helper method with regex-based list detection
+- Updated `format_assistant_message()` to apply indentation to text and thinking blocks
+- Proper indentation for bullet lists (-, *, +), numbered lists (1., 2., etc.), and nested lists
+- Hanging indent for multi-line content
+- 10 comprehensive unit tests covering all indentation scenarios
+- All 602 tests passing (592 + 10 new)
 
 ---
 
