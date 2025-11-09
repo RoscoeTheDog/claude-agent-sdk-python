@@ -112,8 +112,8 @@ Component-level styling for tool calls (name, params, values) plus state-based U
 
 ---
 
-### 🔄 Story 4: Unified Syntax & Semantic Highlighting (v2)
-**Status**: unassigned | **Time**: 4 hr | **File**: [stories/4-unified-syntax-semantic-highlighting.md](./stories/4-unified-syntax-semantic-highlighting.md)
+### ✅ Story 4: Unified Syntax & Semantic Highlighting (v2)
+**Status**: completed | **Time**: 4 hr (est. 4 hr) | **File**: [stories/4-unified-syntax-semantic-highlighting.md](./stories/4-unified-syntax-semantic-highlighting.md) | **Completed**: 2025-11-09 10:30
 **Priority**: HIGH
 **Version**: 2.0 (Replaces archived Stories 4 & 10)
 
@@ -135,12 +135,12 @@ Implement modular syntax highlighting architecture supporting 500+ languages.
 - Customizable theming per language
 - Graceful degradation if Pygments not installed
 
-**Deliverables**:
-- All 5 modules implemented
+**Deliverables**: ✅
+- All 5 modules implemented (language_registry, token_mapper, semantic_mapping, structured_formatter, highlighter)
 - Integration with theme.py, config.py, formatters.py
-- Pygments optional dependency
-- Complete test suite
-- **Document as LAST STEP** (module/class/method docstrings)
+- Pygments optional dependency added to pyproject.toml
+- All 575 tests passing
+- Module/class/method docstrings completed
 
 **Replaces**:
 - ❌ Old Story 4 (archived - only 7 languages, hard-coded)
@@ -401,6 +401,24 @@ Both branches → {Story 3 (IN PROGRESS), 5, 6} → Story 7 → Story 8 → Stor
 ---
 
 ## Progress Log
+
+### 2025-11-09 10:30 - Story 4 Completed
+- ✅ Completed Story 4 v2: Unified Syntax & Semantic Highlighting
+- **Implementation**: Modular 5-module architecture supporting 500+ languages
+- **Modules**:
+  - `language_registry.py`: 20+ predefined languages, extensible catalog
+  - `token_mapper.py`: 100+ Pygments token mappings
+  - `semantic_mapping.py`: Customizable semantic → theme mapping
+  - `structured_formatter.py`: Type-aware JSON/YAML formatting
+  - `highlighter.py`: Orchestrator coordinating all components
+- **Integration**:
+  - Updated `theme.py`: Added `semantic_mapping` field, initialized in `claude_code_default()`
+  - Updated `config.py`: Added `enable_syntax_highlighting` field
+  - Updated `formatters.py`: Integrated `SyntaxHighlighter` for tool results
+  - Updated `pyproject.toml`: Added Pygments as optional dependency (`syntax` and `full` extras)
+- **Tests**: All 575 tests passing (fixed 18 test failures related to integration)
+- **Time**: 4 hours (on-target with estimate)
+- **Impact**: Unlimited language support, zero code duplication, clean modular design
 
 ### 2025-11-09 03:30 - Story 3 Completed
 - ✅ Completed Story 3: Separate Tool Call Component Styling

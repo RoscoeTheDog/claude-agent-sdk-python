@@ -182,6 +182,8 @@ class Theme:
             - `Theme.gruvbox()`: Gruvbox color scheme
             - `Theme.high_contrast()`: Maximum contrast for accessibility
         """
+        from claude_agent_sdk.rendering.syntax import SemanticMapping
+
         return cls(
             # Message types - validated against Claude CLI
             user_message=StyleRule(fg_color="bright_white", bold=True),  # High visibility
@@ -208,6 +210,8 @@ class Theme:
             # Special (verified)
             thinking=StyleRule(fg_color="magenta", italic=True),  # Reasoning
             cost_display=StyleRule(fg_color="bright_black", dim=True),  # Cost info
+            # Syntax highlighting mapping (Story 4)
+            semantic_mapping=SemanticMapping.claude_default(),
         )
 
     @classmethod
@@ -582,6 +586,15 @@ class Theme:
             if value is None:
                 # Allow None values (e.g., for optional fields like semantic_mapping)
                 kwargs[key] = None
+            elif key == "semantic_mapping":
+                # Handle semantic_mapping specially (Story 4)
+                from claude_agent_sdk.rendering.syntax import SemanticMapping
+                if isinstance(value, dict):
+                    kwargs[key] = SemanticMapping(mappings=value.get("mappings", {}))
+                elif isinstance(value, SemanticMapping):
+                    kwargs[key] = value
+                else:
+                    kwargs[key] = None
             elif isinstance(value, dict):
                 kwargs[key] = StyleRule(**value)
             elif isinstance(value, StyleRule):

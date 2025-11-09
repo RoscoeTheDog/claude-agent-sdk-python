@@ -58,6 +58,17 @@ class ClaudeCodeFormatter(Formatter):
         self.classifier = BlockClassifier()
         self.encoder = AnsiEncoder(color_depth=self.config.color_depth)
 
+        # Initialize syntax highlighter if enabled and theme has semantic_mapping (Story 4)
+        if self.config.enable_syntax_highlighting and self.config.theme.semantic_mapping:
+            from .syntax import SyntaxHighlighter
+            self.syntax_highlighter: SyntaxHighlighter | None = SyntaxHighlighter(
+                theme=self.config.theme,
+                semantic_mapping=self.config.theme.semantic_mapping,
+                enabled=True
+            )
+        else:
+            self.syntax_highlighter = None
+
     def _style(self, text: str, category: str) -> str:
         """Apply color styling to text based on semantic category.
 
@@ -408,6 +419,18 @@ class ClaudeCodeFormatter(Formatter):
         # Check if we need a warning for large responses
         token_count = self._estimate_token_count(block.content)
         warning = self._format_tool_result_warning(token_count)
+
+        # Try syntax highlighting for structured data (Story 4)
+        # Only highlight non-empty, non-error content
+        if self.syntax_highlighter and not block.is_error and content_str:
+            highlighted = self.syntax_highlighter.highlight(
+                content_str,
+                language_hint=None,  # Auto-detect JSON/YAML
+                context="tool_result"
+            )
+            # Only use highlighted version if it's different (formatting was applied)
+            if highlighted != content_str:
+                content_str = highlighted
 
         # Determine semantic category based on error status
         category = "tool_error" if block.is_error else "tool_result"

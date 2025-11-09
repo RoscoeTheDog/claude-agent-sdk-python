@@ -70,6 +70,9 @@ class RendererConfig:
     color_depth: ColorDepth | None = None  # Auto-detect if None
     screen_reader_mode: bool = False  # For future use
 
+    # Syntax highlighting (Sprint 1.5, Story 4)
+    enable_syntax_highlighting: bool = True  # Requires pygments
+
     def __post_init__(self) -> None:
         """Validate configuration after initialization."""
         if self.max_text_length < 0:
