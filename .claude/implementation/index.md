@@ -253,7 +253,7 @@ Implement ANSI formatter with terminal capability detection and themeable color 
 ---
 
 ### 🆕 Story 9: Pattern Detection & Semantic Role Mapping (Enhanced)
-**Status**: unassigned | **Time**: 3.5 hr (2.5h + 1.0h enhancement) | **File**: [stories/9-pattern-detection.md](./stories/9-pattern-detection.md)
+**Status**: completed | **Time**: 3.5 hr (2.5h + 1.0h enhancement) | **File**: [stories/9-pattern-detection.md](./stories/9-pattern-detection.md) | **Claimed**: 2025-11-09 23:00 | **Completed**: 2025-11-09 23:08
 **Priority**: HIGH
 **Version**: 2.0 (Enhanced with Stories 4.5 + 4.6 integration)
 

@@ -69,6 +69,16 @@ class ClaudeCodeFormatter(Formatter):
         else:
             self.syntax_highlighter = None
 
+        # Initialize pattern detector if enabled (Story 9)
+        if self.config.enable_pattern_detection and self.config.pattern_config:
+            from .pattern_detector import EnhancedPatternDetector
+            self.pattern_detector: EnhancedPatternDetector | None = EnhancedPatternDetector(
+                config=self.config.pattern_config,
+                theme=self.config.theme
+            )
+        else:
+            self.pattern_detector = None
+
     def _style(self, text: str, category: str) -> str:
         """Apply color styling to text based on semantic category.
 
@@ -90,6 +100,31 @@ class ClaudeCodeFormatter(Formatter):
 
         # Encode the text with the style rule
         return self.encoder.encode(text, style_rule)
+
+    def _apply_pattern_detection(self, text: str, message: Any = None) -> str:
+        """Apply pattern detection to text.
+
+        Args:
+            text: Text to process for pattern detection
+            message: Optional message object for semantic role detection
+
+        Returns:
+            Text with pattern-based styling applied
+        """
+        if not self.pattern_detector:
+            return text
+
+        # Extract code ranges to preserve
+        code_ranges = self.pattern_detector.extract_code_ranges(text)
+
+        # Apply enhanced pattern detection (with semantic roles if enabled)
+        if message and hasattr(self.pattern_detector, 'detect_and_style_with_roles'):
+            return self.pattern_detector.detect_and_style_with_roles(
+                text, message, preserve_ranges=code_ranges
+            )
+        else:
+            # Fallback to basic pattern detection
+            return self.pattern_detector.detect_and_style(text, preserve_ranges=code_ranges)
 
     def _format_text_with_indentation(self, text: str, initial_prefix: str = "") -> str:
         """Format text with proper indentation for nested lists and multi-line content.
@@ -224,8 +259,9 @@ class ClaudeCodeFormatter(Formatter):
         for block in message.content:
             if isinstance(block, TextBlock):
                 # Always show text (all levels)
-                # Apply indentation for lists and multi-line content
-                styled_text = self._style(block.text, "assistant_message")
+                # Apply pattern detection first, then styling, then indentation
+                text_with_patterns = self._apply_pattern_detection(block.text, message)
+                styled_text = self._style(text_with_patterns, "assistant_message")
                 formatted_text = self._format_text_with_indentation(
                     styled_text, initial_prefix=f"{bullet} "
                 )
@@ -501,6 +537,10 @@ class ClaudeCodeFormatter(Formatter):
             # Only use highlighted version if it's different (formatting was applied)
             if highlighted != content_str:
                 content_str = highlighted
+
+        # Apply pattern detection to tool results (Story 9)
+        # Note: Pattern detection applied after syntax highlighting to avoid conflicts
+        content_str = self._apply_pattern_detection(content_str, block)
 
         # Determine semantic category based on error status
         category = "tool_error" if block.is_error else "tool_result"

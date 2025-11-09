@@ -52,6 +52,32 @@ class SystemMessageLevel(IntEnum):
 
 
 @dataclass
+class PatternConfig:
+    """Configuration for pattern detection.
+
+    Controls which patterns are detected and highlighted in messages.
+    Implements Claude CLI's technical reference highlighting behavior.
+    """
+
+    # Built-in pattern toggles
+    enable_issue_numbers: bool = True  # e.g., #9812, #1234
+    enable_hex_colors: bool = True  # e.g., #13A10E, #FF5733
+    enable_env_vars: bool = True  # e.g., COLORTERM, PATH
+    enable_repo_paths: bool = True  # e.g., sharkdp/bat, anthropics/claude-code
+
+    # Semantic role detection (Story 4.5/4.6 integration)
+    enable_semantic_roles: bool = True  # Tool calls, status indicators, etc.
+    enable_status_indicators: bool = True  # ✓, ✗, ⚠️, ⟳, ⊙
+    enable_large_response_warnings: bool = True  # Warnings for >11.5k token responses
+
+    # Custom patterns (name → regex)
+    custom_patterns: dict[str, str] = field(default_factory=dict)
+
+    # Large response threshold (in characters, ~4 chars per token)
+    large_response_threshold: int = 46000  # ~11.5k tokens
+
+
+@dataclass
 class RendererConfig:
     """Configuration for message rendering.
 
@@ -92,6 +118,10 @@ class RendererConfig:
     # Syntax highlighting (Sprint 1.5, Story 4)
     enable_syntax_highlighting: bool = True  # Requires pygments
 
+    # Pattern detection (Sprint 1.5, Story 9)
+    enable_pattern_detection: bool = True  # Technical references & semantic roles
+    pattern_config: PatternConfig | None = None  # Auto-create if None
+
     def __post_init__(self) -> None:
         """Validate configuration after initialization."""
         if self.max_text_length < 0:
@@ -107,6 +137,10 @@ class RendererConfig:
         if self.color_enabled and not _is_tty():
             self.color_enabled = False
             self.color_depth = ColorDepth.NONE
+
+        # Auto-create pattern config if not specified
+        if self.pattern_config is None and self.enable_pattern_detection:
+            self.pattern_config = PatternConfig()
 
     @classmethod
     def from_file(cls, path: str | Path) -> "RendererConfig":
