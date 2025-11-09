@@ -80,17 +80,19 @@ Complete empirical analysis of Claude CLI colors via live output generation.
 
 ---
 
-### Story 2: Update CLAUDE-CODE-DEFAULT Theme
-**Status**: unassigned | **Time**: 30 min | **File**: [stories/2-update-theme.md](./stories/2-update-theme.md)
+### ✅ Story 2: Update CLAUDE-CODE-DEFAULT Theme
+**Status**: completed | **Time**: 25 min (est. 30 min) | **File**: [stories/2-update-theme.md](./stories/2-update-theme.md) | **Completed**: 2025-11-09 02:55
 
 Update theme with `semantic_mapping` field and reference Story 1 findings.
 
 **Dependencies**: Story 1 ✅
 
-**Deliverables**:
-- Add `semantic_mapping: Optional[SemanticMapping]` to Theme
-- Update `claude_code_default()` to include semantic mapping
-- Document as LAST STEP (Story 12 requirement)
+**Deliverables**: ✅
+- Added `semantic_mapping: Any | None` field to Theme dataclass
+- Enhanced `claude_code_default()` docstring with Story 1 references
+- Added validation comments to all color definitions
+- Fixed `from_dict()` to handle None values
+- All 556 tests passing
 
 ---
 
@@ -200,20 +202,65 @@ Update README, examples, API docs for all new features.
 
 ---
 
-### 🆕 Story 9: Pattern Detection Infrastructure
-**Status**: unassigned | **Time**: 2.5 hr | **File**: [stories/9-pattern-detection.md](./stories/9-pattern-detection.md)
-**Priority**: HIGH
+### 🆕 Story 4.5: Semantic Role Taxonomy & Detection
+**Status**: unassigned | **Time**: 2.0 hr | **File**: [stories/4.5-semantic-role-taxonomy.md](./stories/4.5-semantic-role-taxonomy.md)
+**Priority**: CRITICAL (blocking)
+**Version**: 1.0
 
-Automatic detection and highlighting of technical references (issue #s, hex codes, env vars, repos).
+Implement semantic role taxonomy (10 roles) and pattern-based role detection for UI message classification.
 
-**Dependencies**: Story 1 ✅, Story 2
+**Dependencies**: Story 1 ✅, Story 2, Story 4 v2
 
-**Critical**: Required for CLI feature parity
+**Architecture**: Follows Sprint 1.5's established module pattern
 
 **Deliverables**:
-- Pattern detection engine
-- 4+ built-in patterns
-- Custom pattern support
+- SemanticRole enum (10 roles)
+- PatternBasedDetector class
+- Message type, content, and metadata detection
+- Unit tests (>90% accuracy)
+- Document as LAST STEP
+
+---
+
+### 🆕 Story 4.6: UI Element Formatter
+**Status**: unassigned | **Time**: 3.0 hr | **File**: [stories/4.6-ui-element-formatter.md](./stories/4.6-ui-element-formatter.md)
+**Priority**: CRITICAL (blocking)
+**Version**: 1.0
+
+Implement ANSI formatter with terminal capability detection and themeable color mappings for semantic roles.
+
+**Dependencies**: Story 1 ✅, Story 2, Story 4 v2, **Story 4.5 (REQUIRED)**
+
+**Library**: Using `rich>=13.0` (Python equivalent of Ink + Chalk)
+
+**Deliverables**:
+- ANSIFormatter class
+- Terminal capability detection (COLORTERM, TERM)
+- ColorTheme with semantic role mappings
+- Combined ANSI sequences (research-validated)
+- Unit tests for all 10 roles
+- Document as LAST STEP
+
+---
+
+### 🆕 Story 9: Pattern Detection & Semantic Role Mapping (Enhanced)
+**Status**: unassigned | **Time**: 3.5 hr (2.5h + 1.0h enhancement) | **File**: [stories/9-pattern-detection.md](./stories/9-pattern-detection.md)
+**Priority**: HIGH
+**Version**: 2.0 (Enhanced with Stories 4.5 + 4.6 integration)
+
+Comprehensive pattern detection with technical reference highlighting AND semantic role mapping.
+
+**Dependencies**: Story 1 ✅, Story 2, **Story 4.5 (REQUIRED)**, **Story 4.6 (REQUIRED)**
+
+**Two-Layer Architecture**:
+1. Technical references (issue #s, hex codes, env vars, repos) → cyan
+2. Semantic roles (tool calls, status indicators, large responses) → role-based colors
+
+**Deliverables**:
+- EnhancedPatternDetector extending PatternBasedDetector
+- Status indicator patterns (✓, ✗, ⚠️, ⟳, ⊙)
+- Large response warnings (~11.5k tokens)
+- Integration with ANSIFormatter
 - Document as LAST STEP
 
 ---
@@ -262,64 +309,118 @@ Create comprehensive architecture docs AFTER all implementation complete.
 
 ---
 
-## Dependency Graph (Updated for New Architecture)
+## Dependency Graph (Updated with Semantic UI Stories 4.5, 4.6, 9 v2)
 
 ```
 Story 1 (COMPLETED) ✅
   ↓
 Story 2 (Update Theme - add semantic_mapping)
   ↓
-  ├─→ Story 4 v2 (Unified Syntax - 5 modules) ─────┐
-  │     ↓                                           │
-  │   Story 11 (Legacy Cleanup)                     │
-  │                                                  │
+  ├─→ Story 4 v2 (Unified Syntax - 5 modules) ──────┐
+  │     ↓                                            │
+  │   Story 11 (Legacy Cleanup)                      │
+  │                                                   │
+  ├─→ Story 4.5 (Semantic Role Taxonomy) ───────────┐│
+  │     ↓                                            ││
+  │   Story 4.6 (UI Element Formatter) ─────────────┤│
+  │     ↓                                            ││
+  │   Story 9 v2 (Enhanced Pattern Detection) ──────┘│
+  │                                                   │
   ├─→ Story 3 (Tool Formatting) ────────────────────┤
   ├─→ Story 5 (System Messages) ────────────────────┤
   ├─→ Story 6 (Bullet Indentation) ─────────────────┼─→ Story 7 (Tests)
-  └─→ Story 9 (Pattern Detection) ──────────────────┘       ↓
+  └──────────────────────────────────────────────────┘       ↓
                                                          Story 8 (Docs)
                                                              ↓
                                                     Story 12 (Architecture Docs)
                                                     [MUST BE LAST]
 ```
 
-**Execution Strategy**:
-- **Phase 1**: 2 (foundation)
-- **Phase 2**: 4 v2 (critical architecture)
-- **Phase 3**: 11 (cleanup after 4 tested)
-- **Phase 4**: 3, 5, 6, 9 (parallel - independent)
+**Critical Path (New)**:
+```
+Story 2 → Story 4.5 → Story 4.6 → Story 9 v2 (semantic roles branch)
+Story 2 → Story 4 v2 → Story 11 (syntax highlighting branch)
+Both branches → {Story 3, 5, 6} → Story 7 → Story 8 → Story 12
+```
+
+**Execution Strategy (Updated)**:
+- **Phase 1**: 2 (foundation - REQUIRED for all)
+- **Phase 2A**: 4.5 → 4.6 (semantic roles - sequential, blocking)
+- **Phase 2B**: 4 v2 (syntax highlighting - can parallel with 2A)
+- **Phase 3A**: 9 v2 (enhanced pattern detection - depends on 4.5 + 4.6)
+- **Phase 3B**: 11 (cleanup after 4 v2 tested)
+- **Phase 4**: 3, 5, 6 (parallel - all dependencies met)
 - **Phase 5**: 7 (tests all changes)
 - **Phase 6**: 8 (user docs)
 - **Phase 7**: 12 (architecture docs - LAST, verifies everything)
 
-**Recommended Sequence**: 2 → 4 → 11 → {3, 5, 6, 9} → 7 → 8 → 12
+**Recommended Sequence**: 2 → {4.5 → 4.6, 4 v2} → {9 v2, 11} → {3, 5, 6} → 7 → 8 → 12
+
+**Parallel Opportunities**:
+- Stories 4.5/4.6 can run parallel with Story 4 v2 (different modules)
+- Stories 9 v2 and 11 can run parallel (after their dependencies met)
+- Stories 3, 5, 6 can run parallel (after Phase 3 complete)
 
 ---
 
-## Sprint Metrics (Updated for Architecture Redesign)
+## Sprint Metrics (Updated with Semantic UI Stories)
 
-| Metric | Original | After QA | After Architecture Redesign | Final |
-|--------|----------|----------|----------------------------|-------|
-| Stories | 8 | 10 | 11 | **11** |
-| Duration | 6-8h | 9-12h | 12.25h | **12.25h** |
-| Story 4+10 Time | 4h (separate) | 4h (separate) | 4h (unified) | **4h** |
-| Languages Supported | Assumed unlimited | 7 (hard-coded) | 500+ (Pygments) | **500+** |
-| Code Duplication | Unknown | High (2 formatters) | None (unified) | **None** |
-| Extensibility | Unknown | Low (schema changes) | High (config changes) | **High** |
-| Architecture Quality | Unknown | Monolithic | Modular (5 modules) | **Modular** |
+| Metric | Original | After QA | After Arch Redesign | + Semantic UI | **Final** |
+|--------|----------|----------|---------------------|---------------|-----------|
+| Stories | 8 | 10 | 11 | 14 | **14** |
+| Duration | 6-8h | 9-12h | 12.25h | 18.75h | **18.75h** |
+| Syntax Highlighting | Assumed | 7 langs | 500+ langs | 500+ langs | **500+ langs** |
+| Semantic Roles | None | None | None | 10 roles | **10 roles** |
+| Pattern Detection | None | Basic | Basic | Enhanced | **Enhanced** |
+| Code Duplication | Unknown | High | None | None | **None** |
+| Extensibility | Unknown | Low | High | Very High | **Very High** |
+| Architecture Quality | Unknown | Monolithic | Modular (5) | Modular (8) | **Modular** |
 
-**Value Proposition**: Same time investment, vastly superior architecture
+**New Stories**:
+- Story 4.5: Semantic Role Taxonomy (2.0h)
+- Story 4.6: UI Element Formatter (3.0h)
+- Story 9 v2: Enhanced Pattern Detection (+1.0h upgrade)
 
-**Architecture Benefits**:
+**Total Duration**: 18.75 hours (+6.5h from original 12.25h)
+- Syntax highlighting: 4h (unchanged)
+- Semantic UI coloring: 6h (new, Stories 4.5 + 4.6 + 9 enhancement)
+- Other stories: 8.75h (unchanged)
+
+**Value Proposition**: Comprehensive semantic coloring architecture + unlimited language support
+
+**Architecture Benefits** (Enhanced):
 - ✅ Unlimited language support (via Pygments catalog)
-- ✅ Zero code duplication (unified pipeline)
-- ✅ Clean separation of concerns (5 focused modules)
-- ✅ Customizable theming (semantic mapping layer)
-- ✅ Future-proof (easy to extend)
+- ✅ Semantic role-based coloring (10 roles, renderer-side)
+- ✅ ANSI formatting with terminal detection (truecolor → monochrome)
+- ✅ Zero code duplication (unified pipelines)
+- ✅ Clean separation of concerns (8 focused modules)
+- ✅ Customizable theming (semantic + syntax mapping layers)
+- ✅ Research-validated patterns (Claude Code CLI parity)
+- ✅ Future-proof (easy to extend, dict-based configs)
 
 ---
 
 ## Progress Log
+
+### 2025-11-09 02:55 - Story 2 Completed
+- ✅ Added `semantic_mapping` field to Theme dataclass
+- ✅ Enhanced `claude_code_default()` docstring with Story 1 references
+- ✅ Added validation comments for all color choices
+- ✅ Fixed serialization to handle None values
+- ✅ All 556 tests passing
+- **Impact**: Theme infrastructure ready for Story 4 syntax highlighting
+- **Duration**: 25 minutes (under 30 min estimate)
+
+### 2025-11-09 - Semantic UI Coloring Stories Added
+- ✅ Completed comprehensive research (19 queries, 66 sources)
+- ✅ Created Story 4.5: Semantic Role Taxonomy & Detection (2.0h)
+- ✅ Created Story 4.6: UI Element Formatter (3.0h)
+- ✅ Enhanced Story 9: Pattern Detection with semantic role mapping (+1.0h)
+- ✅ Updated dependency graph with new critical path
+- ✅ Updated sprint metrics (14 stories, 18.75h total)
+- **Impact**: Complete semantic UI coloring architecture, Claude Code CLI parity
+- **Research Foundation**: `.claude/research/semantic-ui-coloring/`
+- **Remaining**: Implementation of all stories
 
 ### 2025-11-08 23:58 - Architecture Redesign Complete
 - ✅ Identified architectural gaps in original plan

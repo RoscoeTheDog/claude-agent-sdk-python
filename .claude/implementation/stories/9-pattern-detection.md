@@ -1,10 +1,11 @@
-# Story 9: Pattern Detection Infrastructure
+# Story 9: Pattern Detection & Semantic Role Mapping (Enhanced)
 
 **Status**: unassigned
 **Assignee**: unassigned
-**Estimated Time**: 2.5 hours
+**Estimated Time**: 3.5 hours (2.5h original + 1.0h enhancement)
 **Actual Time**: TBD
 **Priority**: HIGH
+**Version**: 2.0 (Enhanced with Stories 4.5 + 4.6 integration)
 
 ---
 
@@ -12,43 +13,76 @@
 
 - Story 1 (COMPLETED) - Identifies technical reference patterns
 - Story 2 (unassigned) - Theme foundation with `info` category
+- **Story 4.5 (unassigned) - REQUIRED** - Provides SemanticRole taxonomy and PatternBasedDetector
+- **Story 4.6 (unassigned) - REQUIRED** - Provides ANSIFormatter and theme integration
 - Reference: `.claude/implementation/stories/1-color-analysis.md` - Section: "Technical References & Links"
+- Reference: `.claude/research/semantic-ui-coloring/final-recommendations.md`
 
 ---
 
 ## Description
 
-Implement pattern detection infrastructure to automatically identify and highlight technical references (issue numbers, hex color codes, environment variables, repository paths) in assistant messages and tool results.
+Implement comprehensive pattern detection infrastructure with two layers:
+1. **Technical Reference Detection** (original) - Issue numbers, hex codes, env vars, repo paths
+2. **Semantic Role Mapping** (enhancement) - Tool calls, status indicators, large response warnings, metadata hints
 
-**Critical Finding**: From Story 1 analysis, Claude CLI uses **renderer-side pattern detection** (not LLM-generated markup) to identify and color technical elements cyan. This is a key differentiator in visual presentation.
+**Architecture Philosophy**: Extends PatternBasedDetector from Story 4.5 with additional tool-specific patterns. Integrates with ANSIFormatter from Story 4.6 for semantic role-based coloring.
 
-**Goal**: Achieve feature parity with Claude CLI's automatic technical reference highlighting.
+**Critical Finding**: From Story 1 analysis, Claude CLI uses **renderer-side pattern detection** (not LLM-generated markup) to identify and color technical elements. Research validation adds tool call patterns, status indicators, and large response handling.
+
+**Goal**:
+- Original: Feature parity with Claude CLI's technical reference highlighting
+- Enhancement: Intelligent tool call detection, status indicator rendering, large response warnings
 
 ---
 
 ## Acceptance Criteria
 
-### Core Infrastructure
+### Core Infrastructure (Original)
 - [ ] Create `src/claude_agent_sdk/rendering/pattern_detector.py` module
 - [ ] Implement `PatternDetector` class with configurable regex patterns
 - [ ] Integrate with renderer pipeline (after markdown parsing, before theme application)
 - [ ] Support pattern categories: issue_number, hex_color, env_var, repo_path
 
-### Pattern Detection Rules
+### Technical Reference Detection (Original)
 - [ ] Issue numbers: `#\d+` → cyan (e.g., `#9812`, `#1234`)
 - [ ] Hex color codes: `#[0-9A-Fa-f]{6}` → cyan (e.g., `#13A10E`, `#FF5733`)
 - [ ] Environment variables: `[A-Z_][A-Z0-9_]+` → cyan (e.g., `COLORTERM`, `PATH`)
 - [ ] Repository paths: `[\w-]+/[\w-]+` → cyan (e.g., `sharkdp/bat`, `anthropics/claude-code`)
 
+### Semantic Role Mapping (Enhancement - Stories 4.5 + 4.6)
+- [ ] Extend `PatternBasedDetector` from Story 4.5 with tool-specific patterns
+- [ ] Tool call detection (`tool_use` message type → TOOL role)
+- [ ] Tool result detection (`tool_result` message type → TOOL role)
+- [ ] Status indicator detection (✓, ✗, ⚠️, ⟳, ⊙) with appropriate roles
+- [ ] Large response detection (~11.5k tokens) → WARNING role
+- [ ] Support for `message.metadata.ui.role` explicit hints
+
+### Status Indicator Rendering (Enhancement)
+- [ ] Success indicator: `^✓` → SUCCESS role (green)
+- [ ] Error indicator: `^✗` → ERROR role (red)
+- [ ] Warning indicator: `^⚠️` → WARNING role (yellow)
+- [ ] Running indicator: `⟳` → TOOL role (magenta)
+- [ ] Pending indicator: `⊙` → INFO role (cyan)
+
+### Large Response Handling (Enhancement)
+- [ ] Token counting for message content
+- [ ] Warning threshold detection (~11.5k tokens)
+- [ ] Large response warning message formatting
+- [ ] Integration with ANSIFormatter for warning display
+
 ### Configuration & Customization
 - [ ] Add `PatternConfig` dataclass with enable/disable flags per pattern type
 - [ ] Add `enable_pattern_detection: bool = True` to `RendererConfig`
+- [ ] Add `enable_semantic_roles: bool = True` flag (enhancement)
 - [ ] Allow custom regex patterns via configuration
-- [ ] Pattern priority ordering (apply most specific first)
+- [ ] Pattern priority ordering (metadata > type > content > technical refs)
 
 ### Renderer Integration
-- [ ] Apply pattern detection to assistant messages
-- [ ] Apply pattern detection to tool results
+- [ ] Apply technical reference detection to assistant messages
+- [ ] Apply technical reference detection to tool results
+- [ ] Apply semantic role detection to all message types
+- [ ] Integrate with ANSIFormatter from Story 4.6
 - [ ] Preserve code block content (no pattern detection within code)
 - [ ] Handle overlapping patterns correctly (longest match wins)
 
@@ -282,21 +316,358 @@ class MessageFormatter:
 
 ---
 
-## Testing Strategy
+## Enhancement: Semantic Role Integration (Stories 4.5 + 4.6)
 
-### Unit Tests
+### Extended Pattern Detector with Semantic Roles
+
+**File**: `src/claude_agent_sdk/rendering/pattern_detector.py` (Enhanced)
 
 ```python
-def test_issue_number_detection():
-    """Test issue number pattern detection."""
-    detector = create_detector()
+from claude_agent_sdk.rendering.semantic import (
+    SemanticRole,
+    PatternBasedDetector,
+    ANSIFormatter,
+)
 
-    text = "See issue #9812 and #6635 for details"
-    result = detector.detect_and_style(text)
+class EnhancedPatternDetector(PatternDetector):
+    """Enhanced pattern detector with semantic role mapping.
 
-    # Verify issue numbers are cyan
-    assert_contains_ansi_color(result, "#9812", BRIGHT_CYAN)
-    assert_contains_ansi_color(result, "#6635", BRIGHT_CYAN)
+    Extends original PatternDetector with:
+    - Tool call pattern detection
+    - Status indicator patterns
+    - Large response warnings
+    - Integration with Story 4.5 PatternBasedDetector
+    - Integration with Story 4.6 ANSIFormatter
+    """
+
+    def __init__(self, config: PatternConfig, theme: 'Theme'):
+        """Initialize enhanced detector.
+
+        Args:
+            config: Pattern detection configuration
+            theme: Theme for styling
+        """
+        super().__init__(config, theme)
+
+        # Initialize semantic role detector from Story 4.5
+        from claude_agent_sdk.rendering.semantic import (
+            PatternBasedDetector,
+            RoleDetectionConfig,
+        )
+        role_config = RoleDetectionConfig()
+        self.role_detector = PatternBasedDetector(role_config)
+
+        # Initialize ANSI formatter from Story 4.6
+        from claude_agent_sdk.rendering.semantic import (
+            ANSIFormatter,
+            FormatterConfig,
+        )
+        formatter_config = FormatterConfig(theme=theme)
+        self.formatter = ANSIFormatter(formatter_config)
+
+        # Add status indicator patterns
+        self._compile_status_patterns()
+
+    def _compile_status_patterns(self) -> None:
+        """Compile status indicator patterns.
+
+        Patterns from research (query4-tool-rendering.md):
+        - ✓ Complete → SUCCESS role (green)
+        - ✗ Failed → ERROR role (red)
+        - ⚠️ Warning → WARNING role (yellow)
+        - ⟳ Running → TOOL role (magenta)
+        - ⊙ Pending → INFO role (cyan)
+        """
+        self.status_patterns = [
+            (re.compile(r'^✓'), SemanticRole.SUCCESS),
+            (re.compile(r'^✗'), SemanticRole.ERROR),
+            (re.compile(r'^⚠️'), SemanticRole.WARNING),
+            (re.compile(r'⟳'), SemanticRole.TOOL),
+            (re.compile(r'⊙'), SemanticRole.INFO),
+        ]
+
+    def detect_and_style_with_roles(
+        self,
+        text: str,
+        message: Any,
+        preserve_ranges: list[tuple[int, int]] = None
+    ) -> str:
+        """Detect patterns AND semantic roles, applying appropriate styling.
+
+        Two-phase processing:
+        1. Detect semantic role (Story 4.5) → base message styling
+        2. Detect technical references (original) → fine-grained highlighting
+
+        Args:
+            text: Text to process
+            message: Message object for role detection
+            preserve_ranges: Code ranges to skip
+
+        Returns:
+            Styled text with both role-based and pattern-based coloring
+        """
+        # Phase 1: Detect semantic role
+        role = self.role_detector.detect(message)
+
+        # Phase 2: Check for large response warning
+        if self._is_large_response(text):
+            warning_msg = self._format_large_response_warning(len(text))
+            text = f"{warning_msg}\n\n{text}"
+            role = SemanticRole.WARNING
+
+        # Phase 3: Apply technical reference detection (original behavior)
+        text_with_refs = super().detect_and_style(text, preserve_ranges)
+
+        # Phase 4: Apply semantic role formatting (Story 4.6)
+        # Only if message doesn't have fine-grained formatting already
+        if role in (SemanticRole.ERROR, SemanticRole.WARNING, SemanticRole.SUCCESS):
+            # Apply role-based coloring to entire message
+            formatted = self.formatter.format_with_icon(text_with_refs, role)
+        else:
+            # Just use technical reference highlighting
+            formatted = text_with_refs
+
+        return formatted
+
+    def _is_large_response(self, text: str, threshold: int = 11500) -> bool:
+        """Check if response exceeds token threshold.
+
+        Args:
+            text: Text to check
+            threshold: Token threshold (default: ~11.5k from research)
+
+        Returns:
+            bool: True if response is large
+        """
+        # Rough approximation: 1 token ≈ 4 characters
+        estimated_tokens = len(text) / 4
+        return estimated_tokens > threshold
+
+    def _format_large_response_warning(self, char_count: int) -> str:
+        """Format large response warning message.
+
+        Pattern from research (query4-tool-rendering.md):
+        ⚠️ Large response (12,543 tokens)
+           Response truncated at 10,000 characters
+
+        Args:
+            char_count: Character count of response
+
+        Returns:
+            Formatted warning string
+        """
+        token_estimate = char_count // 4
+        warning = f"⚠️ Large response ({token_estimate:,} tokens)"
+
+        # Truncation levels from research: 4k, 6k, 8k, 10k, 12k, 16k
+        truncation_levels = [4000, 6000, 8000, 10000, 12000, 16000]
+        truncate_at = next(
+            (level for level in truncation_levels if char_count > level),
+            None
+        )
+
+        if truncate_at:
+            warning += f"\n   Response may be truncated at {truncate_at:,} characters"
+
+        return warning
+```
+
+### Integration with Renderer Pipeline
+
+**File**: `src/claude_agent_sdk/rendering/formatters.py` (Enhanced)
+
+```python
+class MessageFormatter:
+    """Enhanced message formatter with semantic role support."""
+
+    def __init__(self, config: RendererConfig):
+        self.config = config
+        self.theme = config.theme
+
+        # Initialize enhanced pattern detector
+        if config.enable_pattern_detection:
+            pattern_config = config.pattern_config or PatternConfig()
+            self.pattern_detector = EnhancedPatternDetector(
+                pattern_config,
+                self.theme
+            )
+        else:
+            self.pattern_detector = None
+
+    def format_message(self, message: Message) -> str:
+        """Format message with semantic role detection and styling.
+
+        Integration with Stories 4.5 + 4.6:
+        1. Detect semantic role (PatternBasedDetector)
+        2. Apply role-based formatting (ANSIFormatter)
+        3. Apply technical reference highlighting (original)
+
+        Args:
+            message: Message to format
+
+        Returns:
+            Formatted message with ANSI styling
+        """
+        # Extract code ranges to preserve
+        code_ranges = []
+        if self.pattern_detector:
+            code_ranges = self.pattern_detector.extract_code_ranges(
+                message.content
+            )
+
+        # Apply enhanced detection (both roles and patterns)
+        if self.pattern_detector and hasattr(self.pattern_detector, 'detect_and_style_with_roles'):
+            formatted = self.pattern_detector.detect_and_style_with_roles(
+                message.content,
+                message,
+                preserve_ranges=code_ranges
+            )
+        elif self.pattern_detector:
+            # Fallback to original pattern detection
+            formatted = self.pattern_detector.detect_and_style(
+                message.content,
+                preserve_ranges=code_ranges
+            )
+        else:
+            formatted = message.content
+
+        return formatted
+```
+
+---
+
+## Testing Strategy (Enhanced)
+
+### Unit Tests (Original + Enhancement)
+
+```python
+# Original tests (technical references)
+def test_issue_number_detection(): ...
+def test_hex_color_detection(): ...
+def test_env_var_detection(): ...
+def test_repo_path_detection(): ...
+def test_code_preservation(): ...
+def test_overlapping_patterns(): ...
+
+# Enhancement tests (semantic roles)
+def test_tool_call_role_detection():
+    """Test tool call message type detection."""
+    from claude_agent_sdk.rendering.semantic import SemanticRole
+
+    detector = create_enhanced_detector()
+
+    class Message:
+        def __init__(self):
+            self.type = "tool_use"
+            self.content = "Calling tool: Read"
+
+    role = detector.role_detector.detect(Message())
+    assert role == SemanticRole.TOOL
+
+
+def test_status_indicator_success():
+    """Test success indicator pattern."""
+    detector = create_enhanced_detector()
+
+    class Message:
+        def __init__(self):
+            self.type = "assistant"
+            self.content = "✓ Task completed successfully"
+
+    formatted = detector.detect_and_style_with_roles(
+        "✓ Task completed successfully",
+        Message()
+    )
+
+    # Should be green (SUCCESS role)
+    assert "\033[32;1m" in formatted  # Bright green
+    assert "✓" in formatted
+
+
+def test_status_indicator_error():
+    """Test error indicator pattern."""
+    detector = create_enhanced_detector()
+
+    class Message:
+        def __init__(self):
+            self.type = "assistant"
+            self.content = "✗ Task failed"
+
+    formatted = detector.detect_and_style_with_roles(
+        "✗ Task failed",
+        Message()
+    )
+
+    # Should be red (ERROR role)
+    assert "\033[31;1m" in formatted  # Bright red
+    assert "✗" in formatted
+
+
+def test_large_response_warning():
+    """Test large response detection and warning."""
+    detector = create_enhanced_detector()
+
+    # Create large text (>11.5k tokens ≈ >46k chars)
+    large_text = "a" * 50000
+
+    class Message:
+        def __init__(self):
+            self.type = "assistant"
+            self.content = large_text
+
+    assert detector._is_large_response(large_text) == True
+
+    formatted = detector.detect_and_style_with_roles(
+        large_text,
+        Message()
+    )
+
+    # Should include warning
+    assert "⚠️ Large response" in formatted
+    assert "tokens" in formatted
+
+
+def test_metadata_role_hint():
+    """Test metadata.ui.role explicit hint."""
+    from claude_agent_sdk.rendering.semantic import SemanticRole
+
+    detector = create_enhanced_detector()
+
+    class UIMetadata:
+        role = "success"
+
+    class Metadata:
+        ui = UIMetadata()
+
+    class Message:
+        def __init__(self):
+            self.type = "assistant"
+            self.content = "Operation succeeded"
+            self.metadata = Metadata()
+
+    role = detector.role_detector.detect(Message())
+    assert role == SemanticRole.SUCCESS
+
+
+def test_combined_technical_and_semantic():
+    """Test both technical reference and semantic role detection."""
+    detector = create_enhanced_detector()
+
+    class Message:
+        def __init__(self):
+            self.type = "assistant"
+            self.content = "See issue #9812 for COLORTERM details"
+
+    formatted = detector.detect_and_style_with_roles(
+        "See issue #9812 for COLORTERM details",
+        Message()
+    )
+
+    # Should have both technical reference highlighting
+    assert "#9812" in formatted  # Issue number
+    assert "COLORTERM" in formatted  # Env var
+    # And appropriate ANSI codes
+    assert "\033[" in formatted
 
 
 def test_hex_color_detection():
@@ -435,7 +806,59 @@ def test_overlapping_patterns():
 
 ---
 
-**Document Version**: 1.0
+## Time Breakdown (Enhanced)
+
+### Original Scope (2.5h)
+- **Core Infrastructure**: 30 min
+- **Technical Reference Patterns**: 45 min
+- **Configuration**: 15 min
+- **Renderer Integration**: 30 min
+- **Testing**: 30 min
+- **Documentation**: 10 min
+
+### Enhancement (Stories 4.5 + 4.6 Integration) (+1.0h)
+- **Semantic Role Integration**: 20 min
+- **Status Indicator Patterns**: 15 min
+- **Large Response Handling**: 15 min
+- **Enhanced Testing**: 10 min
+
+**Total**: 3.5 hours
+
+---
+
+## Success Criteria (Enhanced)
+
+✅ **Original: All technical reference patterns working**
+- Issue numbers, hex codes, env vars, repo paths detected
+- Cyan highlighting applied correctly
+- Code blocks preserved
+
+✅ **Enhancement: Semantic role detection integrated**
+- Tool calls detected and styled (TOOL role → magenta)
+- Status indicators rendered with correct colors
+- Large response warnings triggered at ~11.5k tokens
+- Metadata.ui.role hints respected
+
+✅ **Integration with Stories 4.5 + 4.6 complete**
+- PatternBasedDetector extended
+- ANSIFormatter integrated
+- Combined technical + semantic detection working
+
+---
+
+## References (Enhanced)
+
+- Original: `.claude/implementation/stories/1-color-analysis.md`
+- Enhancement: `.claude/research/semantic-ui-coloring/final-recommendations.md`
+- Enhancement: `.claude/research/semantic-ui-coloring/phase2-deep-research/query4-tool-rendering.md`
+- Story 4.5: Semantic Role Taxonomy & Detection (dependency)
+- Story 4.6: UI Element Formatter (dependency)
+- Architecture: `.claude/implementation/SPRINT-1.5-ARCHITECTURE-REDESIGN-SUMMARY.md`
+
+---
+
+**Document Version**: 2.0 (Enhanced with Stories 4.5 + 4.6)
 **Created**: 2025-11-08 23:15
+**Updated**: 2025-11-09 (Semantic role integration)
 **Author**: Claude Agent SDK Team
-**Priority**: HIGH - Critical for CLI feature parity
+**Priority**: HIGH - Critical for CLI feature parity + semantic coloring
