@@ -1,135 +1,341 @@
-# Implementation Sprint: Sprint 1.4 - Screen Reader Mode
-**Created**: 2025-11-08 07:59
+# Implementation Sprint: Sprint 1.5 - Color Theme Accuracy & Tool Formatting
+**Created**: 2025-11-08 21:55
 **Status**: active
-**Sprint Goal**: Implement accessible screen reader mode for message output to support users with visual impairments
+**Sprint Goal**: Fix CLAUDE-CODE-DEFAULT theme to match actual Claude CLI colors and improve tool call formatting to separate styling for different components
 
 ## Overview
 
-This sprint implements a screen reader-friendly output mode that provides clean, semantic text output optimized for screen reader software. The implementation builds on the existing rendering infrastructure and theme system to provide an accessible alternative to the rich color and formatting currently used.
+This sprint addresses color theming inaccuracies identified through visual comparison with the actual Claude Code CLI. The current SDK theme uses generic ANSI colors that don't match the CLI's actual rendering. Additionally, tool call formatting needs enhancement to separately style tool names, parameters, and values.
 
 **Dependencies**:
 - Sprint 1.3 (Theming system) - COMPLETED
-- Existing RendererConfig infrastructure - AVAILABLE
+- Sprint 1.4 (Screen Reader Mode) - DEFERRED
+- Visual color analysis from actual Claude CLI - PENDING (user will provide)
 
-**Estimated Duration**: 4-6 hours
+**Estimated Duration**: 6-8 hours
 
 ## Stories
 
-### Story 1: Screen Reader Mode Configuration
+### Story 1: Visual Color Analysis & Mapping
+**Status**: completed
+**Claimed**: 2025-11-08 22:08
+**Completed**: 2025-11-08 22:35
+**Actual Time**: 35 minutes
+**Estimated Time**: 1 hour
+**Description**: Analyze actual Claude CLI output via screenshot to map exact ANSI color names used for each semantic category. User will provide comprehensive screenshot showing all message types, tool calls, code blocks, and system messages.
+
+**Acceptance Criteria**:
+- [x] User provides screenshot of comprehensive Claude CLI output
+- [x] Create color mapping document in `.claude/implementation/stories/1-color-analysis.md`
+- [x] Map all semantic categories to ANSI color names (not hex values)
+- [x] Identify which colors are bright vs normal variants
+- [x] Document special cases (bold, dim, italic modifiers)
+- [x] Verify mapping covers: user messages, assistant messages, tool use, tool results, code syntax, system messages, errors, warnings
+
+**Completion Summary**:
+Successfully analyzed live Claude Code CLI output by generating comprehensive tool calls and code examples in multiple languages (Python, JavaScript, SQL, Bash, YAML, JSON). Documented complete ANSI color mappings for all syntax elements, message types, and UI components.
+
+**Key Deliverables**:
+1. ✅ Complete color mapping document: `.claude/implementation/stories/1-color-analysis.md`
+2. ✅ Syntax highlighting configuration design (`SyntaxMapping` dataclass)
+3. ✅ Theme customization recommendations
+4. ✅ Implementation guidance for Story 4 (syntax highlighting)
+
+**Findings**:
+- Keywords: `blue`
+- Strings: `red`
+- Comments: `green`
+- Numbers: `green`
+- Types: `cyan`
+- Booleans/None: `cyan`
+- Operators: `white` (default)
+- Built-in functions: `blue`
+- User messages: `bright_white` + bold
+- Tool use: `bright_blue` + bold
+- Errors: `bright_red` + bold
+- See full document for complete mappings
+
+**Technical Notes**:
+- Focus on ANSI color names: black, red, green, yellow, blue, magenta, cyan, white, bright_black, bright_red, etc.
+- Windows Terminal hex values are interpretations of ANSI colors - we need the ANSI names
+- Document format styles separately (bold, dim, italic)
+- Comprehensive syntax mapping covers Python, JavaScript/TypeScript, SQL, Bash, YAML, JSON
+
+### Story 2: Update CLAUDE-CODE-DEFAULT Theme
 **Status**: unassigned
 **Estimated Time**: 30 minutes
-**Description**: Add screen reader mode configuration option to RendererConfig and propagate through the rendering pipeline.
+**Description**: Update the `claude_code_default()` theme method with accurate ANSI color names based on Story 1 analysis.
 
 **Acceptance Criteria**:
-- [ ] Add `screen_reader_mode: bool` field to RendererConfig dataclass
-- [ ] Default value is `False` to maintain backward compatibility
-- [ ] Configuration is properly propagated to PrettyPrinter
-- [ ] Type hints are correct and mypy passes
-- [ ] Unit tests verify configuration propagation
+- [ ] Update `src/claude_agent_sdk/rendering/theme.py` - `Theme.claude_code_default()` method
+- [ ] Replace current color definitions with accurate ANSI names
+- [ ] Preserve all semantic categories
+- [ ] Update docstring with rationale for color choices
+- [ ] Ensure backward compatibility (no API changes)
+- [ ] Type hints remain correct
 
 **Technical Notes**:
-- Location: `src/claude_agent_sdk/types.py` (RendererConfig)
-- Location: `src/claude_agent_sdk/_internal/rendering/pretty_printer.py` (PrettyPrinter)
+- Location: `src/claude_agent_sdk/rendering/theme.py:129-194`
+- Keep StyleRule structure unchanged
+- Only update `fg_color` values and style modifiers (bold, dim, italic)
+- Test that theme still serializes/deserializes correctly
 
-### Story 2: Plain Text Rendering Logic
+### Story 3: Separate Tool Call Component Styling
 **Status**: unassigned
-**Estimated Time**: 1.5 hours
-**Description**: Implement plain text rendering methods that strip all ANSI codes, color, and formatting while preserving semantic structure.
+**Estimated Time**: 2 hours
+**Description**: Enhance `_format_tool_use()` to separately style tool name, parentheses, parameter keys, and parameter values instead of applying one style to the entire string.
 
 **Acceptance Criteria**:
-- [ ] Create `_render_plain_text()` method that strips all formatting
-- [ ] Implement structured prefixes for different message types (e.g., "[User]:", "[Assistant]:", "[System]:")
-- [ ] Tool use blocks are rendered with clear, descriptive labels
-- [ ] Thinking blocks are clearly marked and separated
-- [ ] Error messages are prefixed with "Error:" for clarity
-- [ ] Code blocks maintain indentation and structure without syntax highlighting
-- [ ] All content is rendered in plain ASCII text
+- [ ] Tool name uses dedicated theme color (likely user_message color based on observations)
+- [ ] Parentheses use assistant_message color (neutral)
+- [ ] Parameter keys use assistant_message color
+- [ ] String parameter values use user_message color (for emphasis)
+- [ ] Numeric parameter values use user_message color
+- [ ] Each component styled independently via `_style()` method
+- [ ] Format remains: `● ToolName(key: "value", key: value)`
+- [ ] Update tests to verify component-level styling
 
 **Technical Notes**:
-- Use semantic prefixes: `[User]:`, `[Assistant]:`, `[Tool: {name}]`, `[Thinking]`, `[Error]`
-- Maintain readability through whitespace and structure
-- No color codes, no Unicode box-drawing characters
-- Simple hyphen separators instead of fancy dividers
+- Location: `src/claude_agent_sdk/rendering/formatters.py:239-264`
+- Current: `tool_text = self._style(f"{block.name}({params})", "tool_use")`
+- New: Separately style name, parens, and each param segment
+- May need new semantic categories: `tool_name`, `tool_param_key`, `tool_param_value`
+- Or reuse existing categories for semantic consistency
 
-### Story 3: Conditional Rendering Switch
+### Story 4: Add Syntax Highlighting Infrastructure
 **Status**: unassigned
-**Estimated Time**: 30 minutes
-**Description**: Implement the conditional logic in PrettyPrinter to switch between rich rendering and plain text based on screen_reader_mode flag.
+**Estimated Time**: 3 hours
+**Description**: Add syntax highlighting support for code blocks using Pygments integration. Implement `SyntaxMapping` configuration to map Pygments tokens to theme categories, enabling customizable syntax coloring per theme.
+
+**Dependencies**:
+- Story 1 (COMPLETED) - Provides complete ANSI color mappings from Claude CLI
+- Reference document: `.claude/implementation/stories/1-color-analysis.md`
 
 **Acceptance Criteria**:
-- [ ] Check `screen_reader_mode` flag in render methods
-- [ ] Route to plain text rendering when flag is True
-- [ ] Route to existing rich rendering when flag is False
-- [ ] No performance regression in either mode
-- [ ] Code is clean and maintainable
+- [ ] Add optional dependency: `pygments>=2.17` to `pyproject.toml`
+- [ ] Create `src/claude_agent_sdk/rendering/syntax.py` module with `SyntaxHighlighter` class
+- [ ] Create `SyntaxMapping` dataclass in `theme.py` with fields for all token categories
+- [ ] Add `syntax_mapping: Optional[SyntaxMapping]` field to `Theme` class
+- [ ] Implement Pygments token type → SyntaxMapping field mapper
+- [ ] Add `enable_syntax_highlighting: bool = True` to `RendererConfig`
+- [ ] Integrate syntax highlighter in `_format_tool_result_content()` for code blocks
+- [ ] Graceful degradation if Pygments not installed (use plain `code_block` style)
+- [ ] Support languages: Python, JavaScript, TypeScript, SQL, Bash, JSON, YAML
+
+**SyntaxMapping Structure** (based on Story 1 findings):
+```python
+@dataclass
+class SyntaxMapping:
+    """Maps Pygments token types to Theme semantic categories.
+
+    This allows themes to customize syntax highlighting colors by
+    mapping syntax elements to existing theme categories.
+    """
+
+    # Core syntax elements (map to theme category names)
+    keyword: str = "tool_use"           # blue - def, class, if, async
+    string: str = "error"               # red - "strings", 'literals'
+    comment: str = "success"            # green - # comments
+    number: str = "success"             # green - 42, 3.14
+    type_annotation: str = "info"       # cyan - str, int, List
+    boolean: str = "info"               # cyan - True, False, null
+    builtin_function: str = "tool_use"  # blue - print(), len()
+    operator: str = "assistant_message" # white - +, -, ==, and
+    function_name: str = "assistant_message"  # white - user functions
+    class_name: str = "assistant_message"     # white - in definition
+    class_type: str = "info"            # cyan - in type hints
+    decorator: str = "assistant_message"      # white - @dataclass
+    special_identifier: str = "info"    # cyan - self, this, cls
+    punctuation: str = "assistant_message"    # white - [], {}, ()
+
+    # Default fallback
+    default: str = "assistant_message"  # white - unclassified tokens
+```
+
+**Pygments Token Mapping** (implement in `syntax.py`):
+```python
+from pygments.token import Token
+
+TOKEN_TO_SYNTAX_CATEGORY = {
+    Token.Keyword: "keyword",
+    Token.Keyword.Constant: "boolean",
+    Token.Keyword.Type: "type_annotation",
+    Token.String: "string",
+    Token.String.Escape: "string",
+    Token.Comment: "comment",
+    Token.Number: "number",
+    Token.Name.Builtin: "builtin_function",
+    Token.Name.Function: "function_name",
+    Token.Name.Class: "class_name",
+    Token.Name.Decorator: "decorator",
+    Token.Name.Variable.Instance: "special_identifier",  # self, cls
+    Token.Operator: "operator",
+    Token.Punctuation: "punctuation",
+    # ... complete mapping
+}
+```
+
+**Integration Example**:
+```python
+def apply_syntax_highlighting(
+    code: str,
+    language: str,
+    theme: Theme
+) -> str:
+    """Apply syntax highlighting using theme's syntax mapping."""
+    lexer = get_lexer_by_name(language)
+    tokens = lexer.get_tokens(code)
+
+    mapping = theme.syntax_mapping or SyntaxMapping()
+    result = []
+
+    for token_type, value in tokens:
+        # Get syntax category
+        category_field = TOKEN_TO_SYNTAX_CATEGORY.get(
+            token_type,
+            "default"
+        )
+
+        # Get theme category name from syntax mapping
+        theme_category = getattr(mapping, category_field)
+
+        # Get style rule from theme
+        style_rule = getattr(theme, theme_category)
+
+        # Apply ANSI styling
+        styled = apply_ansi_style(value, style_rule)
+        result.append(styled)
+
+    return ''.join(result)
+```
 
 **Technical Notes**:
-- Location: `src/claude_agent_sdk/_internal/rendering/pretty_printer.py`
-- Pattern: `if self.config.screen_reader_mode: render_plain() else: render_rich()`
+- Location: `src/claude_agent_sdk/rendering/syntax.py`
+- Pygments is optional - check `importlib.util.find_spec("pygments")`
+- Language detection: Use explicit language tag from code fence
+- Theme categories referenced must exist in Theme class
+- Invalid category names → fallback to "assistant_message"
+- Add `pyproject.toml` optional dependency: `[tool.poetry.extras]` → `syntax = ["pygments>=2.17"]`
 
-### Story 4: Integration Tests
+### Story 5: Control System Message Visibility
 **Status**: unassigned
 **Estimated Time**: 1 hour
-**Description**: Create comprehensive tests for screen reader mode covering all message types and edge cases.
+**Description**: Add render level control to hide "System: info" and "System: warning" messages by default, showing only critical system errors unless user explicitly requests detailed output.
 
 **Acceptance Criteria**:
-- [ ] Test all message types (user, assistant, system, tool use, tool result)
-- [ ] Test thinking blocks rendering
-- [ ] Test error messages
-- [ ] Test code blocks and formatting preservation
-- [ ] Verify no ANSI codes in output when screen_reader_mode=True
-- [ ] Verify normal rendering still works when screen_reader_mode=False
-- [ ] Test with real-world message sequences
+- [ ] Define system message severity levels: debug, info, warning, error, critical
+- [ ] Update `RenderLevel` enum or add new `SystemMessageLevel` config
+- [ ] Default behavior: Hide info/warning, show error/critical
+- [ ] `RenderLevel.DETAILED` shows all system messages
+- [ ] `RenderLevel.MINIMAL` shows only critical
+- [ ] `RenderLevel.STANDARD` shows error and above (default)
+- [ ] Update `format_system_message()` to respect visibility rules
+- [ ] Add tests for each render level + message severity combination
 
 **Technical Notes**:
-- Location: `tests/test_screen_reader_mode.py` (new file)
-- Use pytest fixtures for common message structures
-- Assertions should check for absence of ANSI escape sequences
-- Verify semantic prefixes are present
+- Location: `src/claude_agent_sdk/rendering/formatters.py:180-194`
+- System messages have `type` field indicating severity
+- Current implementation doesn't filter by type
+- May need to parse message content to infer severity if type not available
+- "System: info" → info level (hide by default)
+- "System: warning" → warning level (hide by default)
+- Cost displays → metadata (always show, styled dim)
 
-### Story 5: Documentation and Examples
-**Status**: unassigned
-**Estimated Time**: 1 hour
-**Description**: Document the screen reader mode feature with examples and usage guidance.
-
-**Acceptance Criteria**:
-- [ ] Update `docs/rendering.md` with screen reader mode section
-- [ ] Update `docs/api-reference.md` to document screen_reader_mode parameter
-- [ ] Create example script `examples/screen_reader_mode.py`
-- [ ] Include accessibility best practices in documentation
-- [ ] Document how to enable for different screen readers (NVDA, JAWS, VoiceOver)
-
-**Technical Notes**:
-- Example should demonstrate both ClaudeSDKClient and query() usage
-- Include guidance on terminal emulator configuration for accessibility
-- Link to accessibility resources and testing tools
-
-### Story 6: Manual QA and Accessibility Testing
+### Story 6: Fix Bullet List Indentation
 **Status**: unassigned
 **Estimated Time**: 1.5 hours
-**Description**: Manually test screen reader mode with actual screen reader software to ensure usability.
+**Description**: Fix indentation for nested bullet points and list items in assistant messages so that subsequent lines and nested items align properly with the first bullet character position.
 
 **Acceptance Criteria**:
-- [ ] Test with at least one screen reader (NVDA on Windows or VoiceOver on macOS)
-- [ ] Verify output is comprehensible when read aloud
-- [ ] Test with complex conversations including code blocks
-- [ ] Test with error scenarios
-- [ ] Verify navigation through output is smooth
-- [ ] Collect feedback and make adjustments if needed
+- [ ] Top-level bullets (●) appear at left margin
+- [ ] Nested list items (`-`, `*`, `1.`) indent from bullet position
+- [ ] Multi-line list items wrap with hanging indent
+- [ ] Tree connector (⎿) aligns consistently
+- [ ] Preserve existing spacing for code blocks
+- [ ] Update `format_assistant_message()` with proper indentation logic
+- [ ] Add tests for nested lists, multi-line items, mixed content
 
 **Technical Notes**:
-- NVDA (Windows): Free, open-source screen reader
-- VoiceOver (macOS): Built-in screen reader
-- Test in actual terminal with screen reader active
-- Focus on clarity and information density
+- Location: `src/claude_agent_sdk/rendering/formatters.py:126-178`
+- Current issue: Nested `-` bullets don't indent from `●` position
+- Expected format:
+  ```
+  ● I've created a function with:
+    - Input validation
+    - Efficient algorithm
+    - Clear documentation
+  ```
+- May need to parse markdown list structure
+- Consider using a markdown parser or custom list detection regex
+
+### Story 7: Update Tests for Color Changes
+**Status**: unassigned
+**Estimated Time**: 1 hour
+**Description**: Update existing theme and formatter tests to reflect new ANSI color mappings and component-level styling changes.
+
+**Acceptance Criteria**:
+- [ ] Update `tests/test_rendering_theme.py` for new claude_code_default colors
+- [ ] Update `tests/test_rendering_formatters.py` for tool call component styling
+- [ ] Add tests for syntax highlighting (if enabled)
+- [ ] Add tests for system message visibility filtering
+- [ ] Add tests for bullet indentation fixes
+- [ ] All 556+ existing tests continue to pass
+- [ ] Zero regressions from Sprint 1.3
+
+**Technical Notes**:
+- Focus test files:
+  - `tests/test_rendering_theme.py` (21 tests)
+  - `tests/test_rendering_formatters.py` (existing tests)
+  - `tests/test_rendering_formatters_color.py` (8 tests)
+- Update golden outputs / snapshots if using snapshot testing
+- Verify ANSI escape code sequences match expected values
+
+### Story 8: Update Documentation & Examples
+**Status**: unassigned
+**Estimated Time**: 45 minutes
+**Description**: Update README, API documentation, and demo examples to reflect accurate color theming and new formatting features.
+
+**Acceptance Criteria**:
+- [ ] Update README.md theme section with corrected color descriptions
+- [ ] Update `examples/demo_themes.py` if needed for new categories
+- [ ] Update `examples/comprehensive_theming_demo.py` to showcase new features
+- [ ] Add syntax highlighting example if feature implemented
+- [ ] Document system message visibility controls
+- [ ] Document tool call component styling behavior
+
+**Technical Notes**:
+- README location: Root `README.md` (theme section around line 200+)
+- Note that colors will now accurately match Claude CLI
+- Add troubleshooting section if syntax highlighting is optional dependency
 
 ## Progress Log
 
-### 2025-11-08 07:59 - Sprint Started
-- Created sprint structure for Screen Reader Mode implementation
-- Defined 6 stories covering configuration, rendering, testing, and documentation
-- Estimated total time: 4-6 hours
+### 2025-11-08 22:35 - Story 1 Completed
+- ✅ **Story 1 COMPLETED** in 35 minutes (estimated: 1 hour)
+- Method: Generated comprehensive live CLI output with diverse tool calls and code examples
+- Languages covered: Python, JavaScript/TypeScript, SQL, Bash, YAML, JSON
+- Created complete color mapping document: `.claude/implementation/stories/1-color-analysis.md`
+- **Key Findings**:
+  - Keywords: `blue` (def, class, if, async, SELECT)
+  - Strings: `red` (all string types, escape sequences)
+  - Comments: `green` (all comment types)
+  - Numbers: `green` (integers, floats, binary, hex)
+  - Types: `cyan` (str, int, List, Optional)
+  - Booleans/None: `cyan` (True, False, null, None)
+  - Operators: `white` (default, no highlighting)
+  - Built-in functions: `blue` (print, len, range)
+- **Deliverable**: Designed `SyntaxMapping` configuration structure for customizable syntax highlighting
+- **Impact**: Story 4 significantly enhanced with concrete implementation guidance
+- Updated Story 4 estimated time: 2h → 3h (added configuration infrastructure)
+- Sprint now has clear path forward with empirical color data
+
+### 2025-11-08 21:55 - Sprint Started
+- Archived Sprint 1.4 (Screen Reader Mode) to `.claude/implementation/archive/2025-11-08-2154/`
+- Created Sprint 1.5 structure for color theme accuracy
+- Defined 8 stories covering color analysis, theme updates, formatting enhancements
+- Estimated total time: 6-8 hours
 - Sprint builds on completed Sprint 1.3 theming infrastructure
+- Story 1 awaits user-provided screenshot for color analysis
 
 ## Sprint Summary
 _To be filled upon completion_
