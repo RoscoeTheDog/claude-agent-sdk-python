@@ -314,16 +314,16 @@ Create custom formatters by extending `Formatter` or custom output destinations 
 
 ### Theme System
 
-The SDK includes a powerful theme system with ANSI color support for enhanced terminal output.
+The SDK includes a powerful theme system with ANSI color support, syntax highlighting, and semantic role-based coloring for enhanced terminal output.
 
 #### Built-in Themes
 
-Choose from multiple pre-configured themes:
+Choose from multiple pre-configured themes that match the Claude Code CLI rendering:
 
 ```python
 from claude_agent_sdk.rendering import RendererConfig, Theme
 
-# Claude Code default theme (official CLI colors)
+# Claude Code default theme (official CLI colors - exact match)
 config = RendererConfig(theme=Theme.claude_code_default())
 
 # Popular color schemes
@@ -336,6 +336,12 @@ config = RendererConfig(theme=Theme.nord())
 config = RendererConfig(theme=Theme.monochrome())  # No colors, only bold/dim
 config = RendererConfig(theme=Theme.high_contrast())  # Maximum contrast
 ```
+
+All themes now include:
+- **Syntax highlighting** for 500+ languages (via Pygments)
+- **Semantic role mapping** for tool calls, status indicators, and UI elements
+- **Component-level styling** for tool parameters and results
+- **State-based coloring** for active/pending/failed tool calls
 
 #### Color Configuration
 
@@ -367,6 +373,38 @@ config = RendererConfig(color_enabled=False)
 
 The SDK automatically detects terminal capabilities and gracefully degrades:
 - **Truecolor** (16M colors) → **256-color** → **16-color** → **No color**
+
+#### Syntax Highlighting
+
+The SDK supports syntax highlighting for 500+ programming languages using Pygments:
+
+```python
+from claude_agent_sdk.rendering import RendererConfig
+
+# Enable syntax highlighting (default: True)
+config = RendererConfig(enable_syntax_highlighting=True)
+
+# Disable syntax highlighting
+config = RendererConfig(enable_syntax_highlighting=False)
+```
+
+**Installation:**
+
+```bash
+# Install with syntax highlighting support
+pip install claude-agent-sdk[syntax]
+
+# Or install full extras (includes syntax highlighting)
+pip install claude-agent-sdk[full]
+```
+
+**Supported languages** include Python, JavaScript, TypeScript, Java, C++, Rust, Go, Ruby, PHP, and 500+ more. The highlighter automatically detects the language from code blocks and tool results.
+
+**Features:**
+- Automatic language detection for code blocks
+- Consistent semantic mapping (keywords, strings, comments, operators)
+- Theme-aware syntax coloring (uses theme's semantic categories)
+- Graceful fallback if Pygments is not installed
 
 #### Configuration Files
 
@@ -450,6 +488,53 @@ StyleRule(fg_color=(255, 128, 0))  # Orange
 StyleRule(fg_color=214)  # Orange
 ```
 
+#### System Message Visibility
+
+Control which system messages are displayed based on severity level:
+
+```python
+from claude_agent_sdk.rendering import RendererConfig, SystemMessageLevel
+
+# Hide all system messages except errors (default)
+config = RendererConfig(min_system_message_level=SystemMessageLevel.ERROR)
+
+# Show warnings and above
+config = RendererConfig(min_system_message_level=SystemMessageLevel.WARNING)
+
+# Show all system messages including info
+config = RendererConfig(min_system_message_level=SystemMessageLevel.INFO)
+
+# Show debug messages (most verbose)
+config = RendererConfig(min_system_message_level=SystemMessageLevel.DEBUG)
+```
+
+**Severity levels** (from least to most severe):
+- `DEBUG` - Detailed debugging information
+- `INFO` - Informational messages
+- `WARNING` - Warning messages
+- `ERROR` - Error messages (default threshold)
+- `CRITICAL` - Critical errors
+
+#### Tool Call Formatting
+
+Tool calls are automatically formatted with state-based styling:
+
+**State-based bullets:**
+- 🟢 **Active** (green) - Tool is currently executing
+- 🟡 **Pending** (yellow) - Tool is queued
+- 🔴 **Failed** (red) - Tool execution failed
+
+**Component styling:**
+- Parameter names in cyan
+- String values in green
+- Numbers, booleans, null in cyan
+- Large responses (>10k tokens) show warnings
+
+```python
+# Tool calls are automatically formatted by ClaudeCodeFormatter
+# No configuration needed - styling matches Claude CLI exactly
+```
+
 #### Semantic Categories
 
 Themes use semantic categories for consistent styling:
@@ -460,6 +545,7 @@ Themes use semantic categories for consistent styling:
 - **UI elements**: `bullet`, `tree_connector`, `metadata`, `truncation`
 - **Code**: `code_block`, `inline_code`
 - **Special**: `thinking`, `cost_display`
+- **Semantic roles**: 10 role-based categories for enhanced UI coloring
 
 #### Terminal Detection
 

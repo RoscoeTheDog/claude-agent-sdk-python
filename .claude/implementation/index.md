@@ -203,17 +203,20 @@ Verify and document all test coverage for Sprint 1.5 changes.
 
 ---
 
-### Story 8: Update Documentation & Examples
-**Status**: unassigned | **Time**: 45 min | **File**: [stories/8-update-docs.md](./stories/8-update-docs.md)
+### ✅ Story 8: Update Documentation & Examples
+**Status**: completed | **Time**: 45 min | **File**: [stories/8-update-docs.md](./stories/8-update-docs.md) | **Completed**: 2025-11-09
 
 Update README, examples, API docs for all new features.
 
-**Dependencies**: Story 7
+**Dependencies**: Story 7 ✅
 
-**Deliverables**:
-- Updated user-facing docs
-- Migration guide (if needed)
-- Document as LAST STEP
+**Deliverables**: ✅
+- Enhanced README theme section with Sprint 1.5 features (lines 315-548)
+- Added syntax highlighting documentation (installation, config, 500+ languages)
+- Added system message visibility controls documentation
+- Added tool call formatting documentation
+- Created comprehensive syntax highlighting example (590 lines, 10 languages)
+- All features backward compatible with graceful fallback
 
 ---
 
@@ -417,6 +420,22 @@ Both branches → {Story 3 (IN PROGRESS), 5, 6} → Story 7 → Story 8 → Stor
 ---
 
 ## Progress Log
+
+### 2025-11-09 - Story 8 Completed
+- ✅ Completed Story 8: Update Documentation & Examples
+- **Documentation**: Enhanced README with Sprint 1.5 features
+- **Sections Added**:
+  - Syntax highlighting (lines 377-407) - 500+ languages, Pygments integration
+  - System message visibility (lines 491-516) - Severity level controls
+  - Tool call formatting (lines 518-536) - State-based bullets, component styling
+  - Enhanced theme system overview
+- **New Example**: `examples/syntax_highlighting_demo.py` (590 lines)
+  - 10 programming languages demonstrated (Python, JS, TS, Rust, Go, Java, JSON, YAML, SQL, Bash)
+  - Multiple demo modes (single language, all themes, with/without comparison)
+  - CLI with comprehensive options
+- **Time**: 45 minutes (on-target with estimate)
+- **Impact**: Complete user-facing documentation for Sprint 1.5, backward compatible
+- **Next**: Story 11 (Legacy Cleanup) or Story 12 (Architecture Docs)
 
 ### 2025-11-09 10:30 - Story 4 Completed
 - ✅ Completed Story 4 v2: Unified Syntax & Semantic Highlighting
