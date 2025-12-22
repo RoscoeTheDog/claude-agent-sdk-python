@@ -5,7 +5,6 @@ import logging
 import os
 import platform
 import re
-import shutil
 import sys
 import tempfile
 from collections.abc import AsyncIterable, AsyncIterator
@@ -20,10 +19,11 @@ import anyio.abc
 from anyio.abc import Process
 from anyio.streams.text import TextReceiveStream, TextSendStream
 
-from ..._errors import CLIConnectionError, CLINotFoundError, ProcessError
+from ..._errors import CLIConnectionError, ProcessError
 from ..._errors import CLIJSONDecodeError as SDKJSONDecodeError
 from ..._version import __version__
 from ...types import ClaudeAgentOptions
+from ..cli_detection import find_claude_cli
 from . import Transport
 
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ class SubprocessCLITransport(Transport):
         self._is_streaming = not isinstance(prompt, str)
         self._options = options
         self._cli_path = (
-            str(options.cli_path) if options.cli_path is not None else self._find_cli()
+            str(options.cli_path) if options.cli_path is not None else find_claude_cli()
         )
         self._cwd = str(options.cwd) if options.cwd else None
         self._process: Process | None = None
@@ -65,33 +65,6 @@ class SubprocessCLITransport(Transport):
             else _DEFAULT_MAX_BUFFER_SIZE
         )
         self._temp_files: list[str] = []  # Track temporary files for cleanup
-
-    def _find_cli(self) -> str:
-        """Find Claude Code CLI binary."""
-        if cli := shutil.which("claude"):
-            return cli
-
-        locations = [
-            Path.home() / ".npm-global/bin/claude",
-            Path("/usr/local/bin/claude"),
-            Path.home() / ".local/bin/claude",
-            Path.home() / "node_modules/.bin/claude",
-            Path.home() / ".yarn/bin/claude",
-            Path.home() / ".claude/local/claude",
-        ]
-
-        for path in locations:
-            if path.exists() and path.is_file():
-                return str(path)
-
-        raise CLINotFoundError(
-            "Claude Code not found. Install with:\n"
-            "  npm install -g @anthropic-ai/claude-code\n"
-            "\nIf already installed locally, try:\n"
-            '  export PATH="$HOME/node_modules/.bin:$PATH"\n'
-            "\nOr provide the path via ClaudeAgentOptions:\n"
-            "  ClaudeAgentOptions(cli_path='/path/to/claude')"
-        )
 
     def _build_command(self) -> list[str]:
         """Build CLI command with arguments."""
@@ -397,7 +370,8 @@ class SubprocessCLITransport(Transport):
                 )
                 self._exit_error = error
                 raise error from e
-            error = CLINotFoundError(f"Claude Code not found at: {self._cli_path}")
+            from ..._errors import ClaudeCodeNotFoundError
+            error = ClaudeCodeNotFoundError(cli_path=self._cli_path)
             self._exit_error = error
             raise error from e
         except Exception as e:
