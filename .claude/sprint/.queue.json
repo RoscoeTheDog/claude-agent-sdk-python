@@ -15,7 +15,7 @@
       "type": "feature",
       "story_type": "feature",
       "title": "CLI Detection Core",
-      "status": "unassigned",
+      "status": "in_progress",
       "parent": null,
       "children": [
         "1.d",
@@ -42,7 +42,7 @@
       "type": "feature",
       "story_type": "feature",
       "title": "ClaudeCodeNotFoundError",
-      "status": "unassigned",
+      "status": "in_progress",
       "parent": null,
       "children": [
         "2.d",
@@ -159,7 +159,7 @@
       "type": "discovery",
       "story_type": "discovery",
       "title": "Discovery: CLI Detection Core",
-      "status": "pending",
+      "status": "completed",
       "parent": "1",
       "phase": "discovery",
       "phase_order": 1,
@@ -172,14 +172,17 @@
       "type": "implementation",
       "story_type": "implementation",
       "title": "Implementation: CLI Detection Core",
-      "status": "pending",
+      "status": "unassigned",
       "parent": "1",
       "phase": "implementation",
       "phase_order": 2,
       "children": [],
       "blocks": [],
       "file": null,
-      "requires_artifact": "plans/1-plan.yaml"
+      "requires_artifact": "plans/1-plan.yaml",
+      "metadata": {
+        "requires_artifact": "plans/1-plan.yaml"
+      }
     },
     "1.t": {
       "type": "testing",
@@ -202,7 +205,7 @@
       "type": "discovery",
       "story_type": "discovery",
       "title": "Discovery: ClaudeCodeNotFoundError",
-      "status": "pending",
+      "status": "completed",
       "parent": "2",
       "phase": "discovery",
       "phase_order": 1,
@@ -215,14 +218,17 @@
       "type": "implementation",
       "story_type": "implementation",
       "title": "Implementation: ClaudeCodeNotFoundError",
-      "status": "pending",
+      "status": "unassigned",
       "parent": "2",
       "phase": "implementation",
       "phase_order": 2,
       "children": [],
       "blocks": [],
       "file": null,
-      "requires_artifact": "plans/2-plan.yaml"
+      "requires_artifact": "plans/2-plan.yaml",
+      "metadata": {
+        "requires_artifact": "plans/2-plan.yaml"
+      }
     },
     "2.t": {
       "type": "testing",
