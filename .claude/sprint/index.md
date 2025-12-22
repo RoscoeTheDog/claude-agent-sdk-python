@@ -2,7 +2,7 @@
 
 **DO NOT EDIT**: This file is auto-generated. Edit .queue.json instead.
 
-**Generated**: 2025-12-21 21:58:50
+**Generated**: 2025-12-21 22:01:35
 
 ---
 
@@ -15,14 +15,14 @@
 ## Sprint Statistics
 
 - **Total Stories**: 24
-- **Completion**: 12.5%
+- **Completion**: 16.7%
 
 ### By Status
 
-- completed: 3
-- in_progress: 3
-- pending: 13
-- unassigned: 5
+- completed: 4
+- in_progress: 2
+- pending: 12
+- unassigned: 6
 
 ### By Type
 
@@ -40,11 +40,11 @@
   - Dependencies: Story 1
 
   ### Story 1.i: Implementation: CLI Detection Core
-  **Status**: in_progress | **Type**: implementation
+  **Status**: completed | **Type**: implementation
   - Dependencies: Story 1
 
   ### Story 1.t: Testing: CLI Detection Core
-  **Status**: pending | **Type**: testing
+  **Status**: unassigned | **Type**: testing
   - Dependencies: Story 1
 
   ### Story 2.d: Discovery: ClaudeCodeNotFoundError
