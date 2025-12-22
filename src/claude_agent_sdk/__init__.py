@@ -11,6 +11,7 @@ from ._errors import (
     CLINotFoundError,
     ProcessError,
 )
+from ._internal.auth_config import AuthConfig, AuthFallbackPolicy, AuthMode
 from ._internal.transport import Transport
 from ._version import __version__
 from .client import ClaudeSDKClient
@@ -317,6 +318,10 @@ __all__ = [
     "ToolUseBlock",
     "ToolResultBlock",
     "ContentBlock",
+    # Authentication
+    "AuthMode",
+    "AuthFallbackPolicy",
+    "AuthConfig",
     # Tool callbacks
     "CanUseTool",
     "ToolPermissionContext",

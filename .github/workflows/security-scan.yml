@@ -1,0 +1,95 @@
+# GitHub Actions: Security Scanning
+# Runs on every push and pull request to detect secrets
+
+name: Security Scan
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main]
+
+jobs:
+  gitleaks:
+    name: Gitleaks Secret Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for comprehensive scan
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}  # Optional: for pro features
+
+  detect-secrets:
+    name: Detect Secrets Baseline
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install detect-secrets
+        run: pip install detect-secrets
+
+      - name: Run detect-secrets scan
+        run: |
+          detect-secrets scan --all-files --force-use-all-plugins \
+            --exclude-files '\.env\.example$' \
+            --exclude-files '\.gitleaks\.toml$' \
+            --exclude-files 'SECURITY\.md$'
+
+  credential-patterns:
+    name: Check for Anthropic Credentials
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Scan for API keys
+        run: |
+          echo "Scanning for Anthropic API key patterns..."
+          if grep -r "sk-ant-api[0-9][0-9]" \
+            --exclude-dir=.git \
+            --exclude="*.md" \
+            --exclude=".gitleaks.toml" \
+            --exclude=".pre-commit-config.yaml" \
+            --exclude="security-scan.yml" .; then
+            echo "❌ ERROR: Found Anthropic API key pattern!"
+            exit 1
+          else
+            echo "✅ No API keys detected"
+          fi
+
+      - name: Scan for OAuth tokens
+        run: |
+          echo "Scanning for OAuth token patterns..."
+          if grep -r "sk-ant-o[ar]t[0-9][0-9]" \
+            --exclude-dir=.git \
+            --exclude="*.md" \
+            --exclude=".gitleaks.toml" \
+            --exclude=".pre-commit-config.yaml" \
+            --exclude="security-scan.yml" .; then
+            echo "❌ ERROR: Found OAuth token pattern!"
+            exit 1
+          else
+            echo "✅ No OAuth tokens detected"
+          fi
+
+      - name: Check for credentials.json files
+        run: |
+          echo "Scanning for credentials.json files..."
+          if find . -name "*credentials*.json" -not -path "./.git/*"; then
+            echo "❌ ERROR: Found credentials JSON file!"
+            exit 1
+          else
+            echo "✅ No credentials files detected"
+          fi

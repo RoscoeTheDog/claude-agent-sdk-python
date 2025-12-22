@@ -11,6 +11,8 @@ from typing_extensions import NotRequired
 if TYPE_CHECKING:
     from mcp.server import Server as McpServer
 
+    from claude_agent_sdk._internal.auth_config import AuthFallbackPolicy, AuthMode
+
 # Permission modes
 PermissionMode = Literal["default", "acceptEdits", "plan", "bypassPermissions"]
 
@@ -509,7 +511,37 @@ Message = UserMessage | AssistantMessage | SystemMessage | ResultMessage | Strea
 
 @dataclass
 class ClaudeAgentOptions:
-    """Query options for Claude SDK."""
+    """Query options for Claude SDK.
+
+    Authentication Configuration:
+        auth_mode: Authentication mode - "auto" (default), "oauth", or "api_key"
+            - "auto": Try OAuth first, fallback to API key if unavailable
+            - "oauth": Force OAuth only (fail if unavailable)
+            - "api_key": Force API key only
+            Overridden by CLAUDE_AUTH_MODE environment variable.
+
+        auth_fallback: Fallback policy when OAuth fails - "enabled" (default), "disabled", or "strict"
+            - "enabled": Fallback to API key if OAuth fails (default)
+            - "disabled": No fallback, error if OAuth fails
+            - "strict": Fail fast with no fallback (same as "disabled")
+            Overridden by CLAUDE_AUTH_FALLBACK or CLAUDE_AUTH_STRICT environment variables.
+
+        auth_interactive: Allow browser login prompts - True, False, or None (auto-detect)
+            - True: Allow browser login prompts
+            - False: Skip browser login (useful for CI/CD)
+            - None: Auto-detect based on terminal (default)
+            Overridden by CLAUDE_AUTH_INTERACTIVE environment variable.
+
+    Examples:
+        # Auto-detect (default)
+        options = ClaudeAgentOptions()
+
+        # Force OAuth only
+        options = ClaudeAgentOptions(auth_mode="oauth", auth_fallback=False)
+
+        # CI/CD mode (no browser login)
+        options = ClaudeAgentOptions(auth_interactive=False, auth_fallback=True)
+    """
 
     allowed_tools: list[str] = field(default_factory=list)
     system_prompt: str | SystemPromptPreset | None = None
@@ -557,6 +589,14 @@ class ClaudeAgentOptions:
     plugins: list[SdkPluginConfig] = field(default_factory=list)
     # Max tokens for thinking blocks
     max_thinking_tokens: int | None = None
+
+    # Authentication configuration
+    # These options control authentication behavior and are overridden by environment variables
+    auth_mode: "str | AuthMode | None" = None  # Authentication mode: "auto" (default), "oauth", or "api_key"
+    auth_fallback: "str | AuthFallbackPolicy | None" = (
+        None  # Fallback policy: "enabled" (default), "disabled", or "strict"
+    )
+    auth_interactive: bool | None = None  # Allow browser login prompts (default: auto-detect based on terminal)
 
 
 # SDK Control Protocol

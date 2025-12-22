@@ -26,6 +26,175 @@ async def main():
 anyio.run(main)
 ```
 
+## Authentication
+
+The SDK supports two authentication methods:
+
+1. **OAuth (Subscription)** - Use your Claude Max/Pro subscription via OAuth tokens (recommended)
+2. **API Key** - Traditional pay-per-token API pricing
+
+### OAuth Authentication (Subscription)
+
+OAuth authentication uses your Claude subscription (Max/Pro) instead of pay-per-token API pricing. The SDK automatically detects and uses OAuth credentials from `~/.claude/.credentials.json`.
+
+**First-time setup:**
+
+```python
+from claude_agent_sdk import query
+
+# On first run, SDK will prompt for browser login if needed
+async for message in query(prompt="Hello Claude"):
+    print(message)
+```
+
+The SDK will:
+1. Check for valid OAuth credentials
+2. If missing/expired, prompt you to login via browser
+3. Save credentials to `~/.claude/.credentials.json`
+4. Auto-refresh tokens when they expire
+
+**Manual login:**
+
+```bash
+claude /login
+```
+
+### API Key Authentication
+
+Set your API key via environment variable:
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-api03-...
+```
+
+Or programmatically:
+
+```python
+import os
+os.environ["ANTHROPIC_API_KEY"] = "sk-ant-api03-..."
+```
+
+### Authentication Configuration
+
+Control authentication behavior with environment variables or SDK options:
+
+#### Environment Variables
+
+```bash
+# Authentication mode (default: "auto")
+export CLAUDE_AUTH_MODE=oauth          # Force OAuth only
+export CLAUDE_AUTH_MODE=api_key        # Force API key only
+export CLAUDE_AUTH_MODE=auto           # Auto-detect (try OAuth first)
+
+# Fallback behavior (default: enabled)
+export CLAUDE_AUTH_FALLBACK=true       # Fallback to API key if OAuth fails
+export CLAUDE_AUTH_FALLBACK=false      # No fallback, error if OAuth fails
+
+# Strict mode (default: false)
+export CLAUDE_AUTH_STRICT=true         # Fail fast with no fallback
+
+# Interactive mode (default: auto-detect)
+export CLAUDE_AUTH_INTERACTIVE=false   # Skip browser login (CI/CD)
+export CLAUDE_AUTH_INTERACTIVE=true    # Allow browser login
+```
+
+#### Programmatic Configuration
+
+```python
+from claude_agent_sdk import ClaudeAgentOptions
+
+# Force OAuth with fallback to API key
+options = ClaudeAgentOptions(
+    auth_mode="oauth",
+    auth_fallback=True,
+    auth_interactive=True
+)
+
+# Strict OAuth only (no fallback, fail if OAuth unavailable)
+options = ClaudeAgentOptions(
+    auth_mode="oauth",
+    auth_fallback=False
+)
+
+# CI/CD mode (no browser login, use existing credentials or API key)
+options = ClaudeAgentOptions(
+    auth_mode="auto",
+    auth_interactive=False,
+    auth_fallback=True
+)
+
+async for message in query(prompt="Hello", options=options):
+    print(message)
+```
+
+### Authentication Priority
+
+The SDK uses this priority chain:
+
+1. **Environment variables** (highest priority)
+   - `CLAUDE_AUTH_MODE`, `CLAUDE_AUTH_FALLBACK`, `CLAUDE_AUTH_STRICT`, `CLAUDE_AUTH_INTERACTIVE`
+
+2. **SDK options** (medium priority)
+   - `ClaudeAgentOptions(auth_mode=..., auth_fallback=..., auth_interactive=...)`
+
+3. **Auto-detection** (lowest priority)
+   - Try OAuth first, fallback to API key if OAuth unavailable
+
+### Troubleshooting
+
+**"OAuth credentials not found"**
+- Run `claude /login` to authenticate
+- Or set `ANTHROPIC_API_KEY` to use API key authentication
+
+**"OAuth credentials expired"**
+- SDK auto-refreshes tokens automatically
+- If refresh fails, SDK will prompt for browser login
+- Or run `claude /login` manually
+
+**"Browser login not available in non-interactive mode"**
+- Set `CLAUDE_AUTH_INTERACTIVE=false` for CI/CD
+- Ensure valid credentials exist before running
+- Or use API key authentication: `CLAUDE_AUTH_MODE=api_key`
+
+**Fallback behavior**
+- By default, SDK falls back to API key if OAuth fails
+- Set `CLAUDE_AUTH_FALLBACK=false` to disable fallback
+- Set `CLAUDE_AUTH_STRICT=true` for fail-fast behavior
+
+### Authentication Examples
+
+```python
+from claude_agent_sdk import query, ClaudeAgentOptions
+
+# Example 1: Auto-detect (default) - Try OAuth, fallback to API key
+async for message in query(prompt="Hello"):
+    print(message)
+
+# Example 2: Force OAuth only - Fail if OAuth unavailable
+options = ClaudeAgentOptions(auth_mode="oauth", auth_fallback=False)
+async for message in query(prompt="Hello", options=options):
+    print(message)
+
+# Example 3: Force API key only
+options = ClaudeAgentOptions(auth_mode="api_key")
+async for message in query(prompt="Hello", options=options):
+    print(message)
+
+# Example 4: CI/CD mode - No browser login, use existing credentials
+options = ClaudeAgentOptions(auth_interactive=False, auth_fallback=True)
+async for message in query(prompt="Hello", options=options):
+    print(message)
+
+# Example 5: Strict OAuth - Fail fast if OAuth unavailable (no fallback)
+options = ClaudeAgentOptions(
+    auth_mode="oauth",
+    auth_fallback=False,
+    auth_interactive=True
+)
+async for message in query(prompt="Hello", options=options):
+    print(message)
+```
+
 ## Basic Usage: query()
 
 `query()` is an async function for querying Claude Code. It returns an `AsyncIterator` of response messages. See [src/claude_agent_sdk/query.py](src/claude_agent_sdk/query.py).
