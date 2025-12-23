@@ -2,7 +2,7 @@
 
 **DO NOT EDIT**: This file is auto-generated. Edit .queue.json instead.
 
-**Generated**: 2025-12-23 15:45:46
+**Generated**: 2025-12-23 15:52:30
 
 ---
 
@@ -15,13 +15,12 @@
 ## Sprint Statistics
 
 - **Total Stories**: 48
-- **Completion**: 62.5%
+- **Completion**: 66.7%
 
 ### By Status
 
-- completed: 30
-- in_progress: 1
-- unassigned: 17
+- completed: 32
+- unassigned: 16
 
 ### By Type
 
@@ -63,7 +62,7 @@
   - Blocks: Story -2.t
 
   ### Story -2.t: Validate Testing: ClaudeCodeNotFoundError
-  **Status**: unassigned | **Type**: validation_testing
+  **Status**: completed | **Type**: validation_testing
   - Dependencies: Story -2, Story -2.i
 
   ### Story -3.d: Validate Discovery: OAuth Login Integration
