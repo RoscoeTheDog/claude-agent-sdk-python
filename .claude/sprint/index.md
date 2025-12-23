@@ -2,7 +2,7 @@
 
 **DO NOT EDIT**: This file is auto-generated. Edit .queue.json instead.
 
-**Generated**: 2025-12-21 22:01:35
+**Generated**: 2025-12-23 15:17:00
 
 ---
 
@@ -14,15 +14,14 @@
 
 ## Sprint Statistics
 
-- **Total Stories**: 24
-- **Completion**: 16.7%
+- **Total Stories**: 48
+- **Completion**: 52.1%
 
 ### By Status
 
-- completed: 4
-- in_progress: 2
-- pending: 12
-- unassigned: 6
+- completed: 25
+- in_progress: 1
+- unassigned: 22
 
 ### By Type
 
@@ -30,10 +29,98 @@
 - feature: 6
 - implementation: 6
 - testing: 6
+- validation: 6
+- validation_discovery: 6
+- validation_implementation: 6
+- validation_testing: 6
 
 ---
 
 ## Stories (Execution Order)
+
+  ### Story -1.d: Validate Discovery: CLI Detection Core
+  **Status**: completed | **Type**: validation_discovery
+  - Dependencies: Story -1
+  - Blocks: Story -1.i
+
+  ### Story -1.i: Validate Implementation: CLI Detection Core
+  **Status**: unassigned | **Type**: validation_implementation
+  - Dependencies: Story -1, Story -1.d
+  - Blocks: Story -1.t
+
+  ### Story -1.t: Validate Testing: CLI Detection Core
+  **Status**: unassigned | **Type**: validation_testing
+  - Dependencies: Story -1, Story -1.i
+
+  ### Story -2.d: Validate Discovery: ClaudeCodeNotFoundError
+  **Status**: unassigned | **Type**: validation_discovery
+  - Dependencies: Story -2
+  - Blocks: Story -2.i
+
+  ### Story -2.i: Validate Implementation: ClaudeCodeNotFoundError
+  **Status**: unassigned | **Type**: validation_implementation
+  - Dependencies: Story -2, Story -2.d
+  - Blocks: Story -2.t
+
+  ### Story -2.t: Validate Testing: ClaudeCodeNotFoundError
+  **Status**: unassigned | **Type**: validation_testing
+  - Dependencies: Story -2, Story -2.i
+
+  ### Story -3.d: Validate Discovery: OAuth Login Integration
+  **Status**: unassigned | **Type**: validation_discovery
+  - Dependencies: Story -3
+  - Blocks: Story -3.i
+
+  ### Story -3.i: Validate Implementation: OAuth Login Integration
+  **Status**: unassigned | **Type**: validation_implementation
+  - Dependencies: Story -3, Story -3.d
+  - Blocks: Story -3.t
+
+  ### Story -3.t: Validate Testing: OAuth Login Integration
+  **Status**: unassigned | **Type**: validation_testing
+  - Dependencies: Story -3, Story -3.i
+
+  ### Story -4.d: Validate Discovery: Optional Auto-OAuth Extra
+  **Status**: unassigned | **Type**: validation_discovery
+  - Dependencies: Story -4
+  - Blocks: Story -4.i
+
+  ### Story -4.i: Validate Implementation: Optional Auto-OAuth Extra
+  **Status**: unassigned | **Type**: validation_implementation
+  - Dependencies: Story -4, Story -4.d
+  - Blocks: Story -4.t
+
+  ### Story -4.t: Validate Testing: Optional Auto-OAuth Extra
+  **Status**: unassigned | **Type**: validation_testing
+  - Dependencies: Story -4, Story -4.i
+
+  ### Story -5.d: Validate Discovery: Cross-Platform Testing
+  **Status**: unassigned | **Type**: validation_discovery
+  - Dependencies: Story -5
+  - Blocks: Story -5.i
+
+  ### Story -5.i: Validate Implementation: Cross-Platform Testing
+  **Status**: unassigned | **Type**: validation_implementation
+  - Dependencies: Story -5, Story -5.d
+  - Blocks: Story -5.t
+
+  ### Story -5.t: Validate Testing: Cross-Platform Testing
+  **Status**: unassigned | **Type**: validation_testing
+  - Dependencies: Story -5, Story -5.i
+
+  ### Story -6.d: Validate Discovery: Documentation Update
+  **Status**: unassigned | **Type**: validation_discovery
+  - Dependencies: Story -6
+  - Blocks: Story -6.i
+
+  ### Story -6.i: Validate Implementation: Documentation Update
+  **Status**: unassigned | **Type**: validation_implementation
+  - Dependencies: Story -6, Story -6.d
+  - Blocks: Story -6.t
+
+  ### Story -6.t: Validate Testing: Documentation Update
+  **Status**: unassigned | **Type**: validation_testing
+  - Dependencies: Story -6, Story -6.i
 
   ### Story 1.d: Discovery: CLI Detection Core
   **Status**: completed | **Type**: discovery
@@ -44,7 +131,7 @@
   - Dependencies: Story 1
 
   ### Story 1.t: Testing: CLI Detection Core
-  **Status**: unassigned | **Type**: testing
+  **Status**: completed | **Type**: testing
   - Dependencies: Story 1
 
   ### Story 2.d: Discovery: ClaudeCodeNotFoundError
@@ -56,55 +143,55 @@
   - Dependencies: Story 2
 
   ### Story 2.t: Testing: ClaudeCodeNotFoundError
-  **Status**: unassigned | **Type**: testing
+  **Status**: completed | **Type**: testing
   - Dependencies: Story 2
 
   ### Story 3.d: Discovery: OAuth Login Integration
-  **Status**: pending | **Type**: discovery
+  **Status**: completed | **Type**: discovery
   - Dependencies: Story 3
 
   ### Story 3.i: Implementation: OAuth Login Integration
-  **Status**: pending | **Type**: implementation
+  **Status**: completed | **Type**: implementation
   - Dependencies: Story 3
 
   ### Story 3.t: Testing: OAuth Login Integration
-  **Status**: pending | **Type**: testing
+  **Status**: completed | **Type**: testing
   - Dependencies: Story 3
 
   ### Story 4.d: Discovery: Optional Auto-OAuth Extra
-  **Status**: pending | **Type**: discovery
+  **Status**: completed | **Type**: discovery
   - Dependencies: Story 4
 
   ### Story 4.i: Implementation: Optional Auto-OAuth Extra
-  **Status**: pending | **Type**: implementation
+  **Status**: completed | **Type**: implementation
   - Dependencies: Story 4
 
   ### Story 4.t: Testing: Optional Auto-OAuth Extra
-  **Status**: pending | **Type**: testing
+  **Status**: completed | **Type**: testing
   - Dependencies: Story 4
 
   ### Story 5.d: Discovery: Cross-Platform Testing
-  **Status**: pending | **Type**: discovery
+  **Status**: completed | **Type**: discovery
   - Dependencies: Story 5
 
   ### Story 5.i: Implementation: Cross-Platform Testing
-  **Status**: pending | **Type**: implementation
+  **Status**: completed | **Type**: implementation
   - Dependencies: Story 5
 
   ### Story 5.t: Testing: Cross-Platform Testing
-  **Status**: pending | **Type**: testing
+  **Status**: completed | **Type**: testing
   - Dependencies: Story 5
 
   ### Story 6.d: Discovery: Documentation Update
-  **Status**: pending | **Type**: discovery
+  **Status**: completed | **Type**: discovery
   - Dependencies: Story 6
 
   ### Story 6.i: Implementation: Documentation Update
-  **Status**: pending | **Type**: implementation
+  **Status**: completed | **Type**: implementation
   - Dependencies: Story 6
 
   ### Story 6.t: Testing: Documentation Update
-  **Status**: pending | **Type**: testing
+  **Status**: completed | **Type**: testing
   - Dependencies: Story 6
 
 ---

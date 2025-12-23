@@ -15,7 +15,7 @@
       "type": "feature",
       "story_type": "feature",
       "title": "CLI Detection Core",
-      "status": "in_progress",
+      "status": "completed",
       "parent": null,
       "children": [
         "1.d",
@@ -42,7 +42,7 @@
       "type": "feature",
       "story_type": "feature",
       "title": "ClaudeCodeNotFoundError",
-      "status": "in_progress",
+      "status": "completed",
       "parent": null,
       "children": [
         "2.d",
@@ -69,7 +69,7 @@
       "type": "feature",
       "story_type": "feature",
       "title": "OAuth Login Integration",
-      "status": "unassigned",
+      "status": "completed",
       "parent": null,
       "children": [
         "3.d",
@@ -93,7 +93,7 @@
       "type": "feature",
       "story_type": "feature",
       "title": "Optional Auto-OAuth Extra",
-      "status": "unassigned",
+      "status": "completed",
       "parent": null,
       "children": [
         "4.d",
@@ -115,7 +115,7 @@
       "type": "feature",
       "story_type": "feature",
       "title": "Cross-Platform Testing",
-      "status": "unassigned",
+      "status": "completed",
       "parent": null,
       "children": [
         "5.d",
@@ -137,7 +137,7 @@
       "type": "feature",
       "story_type": "feature",
       "title": "Documentation Update",
-      "status": "unassigned",
+      "status": "completed",
       "parent": null,
       "children": [
         "6.d",
@@ -188,7 +188,7 @@
       "type": "testing",
       "story_type": "testing",
       "title": "Testing: CLI Detection Core",
-      "status": "unassigned",
+      "status": "completed",
       "parent": "1",
       "phase": "testing",
       "phase_order": 3,
@@ -237,7 +237,7 @@
       "type": "testing",
       "story_type": "testing",
       "title": "Testing: ClaudeCodeNotFoundError",
-      "status": "unassigned",
+      "status": "completed",
       "parent": "2",
       "phase": "testing",
       "phase_order": 3,
@@ -257,7 +257,7 @@
       "type": "discovery",
       "story_type": "discovery",
       "title": "Discovery: OAuth Login Integration",
-      "status": "pending",
+      "status": "completed",
       "parent": "3",
       "phase": "discovery",
       "phase_order": 1,
@@ -270,7 +270,7 @@
       "type": "implementation",
       "story_type": "implementation",
       "title": "Implementation: OAuth Login Integration",
-      "status": "pending",
+      "status": "completed",
       "parent": "3",
       "phase": "implementation",
       "phase_order": 2,
@@ -283,7 +283,7 @@
       "type": "testing",
       "story_type": "testing",
       "title": "Testing: OAuth Login Integration",
-      "status": "pending",
+      "status": "completed",
       "parent": "3",
       "phase": "testing",
       "phase_order": 3,
@@ -300,7 +300,7 @@
       "type": "discovery",
       "story_type": "discovery",
       "title": "Discovery: Optional Auto-OAuth Extra",
-      "status": "pending",
+      "status": "completed",
       "parent": "4",
       "phase": "discovery",
       "phase_order": 1,
@@ -313,7 +313,7 @@
       "type": "implementation",
       "story_type": "implementation",
       "title": "Implementation: Optional Auto-OAuth Extra",
-      "status": "pending",
+      "status": "completed",
       "parent": "4",
       "phase": "implementation",
       "phase_order": 2,
@@ -326,7 +326,7 @@
       "type": "testing",
       "story_type": "testing",
       "title": "Testing: Optional Auto-OAuth Extra",
-      "status": "pending",
+      "status": "completed",
       "parent": "4",
       "phase": "testing",
       "phase_order": 3,
@@ -343,7 +343,7 @@
       "type": "discovery",
       "story_type": "discovery",
       "title": "Discovery: Cross-Platform Testing",
-      "status": "pending",
+      "status": "completed",
       "parent": "5",
       "phase": "discovery",
       "phase_order": 1,
@@ -356,7 +356,7 @@
       "type": "implementation",
       "story_type": "implementation",
       "title": "Implementation: Cross-Platform Testing",
-      "status": "pending",
+      "status": "completed",
       "parent": "5",
       "phase": "implementation",
       "phase_order": 2,
@@ -369,7 +369,7 @@
       "type": "testing",
       "story_type": "testing",
       "title": "Testing: Cross-Platform Testing",
-      "status": "pending",
+      "status": "completed",
       "parent": "5",
       "phase": "testing",
       "phase_order": 3,
@@ -386,7 +386,7 @@
       "type": "discovery",
       "story_type": "discovery",
       "title": "Discovery: Documentation Update",
-      "status": "pending",
+      "status": "completed",
       "parent": "6",
       "phase": "discovery",
       "phase_order": 1,
@@ -399,7 +399,7 @@
       "type": "implementation",
       "story_type": "implementation",
       "title": "Implementation: Documentation Update",
-      "status": "pending",
+      "status": "completed",
       "parent": "6",
       "phase": "implementation",
       "phase_order": 2,
@@ -412,7 +412,7 @@
       "type": "testing",
       "story_type": "testing",
       "title": "Testing: Documentation Update",
-      "status": "pending",
+      "status": "completed",
       "parent": "6",
       "phase": "testing",
       "phase_order": 3,
@@ -424,9 +424,495 @@
         "integration",
         "security"
       ]
+    },
+    "-1": {
+      "type": "validation",
+      "story_type": "validation",
+      "title": "Validate: CLI Detection Core",
+      "status": "in_progress",
+      "validates": "1",
+      "children": [
+        "-1.d",
+        "-1.i",
+        "-1.t"
+      ],
+      "phase_status": {
+        "validation_discovery": "pending",
+        "validation_implementation": "pending",
+        "validation_testing": "pending"
+      },
+      "target_has_phases": true,
+      "blocks": [],
+      "file": null
+    },
+    "-1.d": {
+      "type": "validation_discovery",
+      "story_type": "validation_discovery",
+      "title": "Validate Discovery: CLI Detection Core",
+      "status": "completed",
+      "parent": "-1",
+      "validates": "1.d",
+      "phase": "validation_discovery",
+      "phase_order": 1,
+      "checks": [
+        "A",
+        "B",
+        "C"
+      ],
+      "children": [],
+      "blocks": [
+        "-1.i"
+      ],
+      "file": null
+    },
+    "-1.i": {
+      "type": "validation_implementation",
+      "story_type": "validation_implementation",
+      "title": "Validate Implementation: CLI Detection Core",
+      "status": "unassigned",
+      "parent": "-1",
+      "validates": "1.i",
+      "phase": "validation_implementation",
+      "phase_order": 2,
+      "checks": [
+        "I"
+      ],
+      "children": [],
+      "blocks": [
+        "-1.t"
+      ],
+      "file": null
+    },
+    "-1.t": {
+      "type": "validation_testing",
+      "story_type": "validation_testing",
+      "title": "Validate Testing: CLI Detection Core",
+      "status": "unassigned",
+      "parent": "-1",
+      "validates": "1.t",
+      "phase": "validation_testing",
+      "phase_order": 3,
+      "checks": [
+        "D",
+        "E",
+        "F",
+        "G",
+        "H"
+      ],
+      "children": [],
+      "blocks": [],
+      "file": null
+    },
+    "-2": {
+      "type": "validation",
+      "story_type": "validation",
+      "title": "Validate: ClaudeCodeNotFoundError",
+      "status": "unassigned",
+      "validates": "2",
+      "children": [
+        "-2.d",
+        "-2.i",
+        "-2.t"
+      ],
+      "phase_status": {
+        "validation_discovery": "pending",
+        "validation_implementation": "pending",
+        "validation_testing": "pending"
+      },
+      "target_has_phases": true,
+      "blocks": [],
+      "file": null
+    },
+    "-2.d": {
+      "type": "validation_discovery",
+      "story_type": "validation_discovery",
+      "title": "Validate Discovery: ClaudeCodeNotFoundError",
+      "status": "unassigned",
+      "parent": "-2",
+      "validates": "2.d",
+      "phase": "validation_discovery",
+      "phase_order": 1,
+      "checks": [
+        "A",
+        "B",
+        "C"
+      ],
+      "children": [],
+      "blocks": [
+        "-2.i"
+      ],
+      "file": null
+    },
+    "-2.i": {
+      "type": "validation_implementation",
+      "story_type": "validation_implementation",
+      "title": "Validate Implementation: ClaudeCodeNotFoundError",
+      "status": "unassigned",
+      "parent": "-2",
+      "validates": "2.i",
+      "phase": "validation_implementation",
+      "phase_order": 2,
+      "checks": [
+        "I"
+      ],
+      "children": [],
+      "blocks": [
+        "-2.t"
+      ],
+      "file": null
+    },
+    "-2.t": {
+      "type": "validation_testing",
+      "story_type": "validation_testing",
+      "title": "Validate Testing: ClaudeCodeNotFoundError",
+      "status": "unassigned",
+      "parent": "-2",
+      "validates": "2.t",
+      "phase": "validation_testing",
+      "phase_order": 3,
+      "checks": [
+        "D",
+        "E",
+        "F",
+        "G",
+        "H"
+      ],
+      "children": [],
+      "blocks": [],
+      "file": null
+    },
+    "-3": {
+      "type": "validation",
+      "story_type": "validation",
+      "title": "Validate: OAuth Login Integration",
+      "status": "unassigned",
+      "validates": "3",
+      "children": [
+        "-3.d",
+        "-3.i",
+        "-3.t"
+      ],
+      "phase_status": {
+        "validation_discovery": "pending",
+        "validation_implementation": "pending",
+        "validation_testing": "pending"
+      },
+      "target_has_phases": true,
+      "blocks": [],
+      "file": null
+    },
+    "-3.d": {
+      "type": "validation_discovery",
+      "story_type": "validation_discovery",
+      "title": "Validate Discovery: OAuth Login Integration",
+      "status": "unassigned",
+      "parent": "-3",
+      "validates": "3.d",
+      "phase": "validation_discovery",
+      "phase_order": 1,
+      "checks": [
+        "A",
+        "B",
+        "C"
+      ],
+      "children": [],
+      "blocks": [
+        "-3.i"
+      ],
+      "file": null
+    },
+    "-3.i": {
+      "type": "validation_implementation",
+      "story_type": "validation_implementation",
+      "title": "Validate Implementation: OAuth Login Integration",
+      "status": "unassigned",
+      "parent": "-3",
+      "validates": "3.i",
+      "phase": "validation_implementation",
+      "phase_order": 2,
+      "checks": [
+        "I"
+      ],
+      "children": [],
+      "blocks": [
+        "-3.t"
+      ],
+      "file": null
+    },
+    "-3.t": {
+      "type": "validation_testing",
+      "story_type": "validation_testing",
+      "title": "Validate Testing: OAuth Login Integration",
+      "status": "unassigned",
+      "parent": "-3",
+      "validates": "3.t",
+      "phase": "validation_testing",
+      "phase_order": 3,
+      "checks": [
+        "D",
+        "E",
+        "F",
+        "G",
+        "H"
+      ],
+      "children": [],
+      "blocks": [],
+      "file": null
+    },
+    "-4": {
+      "type": "validation",
+      "story_type": "validation",
+      "title": "Validate: Optional Auto-OAuth Extra",
+      "status": "unassigned",
+      "validates": "4",
+      "children": [
+        "-4.d",
+        "-4.i",
+        "-4.t"
+      ],
+      "phase_status": {
+        "validation_discovery": "pending",
+        "validation_implementation": "pending",
+        "validation_testing": "pending"
+      },
+      "target_has_phases": true,
+      "blocks": [],
+      "file": null
+    },
+    "-4.d": {
+      "type": "validation_discovery",
+      "story_type": "validation_discovery",
+      "title": "Validate Discovery: Optional Auto-OAuth Extra",
+      "status": "unassigned",
+      "parent": "-4",
+      "validates": "4.d",
+      "phase": "validation_discovery",
+      "phase_order": 1,
+      "checks": [
+        "A",
+        "B",
+        "C"
+      ],
+      "children": [],
+      "blocks": [
+        "-4.i"
+      ],
+      "file": null
+    },
+    "-4.i": {
+      "type": "validation_implementation",
+      "story_type": "validation_implementation",
+      "title": "Validate Implementation: Optional Auto-OAuth Extra",
+      "status": "unassigned",
+      "parent": "-4",
+      "validates": "4.i",
+      "phase": "validation_implementation",
+      "phase_order": 2,
+      "checks": [
+        "I"
+      ],
+      "children": [],
+      "blocks": [
+        "-4.t"
+      ],
+      "file": null
+    },
+    "-4.t": {
+      "type": "validation_testing",
+      "story_type": "validation_testing",
+      "title": "Validate Testing: Optional Auto-OAuth Extra",
+      "status": "unassigned",
+      "parent": "-4",
+      "validates": "4.t",
+      "phase": "validation_testing",
+      "phase_order": 3,
+      "checks": [
+        "D",
+        "E",
+        "F",
+        "G",
+        "H"
+      ],
+      "children": [],
+      "blocks": [],
+      "file": null
+    },
+    "-5": {
+      "type": "validation",
+      "story_type": "validation",
+      "title": "Validate: Cross-Platform Testing",
+      "status": "unassigned",
+      "validates": "5",
+      "children": [
+        "-5.d",
+        "-5.i",
+        "-5.t"
+      ],
+      "phase_status": {
+        "validation_discovery": "pending",
+        "validation_implementation": "pending",
+        "validation_testing": "pending"
+      },
+      "target_has_phases": true,
+      "blocks": [],
+      "file": null
+    },
+    "-5.d": {
+      "type": "validation_discovery",
+      "story_type": "validation_discovery",
+      "title": "Validate Discovery: Cross-Platform Testing",
+      "status": "unassigned",
+      "parent": "-5",
+      "validates": "5.d",
+      "phase": "validation_discovery",
+      "phase_order": 1,
+      "checks": [
+        "A",
+        "B",
+        "C"
+      ],
+      "children": [],
+      "blocks": [
+        "-5.i"
+      ],
+      "file": null
+    },
+    "-5.i": {
+      "type": "validation_implementation",
+      "story_type": "validation_implementation",
+      "title": "Validate Implementation: Cross-Platform Testing",
+      "status": "unassigned",
+      "parent": "-5",
+      "validates": "5.i",
+      "phase": "validation_implementation",
+      "phase_order": 2,
+      "checks": [
+        "I"
+      ],
+      "children": [],
+      "blocks": [
+        "-5.t"
+      ],
+      "file": null
+    },
+    "-5.t": {
+      "type": "validation_testing",
+      "story_type": "validation_testing",
+      "title": "Validate Testing: Cross-Platform Testing",
+      "status": "unassigned",
+      "parent": "-5",
+      "validates": "5.t",
+      "phase": "validation_testing",
+      "phase_order": 3,
+      "checks": [
+        "D",
+        "E",
+        "F",
+        "G",
+        "H"
+      ],
+      "children": [],
+      "blocks": [],
+      "file": null
+    },
+    "-6": {
+      "type": "validation",
+      "story_type": "validation",
+      "title": "Validate: Documentation Update",
+      "status": "unassigned",
+      "validates": "6",
+      "children": [
+        "-6.d",
+        "-6.i",
+        "-6.t"
+      ],
+      "phase_status": {
+        "validation_discovery": "pending",
+        "validation_implementation": "pending",
+        "validation_testing": "pending"
+      },
+      "target_has_phases": true,
+      "blocks": [],
+      "file": null
+    },
+    "-6.d": {
+      "type": "validation_discovery",
+      "story_type": "validation_discovery",
+      "title": "Validate Discovery: Documentation Update",
+      "status": "unassigned",
+      "parent": "-6",
+      "validates": "6.d",
+      "phase": "validation_discovery",
+      "phase_order": 1,
+      "checks": [
+        "A",
+        "B",
+        "C"
+      ],
+      "children": [],
+      "blocks": [
+        "-6.i"
+      ],
+      "file": null
+    },
+    "-6.i": {
+      "type": "validation_implementation",
+      "story_type": "validation_implementation",
+      "title": "Validate Implementation: Documentation Update",
+      "status": "unassigned",
+      "parent": "-6",
+      "validates": "6.i",
+      "phase": "validation_implementation",
+      "phase_order": 2,
+      "checks": [
+        "I"
+      ],
+      "children": [],
+      "blocks": [
+        "-6.t"
+      ],
+      "file": null
+    },
+    "-6.t": {
+      "type": "validation_testing",
+      "story_type": "validation_testing",
+      "title": "Validate Testing: Documentation Update",
+      "status": "unassigned",
+      "parent": "-6",
+      "validates": "6.t",
+      "phase": "validation_testing",
+      "phase_order": 3,
+      "checks": [
+        "D",
+        "E",
+        "F",
+        "G",
+        "H"
+      ],
+      "children": [],
+      "blocks": [],
+      "file": null
     }
   },
   "execution_queue": [
+    "-1.d",
+    "-1.i",
+    "-1.t",
+    "-2.d",
+    "-2.i",
+    "-2.t",
+    "-3.d",
+    "-3.i",
+    "-3.t",
+    "-4.d",
+    "-4.i",
+    "-4.t",
+    "-5.d",
+    "-5.i",
+    "-5.t",
+    "-6.d",
+    "-6.i",
+    "-6.t",
     "1.d",
     "1.i",
     "1.t",
