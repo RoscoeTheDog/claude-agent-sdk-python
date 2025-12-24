@@ -819,7 +819,7 @@
       "type": "validation",
       "story_type": "validation",
       "title": "Validate: Documentation Update",
-      "status": "in_progress",
+      "status": "completed",
       "validates": "6",
       "children": [
         "-6.d",
@@ -877,7 +877,7 @@
       "type": "validation_testing",
       "story_type": "validation_testing",
       "title": "Validate Testing: Documentation Update",
-      "status": "unassigned",
+      "status": "completed",
       "parent": "-6",
       "validates": "6.t",
       "phase": "validation_testing",
