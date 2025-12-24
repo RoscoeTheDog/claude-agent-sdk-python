@@ -2,7 +2,7 @@
 
 **DO NOT EDIT**: This file is auto-generated. Edit .queue.json instead.
 
-**Generated**: 2025-12-23 16:04:22
+**Generated**: 2025-12-23 16:09:27
 
 ---
 
@@ -15,13 +15,12 @@
 ## Sprint Statistics
 
 - **Total Stories**: 48
-- **Completion**: 70.8%
+- **Completion**: 75.0%
 
 ### By Status
 
-- completed: 34
-- in_progress: 1
-- unassigned: 13
+- completed: 36
+- unassigned: 12
 
 ### By Type
 
@@ -77,7 +76,7 @@
   - Blocks: Story -3.t
 
   ### Story -3.t: Validate Testing: OAuth Login Integration
-  **Status**: unassigned | **Type**: validation_testing
+  **Status**: completed | **Type**: validation_testing
   - Dependencies: Story -3, Story -3.i
 
   ### Story -4.d: Validate Discovery: Optional Auto-OAuth Extra
