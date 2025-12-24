@@ -28,13 +28,21 @@ class TestSubprocessCLITransport:
         from claude_agent_sdk._errors import CLINotFoundError
 
         with (
-            patch("shutil.which", return_value=None),
-            patch("pathlib.Path.exists", return_value=False),
+            patch("claude_agent_sdk._internal.cli_detection.shutil.which", return_value=None),
+            patch("claude_agent_sdk._internal.cli_detection.Path.home"),
+            patch("claude_agent_sdk._internal.cli_detection.Path") as mock_path,
             pytest.raises(CLINotFoundError) as exc_info,
         ):
+            # Make all paths not exist
+            mock_instance = mock_path.return_value
+            mock_instance.exists.return_value = False
+            mock_instance.is_file.return_value = False
+            mock_instance.__truediv__.return_value = mock_instance
+            mock_path.home.return_value = mock_instance
+
             SubprocessCLITransport(prompt="test", options=ClaudeAgentOptions())
 
-        assert "Claude Code not found" in str(exc_info.value)
+        assert "Claude Code" in str(exc_info.value) and "not found" in str(exc_info.value)
 
     def test_build_command_basic(self):
         """Test building basic CLI command."""

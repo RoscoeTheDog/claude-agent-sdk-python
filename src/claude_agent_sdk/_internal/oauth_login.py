@@ -15,6 +15,8 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
+from .._errors import ClaudeCodeNotFoundError
+from .cli_detection import find_claude_cli
 from .oauth_credentials import OAuthCredentials, read_credentials
 
 
@@ -62,10 +64,13 @@ def trigger_oauth_login(interactive: bool = True) -> bool:
     print("")
 
     try:
+        # Detect Claude CLI path
+        cli_path = find_claude_cli()
+
         # Run claude /login command
         # Don't capture output so user sees prompts and browser launch messages
         subprocess.run(
-            ["claude", "/login"],
+            [cli_path, "/login"],
             check=True,
             text=True,
             # Let Claude CLI handle all interaction with user
@@ -93,14 +98,11 @@ def trigger_oauth_login(interactive: bool = True) -> bool:
             print("=" * 60 + "\n")
             return False
 
-    except FileNotFoundError:
+    except ClaudeCodeNotFoundError as e:
         print("\n" + "=" * 60)
         print("  Error: Claude CLI Not Found")
         print("=" * 60)
-        print("  Please install Claude Code:")
-        print("    npm install -g @anthropic-ai/claude-code")
-        print("")
-        print("  Or visit: https://docs.claude.com/en/docs/claude-code")
+        print(str(e))
         print("=" * 60 + "\n")
         return False
 
@@ -206,15 +208,16 @@ def check_claude_cli_installed() -> bool:
         ...     print("Please install Claude CLI")
     """
     try:
+        cli_path = find_claude_cli()
         result = subprocess.run(
-            ["claude", "--version"],
+            [cli_path, "--version"],
             capture_output=True,
             text=True,
             timeout=5,
             check=False,  # Don't raise on non-zero exit
         )
         return result.returncode == 0
-    except (FileNotFoundError, subprocess.TimeoutExpired):
+    except (ClaudeCodeNotFoundError, FileNotFoundError, subprocess.TimeoutExpired):
         return False
 
 
@@ -231,8 +234,9 @@ def get_claude_cli_version() -> str | None:
         ...     print(f"Claude CLI version: {version}")
     """
     try:
+        cli_path = find_claude_cli()
         result = subprocess.run(
-            ["claude", "--version"],
+            [cli_path, "--version"],
             capture_output=True,
             text=True,
             timeout=5,
@@ -246,6 +250,7 @@ def get_claude_cli_version() -> str | None:
                 return parts[-1]  # Last part is version number
         return output  # Return full output if format unexpected
     except (
+        ClaudeCodeNotFoundError,
         FileNotFoundError,
         subprocess.TimeoutExpired,
         subprocess.CalledProcessError,

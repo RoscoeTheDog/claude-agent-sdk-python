@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Any, Generic, TypeVar
 
 from ._errors import (
+    ClaudeCodeNotFoundError,
     ClaudeSDKError,
     CLIConnectionError,
     CLIJSONDecodeError,
@@ -355,6 +356,7 @@ __all__ = [
     "ClaudeSDKError",
     "CLIConnectionError",
     "CLINotFoundError",
+    "ClaudeCodeNotFoundError",
     "ProcessError",
     "CLIJSONDecodeError",
 ]

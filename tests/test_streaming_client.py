@@ -638,9 +638,10 @@ print('{"type": "result", "subtype": "success", "duration_ms": 100, "duration_ap
                 Path(test_script).chmod(0o755)
 
             try:
-                # Mock _find_cli to return the test script path directly
-                with patch.object(
-                    SubprocessCLITransport, "_find_cli", return_value=test_script
+                # Mock find_claude_cli to return the test script path directly
+                with patch(
+                    "claude_agent_sdk._internal.cli_detection.find_claude_cli",
+                    return_value=test_script,
                 ):
                     # Mock _build_command to properly execute Python script
                     original_build_command = SubprocessCLITransport._build_command

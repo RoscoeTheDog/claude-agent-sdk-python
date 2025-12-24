@@ -51,10 +51,16 @@ class TestTriggerOAuthLogin:
         with pytest.raises(RuntimeError, match="non-interactive mode"):
             trigger_oauth_login(interactive=False)
 
+    @patch("claude_agent_sdk._internal.oauth_login.find_claude_cli")
     @patch("claude_agent_sdk._internal.oauth_login.subprocess.run")
     @patch("claude_agent_sdk._internal.oauth_login.read_credentials")
-    def test_successful_login(self, mock_read, mock_subprocess, mock_valid_credentials):
+    def test_successful_login(
+        self, mock_read, mock_subprocess, mock_find_cli, mock_valid_credentials
+    ):
         """Test successful OAuth login flow."""
+        # Mock CLI detection
+        mock_find_cli.return_value = "/usr/bin/claude"
+
         # Mock successful subprocess call
         mock_subprocess.return_value = Mock(returncode=0)
 
@@ -64,17 +70,24 @@ class TestTriggerOAuthLogin:
         result = trigger_oauth_login(interactive=True)
 
         assert result is True
+        mock_find_cli.assert_called_once()
         mock_subprocess.assert_called_once_with(
-            ["claude", "/login"],
+            ["/usr/bin/claude", "/login"],
             check=True,
             text=True,
         )
         mock_read.assert_called_once()
 
+    @patch("claude_agent_sdk._internal.oauth_login.find_claude_cli")
     @patch("claude_agent_sdk._internal.oauth_login.subprocess.run")
     @patch("claude_agent_sdk._internal.oauth_login.read_credentials")
-    def test_login_failed_no_credentials(self, mock_read, mock_subprocess):
+    def test_login_failed_no_credentials(
+        self, mock_read, mock_subprocess, mock_find_cli
+    ):
         """Test login failure when no credentials created."""
+        # Mock CLI detection
+        mock_find_cli.return_value = "/usr/bin/claude"
+
         # Mock successful subprocess but no credentials created
         mock_subprocess.return_value = Mock(returncode=0)
         mock_read.return_value = None
@@ -83,12 +96,16 @@ class TestTriggerOAuthLogin:
 
         assert result is False
 
+    @patch("claude_agent_sdk._internal.oauth_login.find_claude_cli")
     @patch("claude_agent_sdk._internal.oauth_login.subprocess.run")
     @patch("claude_agent_sdk._internal.oauth_login.read_credentials")
     def test_login_failed_expired_credentials(
-        self, mock_read, mock_subprocess, mock_expired_credentials
+        self, mock_read, mock_subprocess, mock_find_cli, mock_expired_credentials
     ):
         """Test login failure when credentials still expired."""
+        # Mock CLI detection
+        mock_find_cli.return_value = "/usr/bin/claude"
+
         # Mock successful subprocess but expired credentials
         mock_subprocess.return_value = Mock(returncode=0)
         mock_read.return_value = mock_expired_credentials
@@ -97,18 +114,25 @@ class TestTriggerOAuthLogin:
 
         assert result is False
 
-    @patch("claude_agent_sdk._internal.oauth_login.subprocess.run")
-    def test_claude_cli_not_found(self, mock_subprocess):
+    @patch("claude_agent_sdk._internal.oauth_login.find_claude_cli")
+    def test_claude_cli_not_found(self, mock_find_cli):
         """Test handling of missing Claude CLI."""
-        mock_subprocess.side_effect = FileNotFoundError("claude not found")
+        from claude_agent_sdk._errors import ClaudeCodeNotFoundError
+
+        mock_find_cli.side_effect = ClaudeCodeNotFoundError()
 
         result = trigger_oauth_login(interactive=True)
 
         assert result is False
+        mock_find_cli.assert_called_once()
 
+    @patch("claude_agent_sdk._internal.oauth_login.find_claude_cli")
     @patch("claude_agent_sdk._internal.oauth_login.subprocess.run")
-    def test_subprocess_error(self, mock_subprocess):
+    def test_subprocess_error(self, mock_subprocess, mock_find_cli):
         """Test handling of subprocess errors."""
+        # Mock CLI detection
+        mock_find_cli.return_value = "/usr/bin/claude"
+
         mock_subprocess.side_effect = subprocess.CalledProcessError(
             1, "claude /login", stderr="Login failed"
         )
@@ -117,9 +141,13 @@ class TestTriggerOAuthLogin:
 
         assert result is False
 
+    @patch("claude_agent_sdk._internal.oauth_login.find_claude_cli")
     @patch("claude_agent_sdk._internal.oauth_login.subprocess.run")
-    def test_keyboard_interrupt(self, mock_subprocess):
+    def test_keyboard_interrupt(self, mock_subprocess, mock_find_cli):
         """Test handling of user cancellation."""
+        # Mock CLI detection
+        mock_find_cli.return_value = "/usr/bin/claude"
+
         mock_subprocess.side_effect = KeyboardInterrupt()
 
         result = trigger_oauth_login(interactive=True)
@@ -195,37 +223,46 @@ class TestEnsureValidCredentials:
 class TestCheckClaudeCLIInstalled:
     """Tests for check_claude_cli_installed function."""
 
+    @patch("claude_agent_sdk._internal.oauth_login.find_claude_cli")
     @patch("claude_agent_sdk._internal.oauth_login.subprocess.run")
-    def test_claude_installed(self, mock_subprocess):
+    def test_claude_installed(self, mock_subprocess, mock_find_cli):
         """Test when Claude CLI is installed."""
+        mock_find_cli.return_value = "/usr/bin/claude"
         mock_subprocess.return_value = Mock(returncode=0)
 
         result = check_claude_cli_installed()
 
         assert result is True
+        mock_find_cli.assert_called_once()
         mock_subprocess.assert_called_once()
 
-    @patch("claude_agent_sdk._internal.oauth_login.subprocess.run")
-    def test_claude_not_installed(self, mock_subprocess):
+    @patch("claude_agent_sdk._internal.oauth_login.find_claude_cli")
+    def test_claude_not_installed(self, mock_find_cli):
         """Test when Claude CLI is not installed."""
-        mock_subprocess.side_effect = FileNotFoundError()
+        from claude_agent_sdk._errors import ClaudeCodeNotFoundError
+
+        mock_find_cli.side_effect = ClaudeCodeNotFoundError()
 
         result = check_claude_cli_installed()
 
         assert result is False
 
+    @patch("claude_agent_sdk._internal.oauth_login.find_claude_cli")
     @patch("claude_agent_sdk._internal.oauth_login.subprocess.run")
-    def test_claude_command_fails(self, mock_subprocess):
+    def test_claude_command_fails(self, mock_subprocess, mock_find_cli):
         """Test when Claude CLI command fails."""
+        mock_find_cli.return_value = "/usr/bin/claude"
         mock_subprocess.return_value = Mock(returncode=1)
 
         result = check_claude_cli_installed()
 
         assert result is False
 
+    @patch("claude_agent_sdk._internal.oauth_login.find_claude_cli")
     @patch("claude_agent_sdk._internal.oauth_login.subprocess.run")
-    def test_claude_timeout(self, mock_subprocess):
+    def test_claude_timeout(self, mock_subprocess, mock_find_cli):
         """Test when Claude CLI times out."""
+        mock_find_cli.return_value = "/usr/bin/claude"
         mock_subprocess.side_effect = subprocess.TimeoutExpired("claude --version", 5)
 
         result = check_claude_cli_installed()
@@ -236,9 +273,11 @@ class TestCheckClaudeCLIInstalled:
 class TestGetClaudeCLIVersion:
     """Tests for get_claude_cli_version function."""
 
+    @patch("claude_agent_sdk._internal.oauth_login.find_claude_cli")
     @patch("claude_agent_sdk._internal.oauth_login.subprocess.run")
-    def test_get_version_success(self, mock_subprocess):
+    def test_get_version_success(self, mock_subprocess, mock_find_cli):
         """Test successful version retrieval."""
+        mock_find_cli.return_value = "/usr/bin/claude"
         mock_subprocess.return_value = Mock(
             returncode=0,
             stdout="claude-code version 1.0.123\n",
@@ -248,9 +287,11 @@ class TestGetClaudeCLIVersion:
 
         assert version == "1.0.123"
 
+    @patch("claude_agent_sdk._internal.oauth_login.find_claude_cli")
     @patch("claude_agent_sdk._internal.oauth_login.subprocess.run")
-    def test_get_version_different_format(self, mock_subprocess):
+    def test_get_version_different_format(self, mock_subprocess, mock_find_cli):
         """Test version retrieval with different output format."""
+        mock_find_cli.return_value = "/usr/bin/claude"
         mock_subprocess.return_value = Mock(
             returncode=0,
             stdout="Claude Code CLI v2.0.0",
@@ -261,27 +302,33 @@ class TestGetClaudeCLIVersion:
         # Should return last token
         assert "2.0.0" in version or version == "Claude Code CLI v2.0.0"
 
-    @patch("claude_agent_sdk._internal.oauth_login.subprocess.run")
-    def test_get_version_not_installed(self, mock_subprocess):
+    @patch("claude_agent_sdk._internal.oauth_login.find_claude_cli")
+    def test_get_version_not_installed(self, mock_find_cli):
         """Test version retrieval when CLI not installed."""
-        mock_subprocess.side_effect = FileNotFoundError()
+        from claude_agent_sdk._errors import ClaudeCodeNotFoundError
+
+        mock_find_cli.side_effect = ClaudeCodeNotFoundError()
 
         version = get_claude_cli_version()
 
         assert version is None
 
+    @patch("claude_agent_sdk._internal.oauth_login.find_claude_cli")
     @patch("claude_agent_sdk._internal.oauth_login.subprocess.run")
-    def test_get_version_timeout(self, mock_subprocess):
+    def test_get_version_timeout(self, mock_subprocess, mock_find_cli):
         """Test version retrieval timeout."""
+        mock_find_cli.return_value = "/usr/bin/claude"
         mock_subprocess.side_effect = subprocess.TimeoutExpired("claude --version", 5)
 
         version = get_claude_cli_version()
 
         assert version is None
 
+    @patch("claude_agent_sdk._internal.oauth_login.find_claude_cli")
     @patch("claude_agent_sdk._internal.oauth_login.subprocess.run")
-    def test_get_version_error(self, mock_subprocess):
+    def test_get_version_error(self, mock_subprocess, mock_find_cli):
         """Test version retrieval error."""
+        mock_find_cli.return_value = "/usr/bin/claude"
         mock_subprocess.side_effect = subprocess.CalledProcessError(
             1, "claude --version"
         )
