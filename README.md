@@ -5,13 +5,24 @@ Python SDK for Claude Agent. See the [Claude Agent SDK documentation](https://do
 ## Installation
 
 ```bash
+# Option 1: Basic installation (requires manual Claude Code CLI install)
 pip install claude-agent-sdk
+
+# Option 2: Auto-install Claude Code CLI (recommended)
+pip install 'claude-agent-sdk[auto-oauth]'
 ```
 
 **Prerequisites:**
 - Python 3.10+
 - Node.js
-- Claude Code 2.0.0+: `npm install -g @anthropic-ai/claude-code`
+- Claude Code 2.0.0+:
+  ```bash
+  # Install via npm (recommended)
+  npm install -g @anthropic-ai/claude-code
+
+  # Or install via Homebrew (macOS only)
+  brew install claude-code
+  ```
 
 ## Quick Start
 
@@ -141,6 +152,20 @@ The SDK uses this priority chain:
    - Try OAuth first, fallback to API key if OAuth unavailable
 
 ### Troubleshooting
+
+**"Claude Code CLI not found"**
+- Install via npm: `npm install -g @anthropic-ai/claude-code`
+- Install via Homebrew (macOS): `brew install claude-code`
+- Auto-install with pip: `pip install 'claude-agent-sdk[auto-oauth]'`
+- Custom path: `ClaudeAgentOptions(cli_path='/path/to/claude')`
+- Verify installation: Run `claude --version` in terminal
+
+**CLI detection issues**
+- Ensure `claude` is in your PATH
+- Check `~/.claude/bin/claude` exists (local install)
+- Windows: Check for `claude.exe` or `claude.cmd`
+- macOS Homebrew: Check `/opt/homebrew/bin/claude`
+- See error message for detailed installation instructions
 
 **"OAuth credentials not found"**
 - Run `claude /login` to authenticate
@@ -410,18 +435,22 @@ See [src/claude_agent_sdk/types.py](src/claude_agent_sdk/types.py) for complete 
 
 ```python
 from claude_agent_sdk import (
-    ClaudeSDKError,      # Base error
-    CLINotFoundError,    # Claude Code not installed
-    CLIConnectionError,  # Connection issues
-    ProcessError,        # Process failed
-    CLIJSONDecodeError,  # JSON parsing issues
+    ClaudeSDKError,            # Base error
+    ClaudeCodeNotFoundError,   # Claude Code not installed
+    CLIConnectionError,        # Connection issues
+    ProcessError,              # Process failed
+    CLIJSONDecodeError,        # JSON parsing issues
 )
 
 try:
     async for message in query(prompt="Hello"):
         pass
-except CLINotFoundError:
-    print("Please install Claude Code")
+except ClaudeCodeNotFoundError as e:
+    # Error message includes installation instructions:
+    # 1. npm install -g @anthropic-ai/claude-code (recommended)
+    # 2. brew install claude-code (macOS)
+    # 3. pip install 'claude-agent-sdk[auto-oauth]'
+    print(f"Claude Code CLI not found: {e}")
 except ProcessError as e:
     print(f"Process failed with exit code: {e.exit_code}")
 except CLIJSONDecodeError as e:

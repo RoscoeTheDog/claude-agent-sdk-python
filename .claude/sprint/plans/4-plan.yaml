@@ -1,0 +1,324 @@
+story_id: "4"
+title: "Optional Auto-OAuth Extra"
+discovery:
+  files_analyzed:
+    - C:\Users\Admin\Documents\GitHub\claude-agent-sdk-python\pyproject.toml
+    - C:\Users\Admin\Documents\GitHub\claude-agent-sdk-python\src\claude_agent_sdk\_internal\cli_detection.py
+    - C:\Users\Admin\Documents\GitHub\claude-agent-sdk-python\src\claude_agent_sdk\_errors.py
+    - C:\Users\Admin\Documents\GitHub\claude-agent-sdk-python\tests\test_cli_detection.py
+    - C:\Users\Admin\Documents\GitHub\claude-agent-sdk-python\src\claude_agent_sdk\_internal\transport\subprocess_cli.py
+
+  nodejs_bin_research: |
+    nodejs-bin is a Python package that redistributes Node.js for use as a Python dependency:
+
+    - Provides node, npm, and npx executables bundled within Python virtual environments
+    - Uses only official Node.js releases and unofficial builds
+    - Supports Python 3.7+ on all major platforms (Windows, macOS, Linux)
+    - Weekly downloads: ~5,752 (small but established package)
+    - Security: No known vulnerabilities detected, safe to use
+    - Installation: pip install 'nodejs-bin[cmd]' for command-line tools
+
+    Python API (from subprocess module):
+    - npm.run(args, **kwargs) - Returns CompletedProcess object
+    - npm.call(args, **kwargs) - Returns exit code
+    - npm.Popen(args, **kwargs) - Returns Popen object
+
+    All methods wrap subprocess equivalents and pass through kwargs.
+
+    For auto-install, we'll use npm.run() to execute:
+      npm install -g @anthropic-ai/claude-code --prefix ~/.claude-sdk
+
+    This installs to a user-local directory (~/.claude-sdk) avoiding system-wide pollution.
+    On Windows: Uses %USERPROFILE%\.claude-sdk
+
+    Alternative considered: pynpm (newer, CERN-authored) - rejected because nodejs-bin
+    is more established for our use case of bundling Node.js itself.
+
+implementation:
+  files_to_modify:
+    - C:\Users\Admin\Documents\GitHub\claude-agent-sdk-python\pyproject.toml
+    - C:\Users\Admin\Documents\GitHub\claude-agent-sdk-python\src\claude_agent_sdk\_internal\cli_detection.py
+
+  files_to_create:
+    - C:\Users\Admin\Documents\GitHub\claude-agent-sdk-python\tests\test_auto_install.py
+
+  approach: |
+    Phase 1: Add optional dependency to pyproject.toml
+    ----------------------------------------------------
+    Add new optional dependency group after line 41:
+
+    [project.optional-dependencies]
+    dev = [...]
+    auto-oauth = [
+        "nodejs-bin>=18.0.0",
+    ]
+
+    Version rationale: 18.0.0 is Node.js LTS (Long Term Support) and matches
+    Claude Code's minimum Node.js requirement.
+
+    Phase 2: Create get_claude_cli_or_install() function
+    -----------------------------------------------------
+    In cli_detection.py, add new function:
+
+    def get_claude_cli_or_install() -> str:
+        """Find Claude CLI, attempting auto-install if not found.
+
+        First attempts standard detection via find_claude_cli().
+        If detection fails AND nodejs-bin is installed, attempts to
+        auto-install @anthropic-ai/claude-code to ~/.claude-sdk/.
+
+        Returns:
+            str: Path to Claude CLI executable
+
+        Raises:
+            ClaudeCodeNotFoundError: If CLI not found and auto-install fails
+
+        Example:
+            >>> cli_path = get_claude_cli_or_install()
+            >>> # May trigger npm install on first run
+        """
+        try:
+            return find_claude_cli()
+        except ClaudeCodeNotFoundError:
+            # Attempt auto-install if nodejs-bin available
+            return _attempt_auto_install()
+
+    Phase 3: Implement _attempt_auto_install() helper
+    --------------------------------------------------
+    def _attempt_auto_install() -> str:
+        """Attempt to auto-install Claude Code using nodejs-bin.
+
+        Raises:
+            ClaudeCodeNotFoundError: If nodejs-bin not available or install fails
+        """
+        try:
+            from nodejs import npm
+        except ImportError:
+            # nodejs-bin not installed - fall back to original error
+            raise ClaudeCodeNotFoundError(
+                message=(
+                    "Claude Code CLI not found. "
+                    "Install with 'pip install claude-agent-sdk[auto-oauth]' "
+                    "for automatic installation."
+                )
+            ) from None
+
+        # Determine install directory (cross-platform)
+        home = Path.home()
+        install_dir = home / ".claude-sdk"
+        install_dir.mkdir(parents=True, exist_ok=True)
+
+        # Run npm install
+        try:
+            result = npm.run(
+                [
+                    "install",
+                    "-g",
+                    "@anthropic-ai/claude-code",
+                    "--prefix",
+                    str(install_dir)
+                ],
+                capture_output=True,
+                text=True,
+                check=True,
+                timeout=300,  # 5 minute timeout
+            )
+
+            # After install, search for the CLI in the new location
+            system = platform.system()
+            if system == "Windows":
+                cli_candidates = [
+                    install_dir / "bin" / "claude.cmd",
+                    install_dir / "bin" / "claude.exe",
+                ]
+            else:
+                cli_candidates = [
+                    install_dir / "bin" / "claude",
+                ]
+
+            for cli_path in cli_candidates:
+                if cli_path.exists() and cli_path.is_file():
+                    return str(cli_path.absolute())
+
+            # Install succeeded but CLI not found where expected
+            raise ClaudeCodeNotFoundError(
+                message=(
+                    f"Auto-install completed but CLI not found at {install_dir}/bin/. "
+                    "Try manual installation: npm install -g @anthropic-ai/claude-code"
+                )
+            )
+
+        except subprocess.TimeoutExpired:
+            raise ClaudeCodeNotFoundError(
+                message="Auto-install timed out. Try manual installation."
+            ) from None
+        except subprocess.CalledProcessError as e:
+            raise ClaudeCodeNotFoundError(
+                message=(
+                    f"Auto-install failed (exit code {e.returncode}). "
+                    f"Error: {e.stderr}\n"
+                    "Try manual installation: npm install -g @anthropic-ai/claude-code"
+                )
+            ) from None
+        except Exception as e:
+            raise ClaudeCodeNotFoundError(
+                message=f"Auto-install failed: {e}"
+            ) from None
+
+    Phase 4: Update ClaudeCodeNotFoundError message
+    ------------------------------------------------
+    Already includes auto-oauth extra in installation instructions (line 44 in _errors.py):
+      "3. pip with auto-oauth extra:"
+      "   pip install 'claude-agent-sdk[auto-oauth]'"
+
+    No changes needed - error message already promotes this feature!
+
+    Phase 5: Update SubprocessCLITransport (optional)
+    -------------------------------------------------
+    DECISION: Do NOT change SubprocessCLITransport.__init__ (line 52 in subprocess_cli.py)
+
+    Rationale:
+    - find_claude_cli() is called during transport initialization
+    - Auto-install adds 5-300 seconds latency on first run
+    - Better to let users explicitly opt-in by calling get_claude_cli_or_install()
+    - Keep existing behavior: fail fast if CLI not found
+    - Users wanting auto-install can pass custom cli_path:
+        ClaudeAgentOptions(cli_path=get_claude_cli_or_install())
+
+    This preserves backward compatibility and predictable behavior.
+
+testing:
+  unit_tests:
+    - test_auto_install_with_nodejs_bin_available:
+        description: Mock nodejs-bin import and npm.run() success
+        assertions:
+          - Returns path to installed CLI
+          - Creates ~/.claude-sdk directory
+          - Calls npm with correct arguments
+          - Handles Windows vs Unix path differences
+
+    - test_auto_install_nodejs_bin_not_installed:
+        description: Mock ImportError when importing nodejs.npm
+        assertions:
+          - Raises ClaudeCodeNotFoundError with auto-oauth hint
+          - Error message mentions pip install with [auto-oauth]
+
+    - test_auto_install_npm_install_fails:
+        description: Mock npm.run() raising CalledProcessError
+        assertions:
+          - Raises ClaudeCodeNotFoundError with npm error details
+          - Includes exit code and stderr in message
+          - Suggests manual installation
+
+    - test_auto_install_timeout:
+        description: Mock npm.run() raising TimeoutExpired
+        assertions:
+          - Raises ClaudeCodeNotFoundError with timeout message
+          - Suggests manual installation
+
+    - test_auto_install_cli_not_found_after_install:
+        description: npm.run() succeeds but CLI not at expected path
+        assertions:
+          - Raises ClaudeCodeNotFoundError explaining the situation
+          - Mentions auto-install completed but CLI missing
+
+    - test_get_claude_cli_or_install_finds_existing:
+        description: find_claude_cli() succeeds on first try
+        assertions:
+          - Returns path from find_claude_cli()
+          - Never calls auto-install logic
+          - Never imports nodejs-bin
+
+    - test_get_claude_cli_or_install_falls_back_to_auto_install:
+        description: find_claude_cli() fails, auto-install succeeds
+        assertions:
+          - Catches ClaudeCodeNotFoundError from find_claude_cli()
+          - Attempts auto-install
+          - Returns installed CLI path
+
+  integration_tests:
+    - test_auto_install_real_npm_mock_network:
+        description: If nodejs-bin installed, test with mocked npm registry
+        setup: Requires nodejs-bin in dev dependencies
+        assertions:
+          - Full flow from detection failure to install
+          - File system operations work correctly
+          - Cross-platform path handling
+
+    - test_subprocess_transport_with_auto_install_path:
+        description: Verify SubprocessCLITransport accepts auto-installed path
+        assertions:
+          - Can pass get_claude_cli_or_install() result to ClaudeAgentOptions
+          - Transport initializes successfully
+
+  manual_testing:
+    - Test with nodejs-bin installed: pip install 'nodejs-bin[cmd]'
+    - Test without nodejs-bin: Ensure graceful ImportError handling
+    - Test on Windows, macOS, and Linux
+    - Test with slow network (timeout handling)
+    - Test with npm install failure (invalid package name)
+
+risks:
+  - npm_install_timeout:
+      description: npm install may take 1-5 minutes on slow connections
+      mitigation: 300 second timeout, clear error message suggesting manual install
+
+  - permissions_issues:
+      description: Windows may require elevated permissions for some npm operations
+      mitigation: Install to user-local ~/.claude-sdk (no admin needed)
+
+  - disk_space:
+      description: Node.js + @anthropic-ai/claude-code is ~50-100MB
+      mitigation: Document space requirements, provide cleanup instructions
+
+  - nodejs_bin_package_maintenance:
+      description: nodejs-bin hasn't had updates in 12 months (possible abandonment)
+      mitigation: |
+        - Package is stable and security-scanned (no vulnerabilities)
+        - Only used for optional auto-install feature
+        - Users can always use manual npm install
+        - If package becomes problematic, we can deprecate auto-oauth extra
+
+  - npm_registry_availability:
+      description: npm install requires internet connection
+      mitigation: Fail gracefully with manual installation instructions
+
+  - version_mismatch:
+      description: nodejs-bin might bundle older Node.js than Claude Code requires
+      mitigation: Specify nodejs-bin>=18.0.0 to ensure Node 18+ LTS
+
+  - platform_specific_issues:
+      description: Different behavior on Windows (.cmd) vs Unix (no extension)
+      mitigation: Test on all platforms, handle both .cmd and .exe on Windows
+
+  - unexpected_install_location:
+      description: npm --prefix may behave differently across Node versions
+      mitigation: Check multiple candidate paths after install, clear error if not found
+
+documentation:
+  - Update README.md with auto-oauth installation option
+  - Add troubleshooting section for auto-install failures
+  - Document ~/.claude-sdk directory purpose and cleanup
+  - Add example of using get_claude_cli_or_install() in API docs
+
+dependencies:
+  required_for_implementation:
+    - nodejs-bin>=18.0.0 (optional dependency)
+
+  required_for_testing:
+    - pytest
+    - pytest-mock (for mocking nodejs-bin)
+    - unittest.mock (standard library)
+
+rollout_strategy:
+  phase_1: Add optional dependency and function (no breaking changes)
+  phase_2: Test extensively on all platforms
+  phase_3: Document in README and API reference
+  phase_4: Consider making auto-oauth the default recommendation (future)
+
+success_metrics:
+  - All unit tests pass with >95% coverage
+  - Manual testing succeeds on Windows, macOS, Linux
+  - Error messages are clear and actionable
+  - Auto-install completes in <5 minutes on typical network
+  - No breaking changes to existing API

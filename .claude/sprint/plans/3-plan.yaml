@@ -1,0 +1,142 @@
+story_id: "3"
+title: "OAuth Login Integration"
+
+discovery:
+  files_analyzed:
+    - src/claude_agent_sdk/_internal/oauth_login.py
+    - src/claude_agent_sdk/_internal/cli_detection.py
+    - src/claude_agent_sdk/_errors.py
+    - tests/test_oauth_login.py
+    - tests/test_cli_detection.py
+    - src/claude_agent_sdk/_internal/auth_manager.py
+    - tests/test_auth_manager.py
+    - examples/oauth_simple.py
+
+  integration_points:
+    - oauth_login.py contains 3 functions that use hardcoded 'claude' command:
+      - trigger_oauth_login() at line 68
+      - check_claude_cli_installed() at line 210
+      - get_claude_cli_version() at line 235
+    - cli_detection.py provides find_claude_cli() which returns absolute path
+    - _errors.py provides ClaudeCodeNotFoundError with comprehensive installation instructions
+    - auth_manager.py calls trigger_oauth_login() at line 266 and uses returned boolean
+    - Existing error handling in oauth_login.py catches FileNotFoundError (lines 96-105)
+
+  current_behavior:
+    - trigger_oauth_login() uses subprocess.run(["claude", "/login"]) directly
+    - FileNotFoundError is caught and displays custom error message
+    - Returns False on FileNotFoundError (graceful failure)
+    - Other functions (check_claude_cli_installed, get_claude_cli_version) also use hardcoded "claude"
+
+implementation:
+  files_to_modify:
+    - src/claude_agent_sdk/_internal/oauth_login.py
+
+  files_to_create: []
+
+  approach: |
+    Step 1: Import find_claude_cli and ClaudeCodeNotFoundError
+      - Add: from .cli_detection import find_claude_cli
+      - Add: from .._errors import ClaudeCodeNotFoundError
+
+    Step 2: Modify trigger_oauth_login() function
+      - Replace hardcoded ["claude", "/login"] with dynamic CLI path
+      - Detect CLI path once at start using find_claude_cli()
+      - Wrap find_claude_cli() in try/except to catch ClaudeCodeNotFoundError
+      - On ClaudeCodeNotFoundError, display error message and return False
+      - Remove existing FileNotFoundError handler (now redundant)
+      - Use detected CLI path in subprocess.run([cli_path, "/login"])
+
+    Step 3: Modify check_claude_cli_installed() function
+      - Replace hardcoded ["claude", "--version"] with dynamic CLI path
+      - Use try/except to catch ClaudeCodeNotFoundError
+      - Return False if ClaudeCodeNotFoundError raised
+      - Keep existing FileNotFoundError handling for compatibility
+
+    Step 4: Modify get_claude_cli_version() function
+      - Replace hardcoded ["claude", "--version"] with dynamic CLI path
+      - Use try/except to catch ClaudeCodeNotFoundError
+      - Return None if ClaudeCodeNotFoundError raised
+      - Keep existing FileNotFoundError/CalledProcessError handling
+
+    Step 5: Update error messages
+      - Remove custom "Claude CLI Not Found" error display from trigger_oauth_login
+      - Let ClaudeCodeNotFoundError.message handle installation instructions
+      - Print str(error) to display comprehensive message from ClaudeCodeNotFoundError
+
+testing:
+  unit_tests:
+    - Modify test_claude_cli_not_found (line 101-107):
+      - Mock find_claude_cli to raise ClaudeCodeNotFoundError
+      - Verify trigger_oauth_login returns False
+      - Verify error message contains installation instructions
+
+    - Modify test_check_claude_cli_installed tests:
+      - Mock find_claude_cli to raise ClaudeCodeNotFoundError
+      - Verify check_claude_cli_installed returns False
+
+    - Modify test_get_claude_cli_version tests:
+      - Mock find_claude_cli to raise ClaudeCodeNotFoundError
+      - Verify get_claude_cli_version returns None
+
+    - Add new test for successful CLI detection:
+      - Mock find_claude_cli to return "/usr/bin/claude"
+      - Verify subprocess.run is called with correct path
+      - Verify existing OAuth flow continues working
+
+    - Keep all existing tests working:
+      - test_successful_login (line 56-72)
+      - test_login_failed_no_credentials (line 76-84)
+      - test_subprocess_error (line 110-117)
+      - test_keyboard_interrupt (line 121-127)
+
+  integration_tests:
+    - Verify auth_manager.py continues to work:
+      - handle_oauth_login() at line 266 calls trigger_oauth_login()
+      - Should receive False when CLI not found
+      - Should trigger fallback behavior as expected
+
+    - Manual testing scenarios:
+      - CLI in PATH: Should detect and use it
+      - CLI in custom location: Should detect and use it
+      - CLI not installed: Should display ClaudeCodeNotFoundError message
+      - OAuth flow after detection: Should open browser and complete login
+
+risks:
+  - Breaking changes to existing error handling flow
+    - Mitigation: Keep backward compatibility by returning False on all errors
+
+  - Performance impact of CLI detection on every login
+    - Mitigation: find_claude_cli() is fast (checks PATH first, then fallbacks)
+
+  - Platform-specific path detection issues
+    - Mitigation: cli_detection.py already has comprehensive tests for all platforms
+
+  - Existing tests may need mock updates
+    - Mitigation: Patch find_claude_cli instead of subprocess.run in tests
+
+  - auth_manager.py integration may break
+    - Mitigation: Verify existing behavior is preserved (returns bool, same error handling)
+
+dependencies_verified:
+  - Story 1 (CLI Detection Core): COMPLETE
+    - find_claude_cli() function available and tested
+    - Raises ClaudeCodeNotFoundError when not found
+    - Returns absolute path when found
+
+  - Story 2 (ClaudeCodeNotFoundError): COMPLETE
+    - Exception class defined in _errors.py
+    - Contains comprehensive installation instructions
+    - Platform-specific messages (Homebrew for macOS, etc.)
+
+estimated_complexity: Medium
+  - Simple refactoring of 3 functions
+  - Clear integration points already tested
+  - Well-defined error handling patterns
+  - Existing test infrastructure in place
+
+backwards_compatibility: Full
+  - All functions maintain same signatures
+  - Return types unchanged (bool, str|None)
+  - Error behavior preserved (returns False on failure)
+  - Existing callers (auth_manager.py) unaffected

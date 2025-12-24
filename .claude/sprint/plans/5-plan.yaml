@@ -1,0 +1,266 @@
+story_id: 5.d
+story_name: "Discovery: Cross-Platform Testing"
+phase: discovery
+status: completed
+created: 2025-12-21
+
+# Gap Analysis
+
+## Current Test Coverage
+
+### test_cli_detection.py (519 lines)
+- ✅ PATH detection via shutil.which (line 21-31)
+- ✅ Fallback location detection (line 33-57)
+- ✅ Windows .exe extension (line 102-150)
+- ✅ Windows .cmd extension (line 152-203)
+- ✅ macOS Homebrew paths (line 205-240)
+- ✅ Linux paths (line 242-277)
+- ✅ CLINotFoundError raised when not found (line 59-87)
+- ✅ Auto-install success on Unix (line 319-360)
+- ✅ Auto-install success on Windows (line 362-388)
+- ✅ Auto-install error handling (lines 390-518)
+
+### test_errors.py (205 lines)
+- ✅ ClaudeCodeNotFoundError default message (line 62-72)
+- ✅ npm install command included (line 74-80)
+- ✅ pip auto-oauth extra included (line 82-89)
+- ✅ Anthropic docs link included (line 91-100)
+- ✅ Homebrew on macOS only (line 102-128)
+- ✅ Custom cli_path parameter (line 130-136)
+- ✅ Custom message parameter (line 138-147)
+- ✅ Platform-specific numbering (line 188-204)
+
+### cli_detection.py (192 lines)
+Implementation includes:
+- PATH detection via shutil.which (line 30-31)
+- Platform-specific fallback locations (line 34-73)
+- Windows: AppData/Local, AppData/Roaming (.cmd, .exe)
+- macOS: Homebrew Intel (/usr/local), Homebrew ARM (/opt/homebrew)
+- Linux: /usr/local/bin, /usr/bin
+- Cross-platform: .npm-global, .local, node_modules, .yarn, .claude/local
+- Auto-install via nodejs-bin (line 113-191)
+
+## Coverage Gaps Identified
+
+### P0 Gaps (Critical)
+1. ✅ PATH detection via shutil.which - COVERED (test_finds_cli_in_path)
+2. ✅ Local install path detection - COVERED (test_finds_cli_in_fallback_locations)
+3. ⚠️ PARTIAL: Platform-specific paths not exhaustively tested
+   - Missing: .yarn/bin/claude
+   - Missing: .claude/local/claude
+   - Missing: Windows APPDATA vs LOCALAPPDATA fallback logic
+   - Missing: Cross-verification of all 11+ fallback paths
+
+### P1 Gaps (Important)
+1. ✅ Windows-specific paths - COVERED (test_windows_exe_extension, test_windows_cmd_extension)
+2. ✅ macOS-specific paths - COVERED (test_macos_homebrew_paths)
+3. ✅ Linux-specific paths - COVERED (test_linux_paths)
+4. ⚠️ PARTIAL: ClaudeCodeNotFoundError message content
+   - Missing: Verification of searched paths in error message
+   - Missing: Platform-specific path lists in error output
+   - test_errors.py validates message structure but not dynamic path content
+
+### P2 Gaps (Nice-to-have)
+1. ❌ NOT COVERED: Integration test with actual CLI
+   - No CI configuration detected
+   - No tests that run against real claude binary
+   - All tests use mocks
+
+## Additional Gaps Found
+
+### Edge Cases Not Tested
+1. **Path Priority Order**: Tests verify individual paths work but not priority/order
+2. **Multiple CLIs Present**: What if multiple paths have claude? (first-found wins)
+3. **Symlink Resolution**: Real-world Homebrew installs use symlinks
+4. **Permission Errors**: What if path exists but not executable?
+5. **Unicode/Special Characters**: Paths with spaces, unicode, etc.
+6. **Environment Variable Edge Cases**:
+   - LOCALAPPDATA/APPDATA not set on Windows
+   - HOME not set (unlikely but possible)
+
+### Mock Complexity
+- Current mocks are complex and fragile (see lines 128-146, 179-195)
+- Path mocking uses nested lambda functions that are hard to maintain
+- Consider using pytest fixtures or helper functions
+
+### Auto-Install Coverage
+- ✅ Good coverage of error cases
+- ⚠️ Missing: Verification of exact npm command arguments
+- ⚠️ Missing: Cross-platform path handling in auto-install
+
+# Test Strategy
+
+## Approach
+
+### 1. Platform Mocking Strategy
+Use `platform.system()` patching consistently:
+- Windows: `return_value="Windows"`
+- macOS: `return_value="Darwin"`
+- Linux: `return_value="Linux"`
+
+Mock environment variables for Windows:
+```python
+patch.dict(os.environ, {
+    "LOCALAPPDATA": "C:\\Users\\test\\AppData\\Local",
+    "APPDATA": "C:\\Users\\test\\AppData\\Roaming"
+})
+```
+
+### 2. Path Mocking Simplification
+Replace complex lambda-based mocks with pytest fixtures:
+```python
+@pytest.fixture
+def mock_paths(platform_name, paths_that_exist):
+    # Return pre-configured mock for each platform
+    # with specific paths set to exist
+```
+
+### 3. Exhaustive Platform Coverage
+Create parameterized tests:
+```python
+@pytest.mark.parametrize("platform,path,expected", [
+    ("Windows", "AppData/Local/npm/claude.cmd", True),
+    ("Windows", "AppData/Roaming/npm/claude.cmd", True),
+    ("Darwin", "/opt/homebrew/bin/claude", True),
+    ("Darwin", "/usr/local/bin/claude", True),
+    ("Linux", "/usr/local/bin/claude", True),
+    # ... all 11+ paths
+])
+```
+
+### 4. Error Message Content Verification
+Add assertions for:
+- Searched paths listed in error
+- Platform-specific installation instructions
+- Path count matches implementation
+
+### 5. Integration Testing (CI)
+- Add CI workflow step to install actual CLI (if available)
+- Run subset of tests against real binary
+- Use environment variable to enable/skip: `CLAUDE_CLI_INTEGRATION_TEST`
+- Graceful skip if CLI installation fails in CI
+
+## File Changes Required
+
+### test_cli_detection.py
+1. Add fixture for simplified path mocking (top of file)
+2. Add parameterized test for all fallback paths (~30 lines)
+3. Add test for path priority order (~20 lines)
+4. Add test for symlink handling (~15 lines)
+5. Add edge case tests (permissions, unicode) (~40 lines)
+6. Refactor existing tests to use new fixtures (~50 lines modified)
+
+### test_errors.py
+1. Add test for searched paths in error message (~25 lines)
+2. Add test for platform-specific path lists (~30 lines)
+3. Verify error message contains actual searched locations (~20 lines)
+
+### conftest.py (new file)
+Create shared fixtures for path mocking (~80 lines)
+
+### test_integration.py (new file)
+1. Integration tests with real CLI (~60 lines)
+2. Skip decorator for CI environments without CLI
+3. Basic functionality test (version check, help output)
+
+### .github/workflows/test.yml (if exists) or new
+1. Add optional step to install claude-code
+2. Set environment variable for integration tests
+3. Continue on failure (don't block CI if install fails)
+
+## Total Estimated Changes
+- New lines: ~280
+- Modified lines: ~50
+- New files: 2-3
+- Time estimate: 4-6 hours implementation
+
+# CI Integration Considerations
+
+## GitHub Actions Strategy
+```yaml
+# Optional integration test job
+integration-test:
+  runs-on: ubuntu-latest
+  continue-on-error: true  # Don't fail CI if claude-code unavailable
+  steps:
+    - name: Install Claude Code (optional)
+      run: |
+        npm install -g @anthropic-ai/claude-code || echo "Claude Code not available"
+    - name: Run integration tests
+      env:
+        CLAUDE_CLI_INTEGRATION_TEST: "1"
+      run: pytest tests/test_integration.py -v
+```
+
+## Multi-Platform CI Matrix
+```yaml
+test:
+  strategy:
+    matrix:
+      os: [ubuntu-latest, macos-latest, windows-latest]
+      python-version: ['3.10', '3.11', '3.12']
+  runs-on: ${{ matrix.os }}
+```
+
+Benefits:
+- Validates platform-specific paths on actual OS
+- Catches platform-specific bugs (path separators, extensions)
+- Tests Windows .cmd/.exe, macOS Homebrew, Linux system paths
+
+## Fallback Strategy
+If CI doesn't have Claude Code installed:
+- Integration tests auto-skip via pytest.mark.skipif
+- Unit tests with mocks still provide 95%+ coverage
+- Optional manual testing documentation
+
+# Priority Recommendations
+
+## P0 (Must Have) - Before Story Completion
+1. Exhaustive path coverage test (all 11+ fallback locations)
+2. ClaudeCodeNotFoundError message content validation
+3. Platform-specific path verification (Windows/macOS/Linux)
+
+## P1 (Should Have) - High Value
+1. Simplified path mocking fixtures (reduce test fragility)
+2. Path priority order testing
+3. Environment variable edge cases (missing LOCALAPPDATA, etc.)
+
+## P2 (Nice to Have) - CI/Integration
+1. Integration tests with real CLI
+2. CI matrix for multi-platform testing
+3. Symlink and permission edge cases
+
+# Success Criteria
+
+## Discovery Phase Complete When:
+- ✅ Gap analysis documented
+- ✅ Test strategy defined
+- ✅ File changes identified
+- ✅ CI integration plan created
+- ✅ Priority levels assigned
+
+## Implementation Phase Complete When (Story 5.i):
+- All P0 gaps closed (exhaustive path tests, error message validation)
+- P1 gaps addressed (fixtures, priority testing)
+- P2 gaps evaluated for inclusion (integration tests)
+- Test coverage >= 95% for cli_detection.py
+- All tests pass on Windows, macOS, Linux (via CI or manual)
+
+# Notes
+
+## Strengths of Current Tests
+- Good separation of concerns (detection vs errors)
+- Platform-aware testing already present
+- Auto-install well covered
+- Error message content validated
+
+## Weaknesses to Address
+- Path mocking complexity (maintenance burden)
+- Incomplete fallback path coverage (7/11 paths tested)
+- No integration tests (100% mocked)
+- Missing edge cases (symlinks, permissions, unicode)
+
+## Technical Debt
+- Consider extracting path construction logic to helper module
+- Mock complexity suggests refactoring opportunity in implementation
+- Integration test infrastructure missing (add to CI pipeline)

@@ -97,8 +97,14 @@ claude /login
 
 **Error: "Claude Code not installed"**
 ```bash
-# Solution: Install Claude Code CLI
+# Option 1: Install via npm (recommended)
 npm install -g @anthropic-ai/claude-code
+
+# Option 2: Install via Homebrew (macOS only)
+brew install claude-code
+
+# Option 3: Auto-install with SDK
+pip install 'claude-agent-sdk[auto-oauth]'
 ```
 
 **Error: "Module not found"**

@@ -18,9 +18,7 @@ class ClaudeCodeNotFoundError(CLIConnectionError):
     and installation methods.
     """
 
-    def __init__(
-        self, message: str | None = None, cli_path: str | None = None
-    ):
+    def __init__(self, message: str | None = None, cli_path: str | None = None):
         import platform as platform_module
 
         # Build comprehensive error message if not provided
@@ -38,7 +36,11 @@ class ClaudeCodeNotFoundError(CLIConnectionError):
                 message += "\n     brew install claude-code"
 
             # Add pip with auto-oauth extra option
-            message += "\n\n  " + ("3" if platform_module.system() == "Darwin" else "2") + ". pip with auto-oauth extra:"
+            message += (
+                "\n\n  "
+                + ("3" if platform_module.system() == "Darwin" else "2")
+                + ". pip with auto-oauth extra:"
+            )
             message += "\n     pip install 'claude-agent-sdk[auto-oauth]'"
 
             # Add documentation link
